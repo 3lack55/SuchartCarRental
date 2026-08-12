@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import authRoutes from './modules/auth/auth.routes.js';
+import appRouter from './routes.js';
 
 const app = express();
 
@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
   res.json({ success: true, message: 'ok' });
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api', appRouter);
 
 // TODO: ผูก route ของ module อื่นๆ ตรงนี้ เช่น
 // import vehiclesRoutes from './modules/vehicles/vehicles.routes.js';

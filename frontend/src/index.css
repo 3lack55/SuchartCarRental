@@ -1,1 +1,70 @@
 @import 'tailwindcss';
+
+:root {
+    --primary-color: #2563eb;
+    --primary-color-soft: #e0f2fe;
+    --page-bg: #f9fafb;
+    --page-text: #111827;
+    --surface: #ffffff;
+    --surface-soft: #f3f4f6;
+    --surface-strong: #e5e7eb;
+    --surface-border: #d1d5db;
+    --status-warning: #f97316;
+    --status-warning-soft: #ffedd5;
+    --status-danger: #dc2626;
+    --status-danger-soft: #fee2e2;
+    --status-success: #16a34a;
+    --status-success-soft: #dcfce7;
+    --avatar-hover-bg: #eeeeee;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    font-family: 'Kanit', sans-serif;
+    background: var(--page-bg);
+    color: var(--page-text);
+    overflow: hidden;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+.avatar:hover {
+    background-color: var(--avatar-hover-bg);
+}
+
+/* Scrollbar background transparent */
+body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 100, 100, 0.35) transparent;
+}
+
+body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: rgba(100, 100, 100, 0.35);
+    border-radius: 9999px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 100, 100, 0.5);
+}
+
+.divided-line {
+    border-top: 1px solid var(--surface-border);
+}

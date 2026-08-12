@@ -39,6 +39,7 @@ export async function login(username, password) {
       user_id: user.user_id,
       username: user.username,
       role: user.role,
+      deleted: !user.is_active,
     },
   };
 }
@@ -62,7 +63,6 @@ export async function register({ username, password, role }) {
 }
 
 export async function updatePassword(user_id, newPassword) {
-  console.log('updatePassword called with user_id:', user_id, 'newPassword:', newPassword);
   if (!user_id || !newPassword) {
     throw new AppError('user_id และ newPassword ต้องถูกส่งมา', 400);
   }
