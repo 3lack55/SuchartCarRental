@@ -4,6 +4,7 @@ import overviewRouter from './modules/overview/overview.routes.js';
 import driversRouter from './modules/drivers/drivers.routes.js';
 import vehiclesRouter from './modules/vehicles/vehicles.routes.js';
 import documentsRouter from './modules/documents/documents.routes.js';
+import lookupsRouter from "./modules/lookups/lookups.routes.js";
 
 const appRouter = Router();
 
@@ -12,5 +13,6 @@ appRouter.use('/overview', overviewRouter);
 appRouter.use('/drivers', driversRouter);
 appRouter.use('/vehicles', vehiclesRouter);
 appRouter.use('/documents', documentsRouter);
+appRouter.use('/lookups', lookupsRouter);
 
 export default appRouter;

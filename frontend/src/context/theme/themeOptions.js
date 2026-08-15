@@ -41,8 +41,8 @@ export const themes = [
     id: 'cream',
     name: 'Cream Brown',
     swatch: '#5B4636',
-    value: { light: '#5B4636', dark: '#c9a67b', cream: '#5B4636' },
-    soft: { light: '#f7efe7', dark: '#4a3528', cream: '#fcf1e8' },
+    value: { light: '#5B4636', dark: '#c9a67b', cream: '#4A3524' },
+    soft: { light: '#f7efe7', dark: '#4a3528', cream: '#E3D5BE' },
   },
 ];
 

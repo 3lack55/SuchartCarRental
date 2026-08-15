@@ -2,7 +2,7 @@ import { LayoutDashboard, Users, Car, ScrollText, Wrench, Ban } from 'lucide-rea
 import { useTheme } from '../../../context/theme/useTheme';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const menuItems = [
     { id: 1, name: 'ภาพรวม', icon: <LayoutDashboard />, path: '/overview' },
@@ -15,13 +15,16 @@ const menuItems = [
 
 export default function SidebarMenu({ isSidebarOpen }) {
     const { themeColor } = useTheme();
+    const location = useLocation();
     const navigate = useNavigate();
-    const [activeItem, setActiveItem] = useState(1);
     const [hoveredItem, setHoveredItem] = useState(null);
     const [visible, setVisible] = useState(false); // คุม animation แยกจาก mount
     const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
     const itemRefs = useRef({});
     const hideTimer = useRef(null);
+
+    const currentPath = location.pathname === '/' ? '/overview' : location.pathname;
+    const activeItem = menuItems.find((item) => item.path === currentPath)?.id ?? 1;
 
     const fontColor = 'var(--page-text)';
     const tooltipBg = 'var(--surface)';
@@ -61,13 +64,12 @@ export default function SidebarMenu({ isSidebarOpen }) {
                     ref={(el) => (itemRefs.current[item.id] = el)}
                     className={`group w-full h-12 flex items-center cursor-pointer overflow-hidden`}
                     onClick={() => {
-                        setActiveItem(item.id);
                         navigate(item.path);
                     }}
                     onMouseEnter={() => handleMouseEnter(item)}
                     onMouseLeave={handleMouseLeave}
                 >
-                    <div className={`transition-all duration-300 ${isSidebarOpen ? 'h-full w-1.5' : 'h-0 w-0'} `}>
+                    <div className={`transition-all duration-75 ${isSidebarOpen ? 'h-full w-1.5' : 'h-0 w-0'} `}>
                         <div className={`transition-all duration-200 w-0 h-full rounded-2xl mr-3 ${activeItem === item.id ? 'w-1.5' : `group-hover:w-1.5`}`} style={{ backgroundColor: themeColor }}></div>
                     </div>
 
