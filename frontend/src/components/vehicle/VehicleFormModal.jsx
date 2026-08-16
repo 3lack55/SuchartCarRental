@@ -1,18 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Modal from '../globals/Modal';
-import { createVehicle, updateVehicle } from '../../services/vehicles/vehiclesAPI.js';
-import { getProvinces, getVehicleTypes } from '../../services/lookups/lookupApi.js';
-import { getDrivers } from '../../services/drivers/driversApi.js';
-import { useAuth } from '../../context/auth/useAuth.js';
+import { useCreateVehicle, useUpdateVehicle } from '../../services/vehicles/vehiclesQueries.js';
+import { useProvinces, useVehicleTypes } from '../../services/lookups/lookupQueries.js';
+import { useDrivers } from '../../services/drivers/driversQueries.js';
 
 // vehicle: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
 export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   const isEdit = Boolean(vehicle);
 
-  const [provinces, setProvinces] = useState([]);
-  const [types, setTypes] = useState([]);
-  const [drivers, setDrivers] = useState([]);
-  const [loadingOptions, setLoadingOptions] = useState(true);
+  const provincesQuery = useProvinces();
+  const typesQuery = useVehicleTypes();
+  const driversQuery = useDrivers();
+
+  const provinces = provincesQuery.data?.data ?? [];
+  const types = typesQuery.data?.data ?? [];
+  const drivers = driversQuery.data?.data ?? [];
+  const loadingOptions = provincesQuery.isLoading || typesQuery.isLoading || driversQuery.isLoading;
+  const optionsError = provincesQuery.error || typesQuery.error || driversQuery.error;
 
   const [form, setForm] = useState({
     brand_model: vehicle?.brand_model ?? '',
@@ -21,39 +25,28 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
     type_id: vehicle?.type?.type_id ?? '',
     driver_id: vehicle?.driver?.driver_id ?? '',
   });
-  const [submitting, setSubmitting] = useState(false);
+
+  // เอกสารแนบตอนเพิ่มรถใหม่: กรอกได้ก็ต่อเมื่อมีข้อมูลจริง (ไม่บังคับ)
+  const [act, setAct] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', premium_amount: '' });
+  const [tax, setTax] = useState({ enabled: false, last_paid_date: '', expire_date: '', fee_amount: '' });
+  const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
+
   const [error, setError] = useState(null);
 
-  const {user} = useAuth();
-
-  // โหลดข้อมูล dropdown ทั้งหมดพร้อมกันตอนเปิดฟอร์ม
-  useEffect(() => {
-    let cancelled = false;
-    if (!user?.token) {
-      setLoadingOptions(false);
-      return () => { cancelled = true; };
-    }
-
-    Promise.all([getProvinces(), getVehicleTypes(), getDrivers(user.token)])
-      .then(([provinceData, typeData, driverData]) => {
-        if (cancelled) return;
-        setProvinces(provinceData.data || provinceData);
-        setTypes(typeData.data || typeData);
-        setDrivers(driverData.data || driverData);
-      })
-      .catch((err) => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoadingOptions(false); });
-
-    return () => { cancelled = true; };
-  }, [user?.token]);
+  const createVehicle = useCreateVehicle();
+  const updateVehicle = useUpdateVehicle();
+  const submitting = createVehicle.isPending || updateVehicle.isPending;
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleDocChange(setter, field, value) {
+    setter((prev) => ({ ...prev, [field]: value }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
 
     try {
@@ -64,15 +57,39 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
         type_id: form.type_id ? Number(form.type_id) : null,
         driver_id: form.driver_id ? Number(form.driver_id) : null,
       };
+
+      if (!isEdit) {
+        if (act.enabled) {
+          payload.act = {
+            insurance_company: act.insurance_company,
+            last_paid_date: act.last_paid_date,
+            expire_date: act.expire_date,
+            premium_amount: Number(act.premium_amount),
+          };
+        }
+        if (tax.enabled) {
+          payload.tax = {
+            last_paid_date: tax.last_paid_date,
+            expire_date: tax.expire_date,
+            fee_amount: Number(tax.fee_amount),
+          };
+        }
+        if (insurance.enabled) {
+          payload.insurance = {
+            insurance_company: insurance.insurance_company,
+            last_paid_date: insurance.last_paid_date,
+            expire_date: insurance.expire_date,
+          };
+        }
+      }
+
       const saved = isEdit
-        ? await updateVehicle(user?.token, vehicle.vehicle_id, payload)
-        : await createVehicle(user?.token, payload);
+        ? await updateVehicle.mutateAsync({ id: vehicle.vehicle_id, data: payload })
+        : await createVehicle.mutateAsync(payload);
       const successMessage = isEdit ? 'แก้ไขข้อมูลรถเรียบร้อย' : 'เพิ่มรถเรียบร้อย';
       onSaved?.(saved, successMessage);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -152,7 +169,35 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             </select>
           </div>
 
-          {error && <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+          {!isEdit && (
+            <div className="space-y-3 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+              <p className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เอกสารรถ (กรอกได้ถ้ามีข้อมูล)</p>
+
+              <DocumentSection
+                title="พรบ. (ประกันภาคบังคับ)"
+                state={act}
+                onChange={(field, value) => handleDocChange(setAct, field, value)}
+                showCompany
+                amountField={{ key: 'premium_amount', label: 'เบี้ยประกัน (บาท)' }}
+              />
+              <DocumentSection
+                title="ภาษีรถยนต์"
+                state={tax}
+                onChange={(field, value) => handleDocChange(setTax, field, value)}
+                amountField={{ key: 'fee_amount', label: 'ค่าธรรมเนียม (บาท)' }}
+              />
+              <DocumentSection
+                title="ประกันภาคสมัครใจ"
+                state={insurance}
+                onChange={(field, value) => handleDocChange(setInsurance, field, value)}
+                showCompany
+              />
+            </div>
+          )}
+
+          {(error || optionsError) && (
+            <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
+          )}
 
           <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
             <button
@@ -175,5 +220,81 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
         </form>
       )}
     </Modal>
+  );
+}
+
+const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
+
+// การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
+function DocumentSection({ title, state, onChange, showCompany = false, amountField }) {
+  return (
+    <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
+      <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
+        <input
+          type="checkbox"
+          checked={state.enabled}
+          onChange={(e) => onChange('enabled', e.target.checked)}
+        />
+        {title}
+      </label>
+
+      {state.enabled && (
+        <div className="mt-3 space-y-2">
+          {showCompany && (
+            <div>
+              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
+              <input
+                required
+                value={state.insurance_company}
+                onChange={(e) => onChange('insurance_company', e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={inputStyle}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</label>
+              <input
+                required
+                type="date"
+                value={state.last_paid_date}
+                onChange={(e) => onChange('last_paid_date', e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={inputStyle}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</label>
+              <input
+                required
+                type="date"
+                value={state.expire_date}
+                onChange={(e) => onChange('expire_date', e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {amountField && (
+            <div>
+              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
+              <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={state[amountField.key]}
+                onChange={(e) => onChange(amountField.key, e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={inputStyle}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
-import { getVehicles } from '../../services/vehicles/vehiclesAPI.js';
+import { useState } from 'react';
+import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import Modal from '../../components/globals/Modal';
 import VehicleDetailModal from '../../components/vehicle/VehicleDetailModal';
 import VehicleFormModal from '../../components/vehicle/VehicleFormModal';
 import { useAuth } from '../../context/auth/useAuth.js';
 
 export default function VehiclesPage() {
-    const [vehicles, setVehicles] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState('');
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebouncedValue(search, 300);
+    const [successMessage, setSuccessMessage] = useState('');
     const [selectedVehicleId, setSelectedVehicleId] = useState(null);
     const [formModal, setFormModal] = useState(null);
     const { user } = useAuth();
+
+    const { data, isLoading, error } = useVehicles({ search: debouncedSearch });
+    const vehicles = data?.data ?? [];
+    const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const stats = [
         { label: 'ทั้งหมด', value: vehicles.length, tone: 'primary' },
@@ -28,58 +31,23 @@ export default function VehiclesPage() {
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
 
-    function refetch() {
-        if (!user?.token) {
-            setError('กรุณาเข้าสู่ระบบก่อนใช้งาน');
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        getVehicles(user.token, { search })
-            .then((res) => setVehicles(res.data))
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
-    }
-
     function handleSaved(message = 'บันทึกข้อมูลรถเรียบร้อย') {
         setSuccessMessage(message);
         setFormModal(null);
         setSelectedVehicleId(null);
-        refetch();
     }
 
     function handleDeleted() {
         setSuccessMessage('ลบข้อมูลรถเรียบร้อย');
         setSelectedVehicleId(null);
-        refetch();
     }
 
     function closeSuccessModal() {
         setSuccessMessage('');
     }
 
-    useEffect(() => {
-        if (!user?.token) {
-            setVehicles([]);
-            setError('กรุณาเข้าสู่ระบบก่อนใช้งาน');
-            setLoading(false);
-            return undefined;
-        }
-
-        const timer = setTimeout(() => {
-            setLoading(true);
-            getVehicles(user.token, { search })
-                .then((res) => setVehicles(res.data))
-                .catch((err) => setError(err.message))
-                .finally(() => setLoading(false));
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [search, user?.token]);
-
     return (
-        <div className="space-y-5" style={{ color: 'var(--page-text)' }}>
+        <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
             <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Fleet</p>
@@ -154,7 +122,7 @@ export default function VehiclesPage() {
                     <div className="text-sm" style={{ color: 'var(--sub-text)' }}>{vehicles.length} รายการ</div>
                 </div>
 
-                {error && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+                {errorMessage && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
                 <div className="overflow-hidden rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full text-sm" style={{ color: 'var(--page-text)' }}>
@@ -168,7 +136,7 @@ export default function VehiclesPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
+                            {isLoading && (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
@@ -176,7 +144,7 @@ export default function VehiclesPage() {
                                 </tr>
                             )}
 
-                            {!loading && vehicles.length === 0 && (
+                            {!isLoading && vehicles.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลรถ
@@ -184,7 +152,7 @@ export default function VehiclesPage() {
                                 </tr>
                             )}
 
-                            {!loading && vehicles.map((v) => (
+                            {!isLoading && vehicles.map((v) => (
                                 <tr
                                     key={v.vehicle_id}
                                     onClick={() => setSelectedVehicleId(v.vehicle_id)}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { deleteVehicle, getVehicleById } from '../../services/vehicles/vehiclesAPI.js';
+import { useDeleteVehicle, useVehicle } from '../../services/vehicles/vehiclesQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 
 const DOCUMENT_LABELS = {
@@ -21,46 +21,29 @@ function documentStatusStyle(daysRemaining) {
 }
 
 export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDeleted }) {
-  const [vehicle, setVehicle] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+  const { data, isLoading, error: queryError } = useVehicle(vehicleId);
+  const vehicle = data?.data ?? data ?? null;
+  const deleteVehicle = useDeleteVehicle();
 
-    if (!user?.token) {
-      setError('กรุณาเข้าสู่ระบบก่อนใช้งาน');
-      setLoading(false);
-      return () => { cancelled = true; };
-    }
-
-    getVehicleById(user.token, vehicleId)
-      .then((data) => { if (!cancelled) setVehicle(data.data || data); })
-      .catch((err) => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [vehicleId, user?.token]);
+  const loading = isLoading;
+  const error = !user?.token
+    ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน'
+    : queryError?.message || deleteVehicle.error?.message || null;
+  const deleting = deleteVehicle.isPending;
 
   async function handleDelete() {
     if (!user?.token || !vehicleId) return;
 
-    setDeleting(true);
-    setError(null);
-
     try {
-      await deleteVehicle(user.token, vehicleId);
+      await deleteVehicle.mutateAsync(vehicleId);
       onDeleted?.();
       onClose();
-    } catch (err) {
-      setError(err.message || 'ไม่สามารถลบข้อมูลรถได้');
+    } catch {
+      // error is surfaced via deleteVehicle.error
     } finally {
-      setDeleting(false);
       setConfirmOpen(false);
     }
   }

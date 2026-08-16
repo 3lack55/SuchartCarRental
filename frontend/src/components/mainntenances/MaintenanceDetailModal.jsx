@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Modal from '../globals/Modal.jsx';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx'
-import { getMaintenanceById, deleteMaintenance } from "../../services/maintenances/mainTenanceApi";
-import { useAuth } from "../../context/auth/useAuth.js"; 
+import { useDeleteMaintenance, useMaintenance } from "../../services/maintenances/maintenancesQueries.js";
 
 function formatDate(value) {
     if (!value) return '-';
@@ -10,37 +9,23 @@ function formatDate(value) {
 }
 
 export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit, onDeleted }) {
-    const [maintenance, setMaintenance] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-    const [deleteError, setDeleteError] = useState(null);
 
-    const { user } = useAuth();
+    const { data, isLoading, error: queryError } = useMaintenance(maintenanceId);
+    const maintenance = data?.data ?? null;
+    const deleteMaintenance = useDeleteMaintenance();
 
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
-
-        getMaintenanceById(user.token, maintenanceId)
-            .then((data) => { if (!cancelled) setMaintenance(data.data); })
-            .catch((err) => { if (!cancelled) setError(err.message); })
-            .finally(() => { if (!cancelled) setLoading(false); });
-
-        return () => { cancelled = true; };
-    }, [maintenanceId, user?.token]);
+    const loading = isLoading;
+    const error = queryError?.message ?? null;
+    const deleting = deleteMaintenance.isPending;
+    const deleteError = deleteMaintenance.error?.message ?? null;
 
     async function handleDelete() {
-        setDeleting(true);
-        setDeleteError(null);
         try {
-            await deleteMaintenance(user.token, maintenanceId);
+            await deleteMaintenance.mutateAsync(maintenanceId);
             onDeleted();
-        } catch (err) {
-            setDeleteError(err.message);
-            setDeleting(false);
+        } catch {
+            // error is surfaced via deleteMaintenance.error
         }
     }
 

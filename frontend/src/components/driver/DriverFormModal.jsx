@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import Modal from '../../components/globals/Modal';
-import { createDriver, updateDriver } from '../../services/drivers/driversApi';
-import { useAuth } from '../../context/auth/useAuth';
+import { useCreateDriver, useUpdateDriver } from '../../services/drivers/driversQueries.js';
 
 const PREFIX_OPTIONS = ['นาย', 'นาง', 'นางสาว'];
 
 // driver: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา (undefined) = โหมดเพิ่มใหม่
 export default function DriverFormModal({ driver, onClose, onSaved }) {
     const isEdit = Boolean(driver);
-    const { user } = useAuth();
 
     const [form, setForm] = useState({
         prefix: driver?.prefix ?? PREFIX_OPTIONS[0],
@@ -17,8 +15,11 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
         phone: driver?.phone ?? '',
         hire_date: driver?.hire_date ? driver.hire_date.slice(0, 10) : '',
     });
-    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+
+    const createDriver = useCreateDriver();
+    const updateDriver = useUpdateDriver();
+    const submitting = createDriver.isPending || updateDriver.isPending;
 
     function handleChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -26,20 +27,17 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setSubmitting(true);
         setError(null);
 
         try {
             const payload = { ...form, hire_date: form.hire_date || null };
             const saved = isEdit
-                ? await updateDriver(user?.token, driver.driver_id, payload)
-                : await createDriver(user?.token, payload);
+                ? await updateDriver.mutateAsync({ id: driver.driver_id, data: payload })
+                : await createDriver.mutateAsync(payload);
             const successMessage = isEdit ? 'แก้ไขข้อมูลคนขับเรียบร้อย' : 'เพิ่มคนขับเรียบร้อย';
             onSaved?.(saved, successMessage);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setSubmitting(false);
         }
     }
 

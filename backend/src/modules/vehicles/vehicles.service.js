@@ -122,13 +122,47 @@ async function assertPlateNotDuplicate(plateNumber, plateProvinceId, excludeVehi
  
 export async function createVehicle(data) {
   await assertPlateNotDuplicate(data.plate_number, data.plate_province_id);
- 
-  const [result] = await pool.execute(
-    'INSERT INTO vehicles (brand_model, plate_number, plate_province_id, driver_id, type_id) VALUES (?, ?, ?, ?, ?)',
-    [data.brand_model || null, data.plate_number, data.plate_province_id, data.driver_id || null, data.type_id || null]
-  );
- 
-  return getVehicleById(result.insertId);
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [result] = await conn.execute(
+      'INSERT INTO vehicles (brand_model, plate_number, plate_province_id, driver_id, type_id) VALUES (?, ?, ?, ?, ?)',
+      [data.brand_model || null, data.plate_number, data.plate_province_id, data.driver_id || null, data.type_id || null]
+    );
+    const vehicleId = result.insertId;
+
+    // เอกสารแนบ (พรบ./ภาษี/ประกัน) เป็นข้อมูลเสริม บันทึกก็ต่อเมื่อผู้ใช้กรอกมา
+    if (data.act) {
+      await conn.execute(
+        'INSERT INTO vehicle_acts (vehicle_id, insurance_company, last_paid_date, expire_date, premium_amount) VALUES (?, ?, ?, ?, ?)',
+        [vehicleId, data.act.insurance_company, data.act.last_paid_date, data.act.expire_date, data.act.premium_amount]
+      );
+    }
+
+    if (data.tax) {
+      await conn.execute(
+        'INSERT INTO vehicle_taxes (vehicle_id, last_paid_date, expire_date, fee_amount) VALUES (?, ?, ?, ?)',
+        [vehicleId, data.tax.last_paid_date, data.tax.expire_date, data.tax.fee_amount]
+      );
+    }
+
+    if (data.insurance) {
+      await conn.execute(
+        'INSERT INTO vehicle_insurances (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)',
+        [vehicleId, data.insurance.insurance_company, data.insurance.last_paid_date, data.insurance.expire_date]
+      );
+    }
+
+    await conn.commit();
+    return getVehicleById(vehicleId);
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 }
  
 export async function updateVehicle(vehicleId, data) {

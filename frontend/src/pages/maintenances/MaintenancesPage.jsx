@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/auth/useAuth.js';
-import { getMaintenances } from '../../services/maintenances/mainTenanceApi';
+import { useMaintenances } from '../../services/maintenances/maintenancesQueries.js';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import MaintenanceDetailModal from '../../components/mainntenances/MaintenanceDetailModal.jsx';
 import MaintenanceFormModal from '../../components/mainntenances/MaintenanceFormModal.jsx';
 
@@ -10,14 +11,16 @@ function formatDate(value) {
 }
 
 export default function MaintenancesPage() {
-    const [maintenances, setMaintenances] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebouncedValue(search, 300);
     const [selectedId, setSelectedId] = useState(null);
     const [formModal, setFormModal] = useState(null);
 
     const { user } = useAuth();
+
+    const { data, isLoading, error } = useMaintenances({ search: debouncedSearch });
+    const maintenances = data?.data ?? [];
+    const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const totalItems = maintenances.reduce((sum, item) => sum + Number(item.total_items || 0), 0);
     const totalCost = maintenances.reduce((sum, item) => sum + Number(item.total_cost || 0), 0);
@@ -35,31 +38,13 @@ export default function MaintenancesPage() {
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
 
-    function refetch() {
-        setLoading(true);
-
-        if (!user.token) return (setLoading(false));
-
-        getMaintenances(user.token, { search })
-            .then((res) => setMaintenances(res.data))
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
-    }
-
     function handleSaved() {
         setFormModal(null);
         setSelectedId(null);
-        refetch();
     }
 
-    useEffect(() => {
-        const timer = setTimeout(refetch, 300);
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
-
     return (
-        <div className="space-y-5" style={{ color: 'var(--page-text)' }}>
+        <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
             <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Service</p>
@@ -134,7 +119,7 @@ export default function MaintenancesPage() {
                     <div className="text-sm" style={{ color: 'var(--sub-text)' }}>{maintenances.length} รายการ</div>
                 </div>
 
-                {error && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+                {errorMessage && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
                 <div className="overflow-hidden rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full text-sm" style={{ color: 'var(--page-text)' }}>
@@ -148,7 +133,7 @@ export default function MaintenancesPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
+                            {isLoading && (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
@@ -156,7 +141,7 @@ export default function MaintenancesPage() {
                                 </tr>
                             )}
 
-                            {!loading && maintenances.length === 0 && (
+                            {!isLoading && maintenances.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลการซ่อมบำรุง
@@ -164,7 +149,7 @@ export default function MaintenancesPage() {
                                 </tr>
                             )}
 
-                            {!loading && maintenances.map((m) => (
+                            {!isLoading && maintenances.map((m) => (
                                 <tr
                                     key={m.maintenance_id}
                                     onClick={() => setSelectedId(m.maintenance_id)}

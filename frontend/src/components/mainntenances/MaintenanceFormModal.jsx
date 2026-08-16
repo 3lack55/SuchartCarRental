@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Modal from '../globals/Modal.jsx';
-import { createMaintenance, updateMaintenance } from "../../services/maintenances/mainTenanceApi";
-import { getServiceCatalog } from '../../services/lookups/lookupApi.js';
-import { getVehicles } from '../../services/vehicles/vehiclesAPI.js';
-import { useAuth } from "../../context/auth/useAuth.js";
+import { useCreateMaintenance, useUpdateMaintenance } from "../../services/maintenances/maintenancesQueries.js";
+import { useServiceCatalog } from '../../services/lookups/lookupQueries.js';
+import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 
 let tempIdCounter = 0;
 function nextTempId() { return `tmp-${++tempIdCounter}`; }
@@ -14,12 +13,15 @@ function emptyItem() {
 
 // maintenance: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
 export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) {
-    const { user } = useAuth();
     const isEdit = Boolean(maintenance);
 
-    const [catalog, setCatalog] = useState([]);
-    const [vehicles, setVehicles] = useState([]);
-    const [loadingOptions, setLoadingOptions] = useState(true);
+    const catalogQuery = useServiceCatalog();
+    const vehiclesQuery = useVehicles();
+
+    const catalog = catalogQuery.data?.data ?? [];
+    const vehicles = vehiclesQuery.data?.data ?? [];
+    const loadingOptions = catalogQuery.isLoading || vehiclesQuery.isLoading;
+    const optionsError = catalogQuery.error || vehiclesQuery.error;
 
     const [header, setHeader] = useState({
         vehicle_id: maintenance?.vehicle_id ?? '',
@@ -45,21 +47,11 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
             : [emptyItem()]
     );
 
-    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        let cancelled = false;
-        Promise.all([getServiceCatalog(), getVehicles(user.token,)])
-            .then(([catalogData, vehicleData]) => {
-                if (cancelled) return;
-                setCatalog(catalogData.data);
-                setVehicles(vehicleData.data);
-            })
-            .catch((err) => { if (!cancelled) setError(err.message); })
-            .finally(() => { if (!cancelled) setLoadingOptions(false); });
-        return () => { cancelled = true; };
-    }, [user?.token,]);
+    const createMaintenance = useCreateMaintenance();
+    const updateMaintenance = useUpdateMaintenance();
+    const submitting = createMaintenance.isPending || updateMaintenance.isPending;
 
     function updateHeader(field, value) {
         setHeader((prev) => ({ ...prev, [field]: value }));
@@ -98,7 +90,6 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setSubmitting(true);
         setError(null);
 
         try {
@@ -119,13 +110,11 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
             };
 
             const saved = isEdit
-                ? await updateMaintenance(user.token, maintenance.maintenance_id, payload)
-                : await createMaintenance(user.token, payload);
+                ? await updateMaintenance.mutateAsync({ id: maintenance.maintenance_id, data: payload })
+                : await createMaintenance.mutateAsync(payload);
             onSaved(saved);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setSubmitting(false);
         }
     }
 
@@ -325,7 +314,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                         </div>
                     </div>
 
-                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {(error || optionsError) && <p className="text-sm text-red-600">{error || optionsError.message}</p>}
 
                     <div className="flex gap-2 border-t border-stone-100 pt-4">
                         <button

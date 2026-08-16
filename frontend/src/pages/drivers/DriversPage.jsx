@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DriverDetailModal from '../../components/driver/DriverDetailModal';
 import DriverFormModal from '../../components/driver/DriverFormModal';
 import Modal from '../../components/globals/Modal';
-import { getDrivers } from '../../services/drivers/driversApi';
+import { useDrivers } from '../../services/drivers/driversQueries.js';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import { useAuth } from '../../context/auth/useAuth';
 import { useTheme } from '../../context/theme/useTheme';
 
@@ -16,15 +17,17 @@ function formatDate(value) {
 }
 
 export default function DriversPage() {
-    const [drivers, setDrivers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState('');
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebouncedValue(search, 300);
+    const [successMessage, setSuccessMessage] = useState('');
     const [selectedDriverId, setSelectedDriverId] = useState(null);
     const [formModal, setFormModal] = useState(null);
     const { user } = useAuth();
     const { themeColor } = useTheme();
+
+    const { data, isLoading, error } = useDrivers({ search: debouncedSearch });
+    const drivers = data?.data ?? [];
+    const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const stats = [
         { label: 'ทั้งหมด', value: drivers.length, tone: 'primary' },
@@ -39,58 +42,23 @@ export default function DriversPage() {
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
 
-    function refetch() {
-        if (!user?.token) {
-            setError('กรุณาเข้าสู่ระบบก่อนใช้งาน');
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        getDrivers(user.token, { search })
-            .then((res) => setDrivers(res.data))
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
-    }
-
     function handleSaved(message = 'บันทึกข้อมูลเรียบร้อย') {
         setSuccessMessage(message);
         setFormModal(null);
         setSelectedDriverId(null);
-        refetch();
     }
 
     function handleDeleted() {
         setSuccessMessage('ลบข้อมูลคนขับเรียบร้อย');
         setSelectedDriverId(null);
-        refetch();
     }
 
     function closeSuccessModal() {
         setSuccessMessage('');
     }
 
-    useEffect(() => {
-        if (!user?.token) {
-            setDrivers([]);
-            setError('กรุณาเข้าสู่ระบบก่อนใช้งาน');
-            setLoading(false);
-            return undefined;
-        }
-
-        const timer = setTimeout(() => {
-            setLoading(true);
-            getDrivers(user.token, { search })
-                .then((res) => setDrivers(res.data))
-                .catch((err) => setError(err.message))
-                .finally(() => setLoading(false));
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [search, user?.token]);
-
     return (
-        <div className="space-y-5" style={{ color: 'var(--page-text)' }}>
+        <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
             <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Personnel</p>
@@ -165,7 +133,7 @@ export default function DriversPage() {
                     <div className="text-sm" style={{ color: 'var(--sub-text)' }}>{drivers.length} รายการ</div>
                 </div>
 
-                {error && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+                {errorMessage && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
                 <div className="overflow-hidden rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full text-sm" style={{ color: 'var(--page-text)' }}>
@@ -178,7 +146,7 @@ export default function DriversPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
+                            {isLoading && (
                                 <tr>
                                     <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
@@ -186,7 +154,7 @@ export default function DriversPage() {
                                 </tr>
                             )}
 
-                            {!loading && drivers.length === 0 && (
+                            {!isLoading && drivers.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลคนขับ
@@ -194,7 +162,7 @@ export default function DriversPage() {
                                 </tr>
                             )}
 
-                            {!loading && drivers.map((d) => (
+                            {!isLoading && drivers.map((d) => (
                                 <tr
                                     key={d.driver_id}
                                     onClick={() => setSelectedDriverId(d.driver_id)}

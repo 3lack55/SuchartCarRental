@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { getOverview } from "../../services/overview/overviewApi";
+import { useMemo } from "react";
+import { useOverview } from "../../services/overview/overviewQueries.js";
 import { useAuth } from "../../context/auth/useAuth";
 import { useTheme } from "../../context/theme/useTheme";
 
@@ -174,43 +174,11 @@ function DocumentCard({ title, icon, expiring, expired }) {
 export default function Overview() {
     const { user } = useAuth();
     const { themeColor, themeMode } = useTheme();
-    const [overview, setOverview] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
 
-    useEffect(() => {
-        let mounted = true;
-
-        async function fetchOverview() {
-            if (!user?.token) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError("");
-
-                const response = await getOverview(user.token);
-                if (!mounted) return;
-
-                setOverview(response?.data ?? response);
-            } catch (err) {
-                if (!mounted) return;
-                setError(err?.message || "ไม่สามารถโหลดข้อมูลภาพรวมได้");
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        fetchOverview();
-
-        return () => {
-            mounted = false;
-        };
-    }, [user?.token]);
+    const { data, isLoading, error: queryError } = useOverview();
+    const overview = data?.data ?? data ?? null;
+    const loading = Boolean(user?.token) && isLoading;
+    const error = !user?.token ? "" : queryError ? (queryError.message || "ไม่สามารถโหลดข้อมูลภาพรวมได้") : "";
 
     const documentsTotal = useMemo(() => {
         if (!overview) return 0;

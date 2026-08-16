@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { deleteDriver, getDriverById } from '../../services/drivers/driversApi.js';
+import { useDeleteDriver, useDriver } from '../../services/drivers/driversQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 
@@ -20,40 +20,27 @@ function formatDateTime(value) {
 }
 
 export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted }) {
-    const [driver, setDriver] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-    const [deleteError, setDeleteError] = useState(null);
     const { user } = useAuth();
 
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
+    const { data, isLoading, error: queryError } = useDriver(driverId);
+    const driver = data?.data ?? null;
+    const deleteDriver = useDeleteDriver();
 
-        getDriverById(user.token, driverId)
-            .then((data) => { if (!cancelled) setDriver(data.data); })
-            .catch((err) => { if (!cancelled) setError(err.message); })
-            .finally(() => { if (!cancelled) setLoading(false); });
-
-        return () => { cancelled = true; };
-    }, [driverId, user?.token]);
+    const loading = isLoading;
+    const error = queryError?.message ?? null;
+    const deleting = deleteDriver.isPending;
+    const deleteError = deleteDriver.error?.message ?? null;
 
     async function handleDelete() {
         if (!user?.token || !driverId) return;
 
-        setDeleting(true);
-        setDeleteError(null);
-
         try {
-            await deleteDriver(user.token, driverId);
+            await deleteDriver.mutateAsync(driverId);
             onDeleted?.();
             onClose();
-        } catch (err) {
-            setDeleting(false);
-            setDeleteError(err.message);
+        } catch {
+            // error is surfaced via deleteDriver.error
         }
     }
 
