@@ -6,6 +6,7 @@ import Register from '../pages/auth/Register';
 import Overview from '../pages/overview/Overview';
 import DriversPage from '../pages/drivers/DriversPage';
 import VehiclesPage from '../pages/vehicles/VehiclePage';
+import MaintenancesPage from '../pages/maintenances/MaintenancesPage';
 
 export default function AppRoutes() {
   return (
@@ -19,7 +20,7 @@ export default function AppRoutes() {
         <Route path="drivers" element={<DriversPage />} />
         <Route path="vehicles" element={<VehiclesPage />} />
         <Route path="reports" element={<h1>Reports</h1>} />
-        <Route path="maintenance" element={<h1>Maintenance</h1>} />
+        <Route path="maintenance" element={<MaintenancesPage />} />
         <Route path="violations" element={<h1>Violations</h1>} />
       </Route>
     </Routes>

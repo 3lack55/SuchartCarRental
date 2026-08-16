@@ -5,6 +5,7 @@ import driversRouter from './modules/drivers/drivers.routes.js';
 import vehiclesRouter from './modules/vehicles/vehicles.routes.js';
 import documentsRouter from './modules/documents/documents.routes.js';
 import lookupsRouter from "./modules/lookups/lookups.routes.js";
+import maintenanceRouter from "./modules/maintenances/maintenances.routes.js";
 
 const appRouter = Router();
 
@@ -14,5 +15,6 @@ appRouter.use('/drivers', driversRouter);
 appRouter.use('/vehicles', vehiclesRouter);
 appRouter.use('/documents', documentsRouter);
 appRouter.use('/lookups', lookupsRouter);
+appRouter.use ('/maintenances', maintenanceRouter);
 
 export default appRouter;

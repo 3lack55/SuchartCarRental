@@ -12,3 +12,9 @@ export function getVehicleTypes() {
     method: "GET",
   });
 }
+
+export function getServiceCatalog() {
+  return requestJson(`${API_BASE_URL}/api/lookups/service-catalog`, {
+    method: "GET",
+  });
+}

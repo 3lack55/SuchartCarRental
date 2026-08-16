@@ -1,4 +1,4 @@
-import { getProvinceLookup, getVehicleType } from "./lookups.service.js";
+import { getProvinceLookup, getVehicleTypeLookup, getServiceCatalog } from "./lookups.service.js";
 
 export async function getProvinceLookupController(req, res, next) {
     try {
@@ -11,9 +11,19 @@ export async function getProvinceLookupController(req, res, next) {
 
 export async function getVehicleTypeController(req, res, next) {
     try {
-        const vType = await getVehicleType();
+        const vType = await getVehicleTypeLookup();
         res.json({ success: true, data: vType });
     } catch (err) {
         next(err);
     }
+}
+
+export async function getServiceCatalogController(req, res, next) {
+    try {
+        const catalog = await getServiceCatalog();
+        res.json({ success: true, data: catalog});
+    } catch (err) {
+        next(err);
+    }
+    
 }
