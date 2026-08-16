@@ -74,11 +74,12 @@ export function ThemeProvider({ children }) {
     root.style.setProperty('--page-text', themeMode === 'dark' ? '#f8fafc' : themeMode === 'cream' ? '#5b4636' : '#111827');
     root.style.setProperty('--sub-text', themeMode === 'dark' ? '#f8fafc' : themeMode === 'cream' ? '#8A7660' : '#111827');
     root.style.setProperty('--surface', themeMode === 'dark' ? '#0f172a' : themeMode === 'cream' ? '#fff7ee' : '#ffffff');
+    root.style.setProperty('--surface1', themeMode === 'dark' ? '#0f172a' : themeMode === 'cream' ? '#5e4531' : '#ffffff');
     root.style.setProperty('--surface-soft', themeMode === 'dark' ? '#1f2937' : themeMode === 'cream' ? '#f6ebe0' : '#f8fafc');
     // แก้: dark เดิม '#111827' ซ้ำกับ --surface ทำให้ active state กลืนพื้นหลัง เปลี่ยนเป็นสว่างกว่า surface-soft อีกขั้น
     root.style.setProperty('--surface-strong', themeMode === 'dark' ? '#2a3441' : themeMode === 'cream' ? '#e4d1c2' : '#e5e7eb');
     // แก้: เพิ่ม opacity จาก 0.08 -> 0.14 ให้ขอบการ์ดเห็นชัดขึ้นบนพื้นมืด
-    root.style.setProperty('--surface-border', themeMode === 'dark' ? 'rgba(255,255,255,0.14)' : themeMode === 'cream' ? '#dac4ae' : '#d1d5db');
+    root.style.setProperty('--surface-border', themeMode === 'dark' ? 'rgba(255,255,255,0.14)' : themeMode === 'cream' ? '#624A38' : '#d1d5db');
     root.style.setProperty('--status-warning', themeMode === 'dark' ? '#fb923c' : '#f97316');
     root.style.setProperty('--status-warning-soft', themeMode === 'dark' ? '#7c2d12' : '#ffedd5');
     root.style.setProperty('--status-danger', themeMode === 'dark' ? '#fca5a5' : '#dc2626');

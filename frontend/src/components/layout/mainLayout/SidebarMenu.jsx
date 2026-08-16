@@ -26,12 +26,12 @@ export default function SidebarMenu({ isSidebarOpen }) {
     const currentPath = location.pathname === '/' ? '/overview' : location.pathname;
     const activeItem = menuItems.find((item) => item.path === currentPath)?.id ?? 1;
 
-    const fontColor = 'var(--page-text)';
+    const fontColor = 'var(--on-primary)';
     const tooltipBg = 'var(--surface)';
     const tooltipBorder = 'var(--surface-border)';
 
-    const activeBackground = `${themeColor}22`;
-    const activeText = themeColor;
+    const activeBackground = `var(--surface1)`;
+    const activeText = 'var(--on-primary)';
 
     const handleMouseEnter = (item) => {
         if (isSidebarOpen) return;
@@ -57,7 +57,7 @@ export default function SidebarMenu({ isSidebarOpen }) {
     useEffect(() => () => clearTimeout(hideTimer.current), []);
 
     return (
-        <div className={`w-full h-full flex flex-col gap-2`}>
+        <div className={`w-full h-full flex flex-col gap-2 p-2`}>
             {menuItems.map((item) => (
                 <div
                     key={item.id}
@@ -70,7 +70,7 @@ export default function SidebarMenu({ isSidebarOpen }) {
                     onMouseLeave={handleMouseLeave}
                 >
                     <div className={`transition-all duration-75 ${isSidebarOpen ? 'h-full w-1.5' : 'h-0 w-0'} `}>
-                        <div className={`transition-all duration-200 w-0 h-full rounded-2xl mr-3 ${activeItem === item.id ? 'w-1.5' : `group-hover:w-1.5`}`} style={{ backgroundColor: themeColor }}></div>
+                        <div className={`transition-all duration-200 w-0 h-full rounded-2xl mr-3 ${activeItem === item.id ? 'w-1.5' : `group-hover:w-1.5`}`} style={{ backgroundColor: activeBackground }}></div>
                     </div>
 
                     <div className={`${isSidebarOpen ? 'group-hover:ml-3' : 'ml-0'} flex items-center h-full w-full overflow-hidden px-3 ${activeItem === item.id ? (isSidebarOpen ? 'ml-3' : 'ml-0') : 'ml-0'}`}
