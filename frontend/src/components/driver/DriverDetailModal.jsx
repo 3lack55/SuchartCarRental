@@ -68,70 +68,36 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-xl">
+            <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}>
                 {loading && (
-                    <div className="flex items-center justify-center p-16 text-stone-400">กำลังโหลดข้อมูล...</div>
+                    <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
                 )}
 
                 {error && (
                     <div className="p-6">
-                        <p className="text-red-600 text-sm">{error}</p>
-                        <button onClick={onClose} className="mt-4 text-sm text-stone-500 hover:underline">ปิด</button>
+                        <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
+                        <button onClick={onClose} className="mt-4 text-sm underline" style={{ color: 'var(--sub-text)' }}>ปิด</button>
                     </div>
                 )}
 
-                {/* {confirmOpen && (
-                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/45 p-4" onClick={(e) => { if (e.target === e.currentTarget) setConfirmOpen(false); }}>
-                        <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-                            <h3 className="text-lg font-semibold text-stone-800">ยืนยันการลบ</h3>
-                            <p className="mt-2 text-sm text-stone-600">
-                                คุณต้องการลบข้อมูลคนขับนี้ใช่หรือไม่?
-                                <span className="mt-2 block font-medium text-stone-700">
-                                    {driver?.prefix}{driver?.first_name} {driver?.last_name}
-                                </span>
-                            </p>
-
-                            <div className="mt-5 flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setConfirmOpen(false)}
-                                    className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                    className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                                >
-                                    {deleting ? 'กำลังลบ...' : 'ตกลง'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
-
                 {!loading && !error && driver && (
                     <>
-                        {/* header */}
-                        <div className="flex items-start justify-between border-b border-stone-100 p-5">
+                        <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
                             <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-sm font-medium text-emerald-700">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)' }}>
                                     {initials(driver.first_name, driver.last_name)}
                                 </div>
                                 <div>
-                                    <p className="font-medium text-stone-800">
+                                    <p className="font-semibold" style={{ color: 'var(--page-text)' }}>
                                         {driver.prefix}{driver.first_name} {driver.last_name}
                                     </p>
                                     <span
-                                        className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${driver.deleted
-                                            ? 'bg-stone-100 text-stone-500'
-                                            : 'bg-emerald-50 text-emerald-700'
-                                            }`}
+                                        className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                        style={driver.deleted ? { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', opacity: 0.75 } : { backgroundColor: 'var(--status-success-soft)', color: 'var(--status-success)' }}
                                     >
                                         {driver.deleted ? 'พ้นสภาพ' : 'ทำงานอยู่'}
                                     </span>
@@ -140,73 +106,71 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             <button
                                 onClick={onClose}
                                 aria-label="ปิด"
-                                className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                                className="rounded-lg p-1.5 transition-colors"
+                                style={{ color: 'var(--icon-muted)', backgroundColor: 'transparent' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-soft)'; e.currentTarget.style.color = 'var(--page-text)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--icon-muted)'; }}
                             >
                                 ✕
                             </button>
                         </div>
 
-                        {/* ข้อมูลติดต่อ/เริ่มงาน */}
                         <div className="grid grid-cols-2 gap-3 p-5 text-sm">
                             <div>
-                                <p className="text-stone-400">เบอร์โทร</p>
-                                <p className="mt-0.5 text-stone-700">{driver.phone}</p>
+                                <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{driver.phone}</p>
                             </div>
                             <div>
-                                <p className="text-stone-400">วันที่เริ่มงาน</p>
-                                <p className="mt-0.5 text-stone-700">{formatDate(driver.hire_date)}</p>
+                                <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
                             </div>
                         </div>
 
-                        {/* รถที่ดูแล */}
-                        <div className="border-t border-stone-100 p-5">
-                            <p className="mb-2 text-sm font-medium text-stone-600">รถที่ดูแล</p>
+                        <div className="border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
+                            <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รถที่ดูแล</p>
                             {driver.vehicles.length === 0 ? (
-                                <p className="text-sm text-stone-400">ไม่มีรถที่ดูแลอยู่ในขณะนี้</p>
+                                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีรถที่ดูแลอยู่ในขณะนี้</p>
                             ) : (
-                                <ul className="space-y-1.5">
+                                <ul className="space-y-2">
                                     {driver.vehicles.map((v) => (
-                                        <li key={v.vehicle_id} className="flex justify-between text-sm">
-                                            <span className="text-stone-700">{v.plate_number} · {v.plate_province}</span>
-                                            <span className="text-stone-400">{v.brand_model}</span>
+                                        <li key={v.vehicle_id} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
+                                            <span style={{ color: 'var(--page-text)' }}>{v.plate_number} · {v.plate_province}</span>
+                                            <span style={{ color: 'var(--sub-text)' }}>{v.brand_model}</span>
                                         </li>
                                     ))}
                                 </ul>
                             )}
                         </div>
 
-                        {/* ประวัติใบสั่ง — ทั้งจ่ายแล้วและยังไม่จ่าย */}
-                        <div className="border-t border-stone-100 p-5">
-                            <div className="mb-2 flex items-center justify-between">
-                                <p className="text-sm font-medium text-stone-600">ประวัติการทำผิดกฎจราจร</p>
+                        <div className="border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                                <p className="text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติการทำผิดกฎจราจร</p>
                                 {driver.unpaid_violations > 0 && (
-                                    <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
+                                    <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
                                         ค้างจ่าย {driver.unpaid_violations} รายการ
                                     </span>
                                 )}
                             </div>
 
                             {driver.violations.length === 0 ? (
-                                <p className="text-sm text-stone-400">ไม่มีประวัติการทำผิดกฎจราจร</p>
+                                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีประวัติการทำผิดกฎจราจร</p>
                             ) : (
                                 <ul className="space-y-2">
                                     {driver.violations.map((v) => (
                                         <li
                                             key={v.violation_id}
-                                            className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm"
+                                            className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm"
+                                            style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
                                         >
                                             <div>
-                                                <p className="text-stone-700">{v.reason_name}</p>
-                                                <p className="text-xs text-stone-400">
+                                                <p style={{ color: 'var(--page-text)' }}>{v.reason_name}</p>
+                                                <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
                                                     {formatDateTime(v.incident_datetime)} · {v.plate_number}
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-stone-700">฿{Number(v.fine).toLocaleString()}</p>
-                                                <span
-                                                    className={`text-xs font-medium ${v.is_paid ? 'text-emerald-600' : 'text-red-500'
-                                                        }`}
-                                                >
+                                                <p style={{ color: 'var(--page-text)' }}>฿{Number(v.fine).toLocaleString()}</p>
+                                                <span className="text-xs font-medium" style={v.is_paid ? { color: 'var(--status-success)' } : { color: 'var(--status-danger)' }}>
                                                     {v.is_paid ? 'จ่ายแล้ว' : 'ยังไม่จ่าย'}
                                                 </span>
                                             </div>
@@ -216,24 +180,25 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             )}
                         </div>
 
-                        {/* actions */}
-                        <div className="flex gap-2 border-t border-stone-100 p-5">
+                        <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
                             <button
                                 onClick={() => onEdit(driver)}
-                                className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                                className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                             >
                                 แก้ไข
                             </button>
                             <button
                                 onClick={() => setShowConfirm(true)}
                                 disabled={deleting}
-                                className="flex-1 rounded-lg border border-red-200 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                className="flex-1 rounded-xl border py-2.5 text-sm font-medium disabled:opacity-50"
+                                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                             >
                                 {deleting ? 'กำลังลบ...' : 'ลบ'}
                             </button>
                         </div>
 
-                        {deleteError && <p className="px-5 pb-4 text-sm text-red-600">{deleteError}</p>}
+                        {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}
                     </>
                 )}
             </div>

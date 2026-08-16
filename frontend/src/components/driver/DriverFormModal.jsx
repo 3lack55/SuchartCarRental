@@ -48,72 +48,79 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
             <form onSubmit={handleSubmit} className="space-y-4 p-5">
                 <div className="flex gap-3">
                     <div className="w-28">
-                        <label className="mb-1 block text-xs font-medium text-stone-500">คำนำหน้า</label>
+                        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คำนำหน้า</label>
                         <select
                             value={form.prefix}
                             onChange={(e) => handleChange('prefix', e.target.value)}
-                            className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                            className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                         >
                             {PREFIX_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                     </div>
                     <div className="flex-1">
-                        <label className="mb-1 block text-xs font-medium text-stone-500">ชื่อ</label>
+                        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ชื่อ</label>
                         <input
                             required
                             value={form.first_name}
                             onChange={(e) => handleChange('first_name', e.target.value)}
-                            className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-medium text-stone-500">นามสกุล</label>
+                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>นามสกุล</label>
                     <input
                         required
                         value={form.last_name}
                         onChange={(e) => handleChange('last_name', e.target.value)}
-                        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-medium text-stone-500">เบอร์โทร</label>
+                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เบอร์โทร</label>
                     <input
                         required
                         pattern="[0-9]{10}"
                         title="เบอร์โทรต้องเป็นตัวเลข 10 หลัก"
                         value={form.phone}
                         onChange={(e) => handleChange('phone', e.target.value)}
-                        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-medium text-stone-500">วันที่เริ่มงาน</label>
+                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</label>
                     <input
                         type="date"
                         value={form.hire_date}
                         onChange={(e) => handleChange('hire_date', e.target.value)}
-                        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
 
-                <div className="flex gap-2 border-t border-stone-100 pt-4">
+                <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                        className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                        style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                     >
                         ยกเลิก
                     </button>
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                        className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+                        style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                     >
                         {submitting ? 'กำลังบันทึก...' : 'บันทึก'}
                     </button>

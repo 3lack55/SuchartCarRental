@@ -73,28 +73,29 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-xl">
+      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}>
         {loading && (
-          <div className="flex items-center justify-center p-16 text-stone-400">กำลังโหลดข้อมูล...</div>
+          <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
         )}
 
         {error && (
           <div className="p-6">
-            <p className="text-sm text-red-600">{error}</p>
-            <button onClick={onClose} className="mt-4 text-sm text-stone-500 hover:underline">ปิด</button>
+            <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
+            <button onClick={onClose} className="mt-4 text-sm underline" style={{ color: 'var(--sub-text)' }}>ปิด</button>
           </div>
         )}
 
         {confirmOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={(e) => { if (e.target === e.currentTarget) setConfirmOpen(false); }}>
-            <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-              <h3 className="text-lg font-semibold text-stone-800">ยืนยันการลบ</h3>
-              <p className="mt-2 text-sm text-stone-600">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }} onClick={(e) => { if (e.target === e.currentTarget) setConfirmOpen(false); }}>
+            <div className="w-full max-w-sm rounded-2xl border p-5 shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--page-text)' }}>ยืนยันการลบ</h3>
+              <p className="mt-2 text-sm" style={{ color: 'var(--sub-text)' }}>
                 คุณต้องการลบข้อมูลรถนี้ใช่หรือไม่?
-                <span className="mt-2 block font-medium text-stone-700">
+                <span className="mt-2 block font-medium" style={{ color: 'var(--page-text)' }}>
                   {vehicle?.plate_number} · {vehicle?.plate_province}
                 </span>
               </p>
@@ -103,7 +104,8 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                 <button
                   type="button"
                   onClick={() => setConfirmOpen(false)}
-                  className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                  className="flex-1 rounded-xl border py-2.5 text-sm font-medium"
+                  style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                 >
                   ยกเลิก
                 </button>
@@ -111,7 +113,8 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--status-danger)', color: '#ffffff' }}
                 >
                   {deleting ? 'กำลังลบ...' : 'ตกลง'}
                 </button>
@@ -122,46 +125,46 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
 
         {!loading && !error && vehicle && (
           <>
-            {/* header */}
-            <div className="flex items-start justify-between border-b border-stone-100 p-5">
+            <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
               <div>
-                <p className="font-medium text-stone-800">{vehicle.plate_number} · {vehicle.plate_province}</p>
-                <p className="mt-0.5 text-sm text-stone-400">
+                <p className="font-semibold" style={{ color: 'var(--page-text)' }}>{vehicle.plate_number} · {vehicle.plate_province}</p>
+                <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
                   {vehicle.brand_model || 'ไม่ระบุรุ่น'}{vehicle.type ? ` · ${vehicle.type.type_name}` : ''}
                 </p>
               </div>
               <button
                 onClick={onClose}
                 aria-label="ปิด"
-                className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                className="rounded-lg p-1.5 transition-colors"
+                style={{ color: 'var(--icon-muted)', backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-soft)'; e.currentTarget.style.color = 'var(--page-text)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--icon-muted)'; }}
               >
                 ✕
               </button>
             </div>
 
-            {/* คนขับที่ดูแล */}
-            <div className="border-b border-stone-100 p-5">
-              <p className="mb-2 text-sm font-medium text-stone-600">คนขับที่ดูแล</p>
+            <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>คนขับที่ดูแล</p>
               {vehicle.driver ? (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-stone-700">{vehicle.driver.name}</span>
-                  <span className="text-stone-400">{vehicle.driver.phone}</span>
+                <div className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
+                  <span style={{ color: 'var(--page-text)' }}>{vehicle.driver.name}</span>
+                  <span style={{ color: 'var(--sub-text)' }}>{vehicle.driver.phone}</span>
                 </div>
               ) : (
-                <p className="text-sm text-stone-400">ยังไม่มีคนขับประจำ</p>
+                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีคนขับประจำ</p>
               )}
               {vehicle.unpaid_violations > 0 && (
-                <span className="mt-2 inline-block rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
+                <span className="mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
                   ใบสั่งค้างจ่าย {vehicle.unpaid_violations} รายการ
                 </span>
               )}
             </div>
 
-            {/* สถานะเอกสาร: ภาษี/พรบ/ประกัน */}
-            <div className="border-b border-stone-100 p-5">
-              <p className="mb-2 text-sm font-medium text-stone-600">ภาษี พรบ. และประกัน</p>
+            <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ภาษี พรบ. และประกัน</p>
               {vehicle.documents.length === 0 ? (
-                <p className="text-sm text-stone-400">ยังไม่มีข้อมูลเอกสาร</p>
+                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีข้อมูลเอกสาร</p>
               ) : (
                 <ul className="space-y-2">
                   {vehicle.documents.map((doc) => {
@@ -169,13 +172,14 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                     return (
                       <li
                         key={doc.document_type}
-                        className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm"
+                        className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm"
+                        style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
                       >
                         <div>
-                          <p className="text-stone-700">{DOCUMENT_LABELS[doc.document_type] || doc.document_type}</p>
-                          <p className="text-xs text-stone-400">หมดอายุ {formatDate(doc.expire_date)}</p>
+                          <p style={{ color: 'var(--page-text)' }}>{DOCUMENT_LABELS[doc.document_type] || doc.document_type}</p>
+                          <p className="text-xs" style={{ color: 'var(--sub-text)' }}>หมดอายุ {formatDate(doc.expire_date)}</p>
                         </div>
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
+                        <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: status.className.includes('red') ? 'var(--status-danger-soft)' : status.className.includes('amber') ? 'var(--status-warning-soft)' : 'var(--status-success-soft)', color: status.className.includes('red') ? 'var(--status-danger)' : status.className.includes('amber') ? 'var(--status-warning)' : 'var(--status-success)' }}>
                           {status.label}
                         </span>
                       </li>
@@ -185,40 +189,40 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
               )}
             </div>
 
-            {/* ประวัติซ่อมบำรุงล่าสุด */}
-            <div className="border-b border-stone-100 p-5">
-              <p className="mb-2 text-sm font-medium text-stone-600">ประวัติซ่อมบำรุงล่าสุด</p>
+            <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติซ่อมบำรุงล่าสุด</p>
               {vehicle.recent_maintenances.length === 0 ? (
-                <p className="text-sm text-stone-400">ยังไม่มีประวัติการซ่อมบำรุง</p>
+                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีประวัติการซ่อมบำรุง</p>
               ) : (
                 <ul className="space-y-2">
                   {vehicle.recent_maintenances.map((m) => (
-                    <li key={m.maintenance_id} className="flex items-center justify-between text-sm">
+                    <li key={m.maintenance_id} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
                       <div>
-                        <p className="text-stone-700">{m.garage_name}</p>
-                        <p className="text-xs text-stone-400">
+                        <p style={{ color: 'var(--page-text)' }}>{m.garage_name}</p>
+                        <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
                           {formatDate(m.service_date)} · {m.total_items} รายการ
                         </p>
                       </div>
-                      <span className="text-stone-600">฿{Number(m.total_cost).toLocaleString()}</span>
+                      <span style={{ color: 'var(--page-text)' }}>฿{Number(m.total_cost).toLocaleString()}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
 
-            {/* actions */}
             <div className="flex gap-2 p-5">
               <button
                 onClick={() => onEdit(vehicle)}
-                className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
               >
                 แก้ไข
               </button>
               <button
                 onClick={() => setConfirmOpen(true)}
                 disabled={deleting}
-                className="flex-1 rounded-lg border border-red-200 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                className="flex-1 rounded-xl border py-2.5 text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
               >
                 {deleting ? 'กำลังลบ...' : 'ลบ'}
               </button>

@@ -79,37 +79,40 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   return (
     <Modal title={isEdit ? 'แก้ไขข้อมูลรถ' : 'เพิ่มรถ'} onClose={onClose}>
       {loadingOptions ? (
-        <div className="flex items-center justify-center p-16 text-stone-400">กำลังโหลดข้อมูล...</div>
+        <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 p-5">
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">รุ่นรถ</label>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รุ่นรถ</label>
             <input
               value={form.brand_model}
               onChange={(e) => handleChange('brand_model', e.target.value)}
               placeholder="เช่น Toyota Hilux Revo 2022"
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             />
           </div>
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-stone-500">ทะเบียน</label>
+              <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</label>
               <input
                 required
                 value={form.plate_number}
                 onChange={(e) => handleChange('plate_number', e.target.value)}
                 placeholder="เช่น 1กข1234"
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-stone-500">จังหวัด</label>
+              <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด</label>
               <select
                 required
                 value={form.plate_province_id}
                 onChange={(e) => handleChange('plate_province_id', e.target.value)}
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
               >
                 <option value="" disabled>เลือกจังหวัด</option>
                 {provinces?.map((p) => (
@@ -120,11 +123,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">ประเภทรถ</label>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทรถ</label>
             <select
               value={form.type_id}
               onChange={(e) => handleChange('type_id', e.target.value)}
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             >
               <option value="">ไม่ระบุ</option>
               {types.map((t) => (
@@ -134,11 +138,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">คนขับประจำ</label>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คนขับประจำ</label>
             <select
               value={form.driver_id}
               onChange={(e) => handleChange('driver_id', e.target.value)}
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             >
               <option value="">ไม่มีคนขับประจำ</option>
               {drivers.map((d) => (
@@ -147,20 +152,22 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             </select>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
 
-          <div className="flex gap-2 border-t border-stone-100 pt-4">
+          <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+              className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+              style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
             >
               ยกเลิก
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+              style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
             >
               {submitting ? 'กำลังบันทึก...' : 'บันทึก'}
             </button>

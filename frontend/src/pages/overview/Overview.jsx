@@ -173,6 +173,7 @@ function DocumentCard({ title, icon, expiring, expired }) {
 
 export default function Overview() {
     const { user } = useAuth();
+    const { themeColor, themeMode } = useTheme();
     const [overview, setOverview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -333,7 +334,7 @@ export default function Overview() {
     }
 
     return (
-        <main className="min-h-full overflow-y-auto" style={pageStyle}>
+        <main className="min-h-full overflow-y-auto">
             <div className="mx-auto max-w-7xl">
                 <header className="mb-6">
                     <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--page-text)" }}>
@@ -353,6 +354,11 @@ export default function Overview() {
                             value={item.value}
                             description={item.description}
                             variant={item.variant || "blue"}
+                            accentColor={
+                                item.variant === "blue"
+                                    ? { soft: "var(--primary-color-soft)", main: themeColor }
+                                    : undefined
+                            }
                         />
                     ))}
                 </section>
@@ -365,7 +371,14 @@ export default function Overview() {
                                 <p className="mt-1 text-sm" style={mutedTextStyle}>เอกสารที่ใกล้หมดอายุและหมดอายุแล้ว</p>
                             </div>
 
-                            <div className="rounded-xl px-3 py-2 text-sm font-medium" style={{ backgroundColor: "var(--primary-color-soft)", color: "var(--primary-color)" }}>
+                            <div
+                                className="rounded-xl px-3 py-2 text-sm font-medium"
+                                style={{
+                                    backgroundColor: themeMode === "dark" ? "rgba(var(--primary-color-rgb), 0.18)" : "var(--primary-color-soft)",
+                                    color: themeColor,
+                                    border: "1px solid rgba(var(--primary-color-rgb), 0.22)",
+                                }}
+                            >
                                 {documentsTotal} รายการ
                             </div>
                         </div>
@@ -432,7 +445,13 @@ export default function Overview() {
                 <section className="mt-6">
                     <div className="rounded-2xl border p-6 shadow-sm" style={surfaceStyle}>
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--primary-color-soft)", color: "var(--primary-color)" }}>
+                            <div
+                                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                                style={{
+                                    backgroundColor: themeMode === "dark" ? "rgba(var(--primary-color-rgb), 0.18)" : "var(--primary-color-soft)",
+                                    color: themeColor,
+                                }}
+                            >
                                 <StatIcon type="maintenance" />
                             </div>
 

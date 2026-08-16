@@ -51,92 +51,91 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
             maxWidth="max-w-xl"
         >
             {loading && (
-                <div className="flex items-center justify-center p-16 text-stone-400">กำลังโหลดข้อมูล...</div>
+                <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             )}
 
             {error && (
                 <div className="p-6">
-                    <p className="text-sm text-red-600">{error}</p>
+                    <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
                 </div>
             )}
 
             {!loading && !error && maintenance && (
                 <>
-                    {/* header */}
-                    <div className="grid grid-cols-2 gap-3 border-b border-stone-100 p-5 text-sm">
+                    <div className="grid grid-cols-2 gap-3 border-b p-5 text-sm" style={{ borderColor: 'var(--surface-border)' }}>
                         <div>
-                            <p className="text-stone-400">รถ</p>
-                            <p className="mt-0.5 text-stone-700">{maintenance.plate_number} · {maintenance.plate_province}</p>
+                            <p style={{ color: 'var(--sub-text)' }}>รถ</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.plate_number} · {maintenance.plate_province}</p>
                         </div>
                         <div>
-                            <p className="text-stone-400">วันที่ซ่อม</p>
-                            <p className="mt-0.5 text-stone-700">{formatDate(maintenance.service_date)}</p>
+                            <p style={{ color: 'var(--sub-text)' }}>วันที่ซ่อม</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(maintenance.service_date)}</p>
                         </div>
                         <div>
-                            <p className="text-stone-400">ศูนย์/อู่</p>
-                            <p className="mt-0.5 text-stone-700">
+                            <p style={{ color: 'var(--sub-text)' }}>ศูนย์/อู่</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
                                 {maintenance.garage_name}
-                                <span className="ml-1.5 text-xs text-stone-400">
+                                <span className="ml-1.5 text-xs" style={{ color: 'var(--icon-muted)' }}>
                                     ({maintenance.garage_type === 'center' ? 'ศูนย์บริการ' : 'อู่ทั่วไป'})
                                 </span>
                             </p>
                         </div>
                         <div>
-                            <p className="text-stone-400">เลขที่ใบเสร็จ</p>
-                            <p className="mt-0.5 text-stone-700">{maintenance.receipt_number || '-'}</p>
+                            <p style={{ color: 'var(--sub-text)' }}>เลขที่ใบเสร็จ</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-stone-400">เลขไมล์</p>
-                            <p className="mt-0.5 text-stone-700">{Number(maintenance.mileage).toLocaleString()} กม.</p>
+                            <p style={{ color: 'var(--sub-text)' }}>เลขไมล์</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
                         </div>
                         <div>
-                            <p className="text-stone-400">นัดครั้งถัดไป</p>
-                            <p className="mt-0.5 text-stone-700">
+                            <p style={{ color: 'var(--sub-text)' }}>นัดครั้งถัดไป</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
                                 {maintenance.next_service_mileage ? `${Number(maintenance.next_service_mileage).toLocaleString()} กม.` : '-'}
                             </p>
                         </div>
                     </div>
 
-                    {/* รายการซ่อม */}
-                    <div className="border-b border-stone-100 p-5">
-                        <p className="mb-2 text-sm font-medium text-stone-600">รายการซ่อม</p>
+                    <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+                        <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รายการซ่อม</p>
                         <ul className="space-y-2">
                             {maintenance.items.map((item) => (
-                                <li key={item.detail_id} className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm">
+                                <li key={item.detail_id} className="flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
                                     <div>
-                                        <p className="text-stone-700">{item.service_item_name}</p>
-                                        <p className="text-xs text-stone-400">
+                                        <p style={{ color: 'var(--page-text)' }}>{item.service_item_name}</p>
+                                        <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
                                             {item.service_type_name} · {item.service_category_name} · {item.quantity} x ฿{Number(item.unit_price).toLocaleString()}
                                         </p>
-                                        {item.remark && <p className="mt-0.5 text-xs text-stone-400">หมายเหตุ: {item.remark}</p>}
+                                        {item.remark && <p className="mt-0.5 text-xs" style={{ color: 'var(--sub-text)' }}>หมายเหตุ: {item.remark}</p>}
                                     </div>
-                                    <span className="text-stone-700">฿{Number(item.line_total).toLocaleString()}</span>
+                                    <span style={{ color: 'var(--page-text)' }}>฿{Number(item.line_total).toLocaleString()}</span>
                                 </li>
                             ))}
                         </ul>
                         <div className="mt-3 flex justify-end text-sm">
-                            <span className="text-stone-500">ยอดรวมทั้งหมด: </span>
-                            <span className="ml-1.5 font-medium text-stone-800">฿{Number(maintenance.total_cost).toLocaleString()}</span>
+                            <span style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด: </span>
+                            <span className="ml-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>฿{Number(maintenance.total_cost).toLocaleString()}</span>
                         </div>
                     </div>
 
-                    {/* actions */}
                     <div className="flex gap-2 p-5">
                         <button
                             onClick={() => onEdit(maintenance)}
-                            className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                            className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                            style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                         >
                             แก้ไข
                         </button>
                         <button
                             onClick={() => setShowConfirm(true)}
-                            className="flex-1 rounded-lg border border-red-200 py-2 text-sm text-red-600 hover:bg-red-50"
+                            className="flex-1 rounded-xl border py-2.5 text-sm font-medium"
+                            style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                         >
                             ลบ
                         </button>
                     </div>
 
-                    {deleteError && <p className="px-5 pb-4 text-sm text-red-600">{deleteError}</p>}
+                    {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}
                 </>
             )}
 

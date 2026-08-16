@@ -15,7 +15,7 @@ export default function Topbar() {
   const title = pageTitles[location.pathname] || '';
 
   return (
-    <div className={`w-full h-16 flex items-center justify-between border-b pl-4`} style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+    <div className={`w-full h-16 flex items-center justify-between border-b pl-4`} style={{ backgroundColor: 'var(--page-bg)', borderColor: 'var(--surface-border)' }}>
       <h1 className="text-lg font-semibold tracking-wider">{title}</h1>
 
       <div className="flex items-center">
