@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Modal from '../globals/Modal.jsx';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx'
+import InfoTooltip from '../globals/InfoTooltip.jsx';
 import { useDeleteMaintenance, useMaintenance } from "../../services/maintenances/maintenancesQueries.js";
 
 function formatDate(value) {
@@ -36,7 +37,7 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
             maxWidth="max-w-xl"
         >
             {loading && (
-                <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
+                <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             )}
 
             {error && (
@@ -47,7 +48,7 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
 
             {!loading && !error && maintenance && (
                 <>
-                    <div className="grid grid-cols-2 gap-3 border-b p-5 text-sm" style={{ borderColor: 'var(--surface-border)' }}>
+                    <div className="grid grid-cols-1 gap-3 border-b p-5 text-sm sm:grid-cols-2" style={{ borderColor: 'var(--surface-border)' }}>
                         <div>
                             <p style={{ color: 'var(--sub-text)' }}>รถ</p>
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.plate_number} · {maintenance.plate_province}</p>
@@ -70,11 +71,17 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number || '-'}</p>
                         </div>
                         <div>
-                            <p style={{ color: 'var(--sub-text)' }}>เลขไมล์</p>
+                            <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                เลขไมล์
+                                <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
+                            </p>
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
                         </div>
                         <div>
-                            <p style={{ color: 'var(--sub-text)' }}>นัดครั้งถัดไป</p>
+                            <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                นัดครั้งถัดไป
+                                <InfoTooltip text="ระยะทาง (กม.) ที่แนะนำให้นำรถเข้าซ่อมบำรุงครั้งถัดไป" />
+                            </p>
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
                                 {maintenance.next_service_mileage ? `${Number(maintenance.next_service_mileage).toLocaleString()} กม.` : '-'}
                             </p>
@@ -106,14 +113,14 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                     <div className="flex gap-2 p-5">
                         <button
                             onClick={() => onEdit(maintenance)}
-                            className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                             style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                         >
                             แก้ไข
                         </button>
                         <button
                             onClick={() => setShowConfirm(true)}
-                            className="flex-1 rounded-xl border py-2.5 text-sm font-medium"
+                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
                             style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                         >
                             ลบ

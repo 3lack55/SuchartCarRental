@@ -48,3 +48,12 @@ export async function deleteDriverController(req, res, next) {
         next(err);
     }
 }
+
+export async function restoreDriverController(req, res, next) {
+    try {
+        const result = await driversService.restoreDriver(req.params.id);
+        res.json({ success: true, data: result });
+    } catch (err) {
+        next(err);
+    }
+}

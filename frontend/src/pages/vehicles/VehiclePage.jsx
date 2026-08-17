@@ -1,27 +1,54 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import Modal from '../../components/globals/Modal';
+import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import VehicleDetailModal from '../../components/vehicle/VehicleDetailModal';
 import VehicleFormModal from '../../components/vehicle/VehicleFormModal';
 import { useAuth } from '../../context/auth/useAuth.js';
 
 export default function VehiclesPage() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
+    const [showInactive, setShowInactive] = useState(false);
+    const [typeFilter, setTypeFilter] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+    // เปิดรายละเอียดรถอัตโนมัติเมื่อมาจากลิงก์ภายนอก เช่น "รถที่ดูแล" ในหน้าคนขับ (?open=<id>)
+    const [selectedVehicleId, setSelectedVehicleId] = useState(() => {
+        const openId = searchParams.get('open');
+        return openId ? Number(openId) : null;
+    });
     const [formModal, setFormModal] = useState(null);
     const { user } = useAuth();
 
-    const { data, isLoading, error } = useVehicles({ search: debouncedSearch });
-    const vehicles = data?.data ?? [];
+    // ล้าง ?open= ออกจาก URL หลังอ่านค่าไปแล้ว ไม่ให้ค้างอยู่ตอน refresh หรือกดย้อนกลับ
+    useEffect(() => {
+        if (searchParams.get('open')) {
+            setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete('open');
+                return next;
+            }, { replace: true });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const { data, isLoading, error } = useVehicles({ search: debouncedSearch, includeInactive: showInactive });
+    const allVehicles = data?.data ?? [];
+    const typeOptions = [...new Set(allVehicles.map((v) => v.type_name).filter(Boolean))].sort();
+    const vehicles = typeFilter ? allVehicles.filter((v) => v.type_name === typeFilter) : allVehicles;
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
+    const withDriverCount = vehicles.filter((v) => v.driver).length;
+    const withoutDriverCount = vehicles.filter((v) => !v.driver).length;
+
     const stats = [
-        { label: 'ทั้งหมด', value: vehicles.length, tone: 'primary' },
-        { label: 'ใช้งานอยู่', value: vehicles.filter((v) => !v.deleted).length, tone: 'success' },
-        { label: 'ปลดระวาง', value: vehicles.filter((v) => v.deleted).length, tone: 'muted' },
+        { label: 'ทั้งหมด', value: vehicles.length, tone: 'primary', description: 'จำนวนรถที่แสดงอยู่ในขณะนี้' },
+        { label: 'มีคนขับประจำ', value: withDriverCount, tone: 'success', description: 'จำนวนรถที่มีคนขับประจำแล้ว' },
+        { label: 'ไม่มีคนขับประจำ', value: withoutDriverCount, tone: 'warning', description: 'จำนวนรถที่ยังไม่มีคนขับประจำ' },
     ];
 
     const buttonStyle = {
@@ -30,6 +57,10 @@ export default function VehiclesPage() {
         border: '1px solid var(--primary-color)',
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
+
+    const toggleButtonStyle = showInactive
+        ? { backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)', border: '1px solid var(--primary-color)' }
+        : { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' };
 
     function handleSaved(message = 'บันทึกข้อมูลรถเรียบร้อย') {
         setSuccessMessage(message);
@@ -56,7 +87,7 @@ export default function VehiclesPage() {
 
                 <button
                     onClick={() => setFormModal({ mode: 'create' })}
-                    className="rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
+                    className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
                     style={buttonStyle}
                 >
                     + เพิ่มรถ
@@ -66,27 +97,23 @@ export default function VehiclesPage() {
             <section className="grid gap-4 md:grid-cols-3">
                 {stats.map((item) => (
                     <div key={item.label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                        <p className="text-xs" style={{ color: 'var(--sub-text)' }}>{item.label}</p>
-                        <div className="mt-2 flex items-end justify-between">
-                            <span className="text-3xl font-semibold" style={{ color: 'var(--page-text)' }}>{item.value}</span>
+                        <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
+                            {item.label}
+                            <InfoTooltip text={item.description} />
+                        </p>
+                        <div className="mt-2">
                             <span
-                                className="rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-[0.15em]"
+                                className="text-2xl font-semibold"
                                 style={{
-                                    backgroundColor:
-                                        item.tone === 'primary'
-                                            ? 'var(--primary-color-soft)'
-                                            : item.tone === 'success'
-                                                ? 'var(--status-success-soft)'
-                                                : 'var(--surface-soft)',
                                     color:
                                         item.tone === 'primary'
                                             ? 'var(--primary-color)'
-                                            : item.tone === 'success'
-                                                ? 'var(--status-success)'
-                                                : 'var(--page-text)',
+                                            : item.tone === 'warning'
+                                                ? 'var(--status-warning)'
+                                                : 'var(--status-success)',
                                 }}
                             >
-                                {item.tone}
+                                {item.value}
                             </span>
                         </div>
                     </div>
@@ -94,15 +121,16 @@ export default function VehiclesPage() {
             </section>
 
             <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="relative w-full max-w-md">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--icon-muted)' }}>⌕</span>
                         <input
                             type="text"
+                            aria-label="ค้นหาทะเบียนหรือรุ่นรถ"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="ค้นหาทะเบียนหรือรุ่นรถ"
-                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none transition-all duration-200"
+                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
                             style={{
                                 backgroundColor: 'var(--surface-soft)',
                                 color: 'var(--page-text)',
@@ -119,13 +147,36 @@ export default function VehiclesPage() {
                             }}
                         />
                     </div>
-                    <div className="text-sm" style={{ color: 'var(--sub-text)' }}>{vehicles.length} รายการ</div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-3">
+                        <select
+                            aria-label="กรองตามประเภทรถ"
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                        >
+                            <option value="">ทุกประเภทรถ</option>
+                            {typeOptions.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => setShowInactive((prev) => !prev)}
+                            className="cursor-pointer whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:opacity-80"
+                            style={toggleButtonStyle}
+                        >
+                            {showInactive ? 'กำลังแสดงรถที่ปลดระวาง' : 'แสดงรถที่ปลดระวาง'}
+                        </button>
+                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{vehicles.length} รายการ</div>
+                    </div>
                 </div>
 
-                {errorMessage && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
+                {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
-                <div className="overflow-hidden rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                    <table className="w-full text-sm" style={{ color: 'var(--page-text)' }}>
+                <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                    <table className="w-full min-w-160 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</th>
@@ -138,7 +189,7 @@ export default function VehiclesPage() {
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={5} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -156,19 +207,14 @@ export default function VehiclesPage() {
                                 <tr
                                     key={v.vehicle_id}
                                     onClick={() => setSelectedVehicleId(v.vehicle_id)}
-                                    className="cursor-pointer transition-colors duration-150 hover:opacity-95"
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVehicleId(v.vehicle_id); } }}
+                                    tabIndex={0}
+                                    aria-label={`ดูรายละเอียดรถทะเบียน ${v.plate_number} ${v.plate_province}`}
+                                    className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
                                     style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                 >
                                     <td className="px-4 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-lg text-xs font-semibold" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)' }}>
-                                                {v.plate_number?.slice(0, 2) || 'รถ'}
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold" style={{ color: 'var(--page-text)' }}>{v.plate_number}</div>
-                                                <div style={{ color: 'var(--sub-text)', opacity: 0.8 }}>{v.plate_province}</div>
-                                            </div>
-                                        </div>
+                                        <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.type_name || '-'}</td>
@@ -219,7 +265,7 @@ export default function VehiclesPage() {
                             <button
                                 type="button"
                                 onClick={closeSuccessModal}
-                                className="rounded-lg px-4 py-2 text-sm font-medium"
+                                className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
                                 style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                             >
                                 รับทราบ

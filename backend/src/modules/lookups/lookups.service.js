@@ -10,6 +10,9 @@ const VEHICLE_TYPE_CACHE_TTL = 0;
 const SERVICE_CATALOG_CACHE_KEY = "SERVICE_CATALOG";
 const SERVICE_CATALOG_CACHE_TTL = 0;
 
+const VIOLATION_REASONS_CACHE_KEY = "VIOLATION_REASONS";
+const VIOLATION_REASONS_CACHE_TTL = 0;
+
 export async function getProvinceLookup() {
     return getOrSetCache(PROVINCE_LOOKUPS_CACHE_KEY, PROVINCE_LOOKUPS_CACHE_TTL, async () => {
         const [rows] = await pool.execute('SELECT province_id, name_th FROM provinces ORDER BY name_th');
@@ -49,5 +52,12 @@ export async function getServiceCatalog() {
         }));
 
         return catalog;
+    });
+}
+
+export async function getViolationReasonsLookup() {
+    return getOrSetCache(VIOLATION_REASONS_CACHE_KEY, VIOLATION_REASONS_CACHE_TTL, async () => {
+        const [rows] = await pool.execute('SELECT reason_id, reason_name FROM violations_reasons ORDER BY reason_name');
+        return rows;
     });
 }

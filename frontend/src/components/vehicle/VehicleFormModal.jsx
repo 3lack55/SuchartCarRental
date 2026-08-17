@@ -96,39 +96,42 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   return (
     <Modal title={isEdit ? 'แก้ไขข้อมูลรถ' : 'เพิ่มรถ'} onClose={onClose}>
       {loadingOptions ? (
-        <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
+        <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 p-5">
           <div>
-            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รุ่นรถ</label>
+            <label htmlFor="vehicle-brand-model" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รุ่นรถ</label>
             <input
+              id="vehicle-brand-model"
               value={form.brand_model}
               onChange={(e) => handleChange('brand_model', e.target.value)}
               placeholder="เช่น Toyota Hilux Revo 2022"
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
               style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</label>
+              <label htmlFor="vehicle-plate-number" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</label>
               <input
+                id="vehicle-plate-number"
                 required
                 value={form.plate_number}
                 onChange={(e) => handleChange('plate_number', e.target.value)}
                 placeholder="เช่น 1กข1234"
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                 style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด</label>
+              <label htmlFor="vehicle-plate-province" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด</label>
               <select
+                id="vehicle-plate-province"
                 required
                 value={form.plate_province_id}
                 onChange={(e) => handleChange('plate_province_id', e.target.value)}
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                 style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
               >
                 <option value="" disabled>เลือกจังหวัด</option>
@@ -140,11 +143,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทรถ</label>
+            <label htmlFor="vehicle-type" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทรถ</label>
             <select
+              id="vehicle-type"
               value={form.type_id}
               onChange={(e) => handleChange('type_id', e.target.value)}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
               style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             >
               <option value="">ไม่ระบุ</option>
@@ -155,11 +159,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คนขับประจำ</label>
+            <label htmlFor="vehicle-driver" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คนขับประจำ</label>
             <select
+              id="vehicle-driver"
               value={form.driver_id}
               onChange={(e) => handleChange('driver_id', e.target.value)}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
               style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
             >
               <option value="">ไม่มีคนขับประจำ</option>
@@ -174,6 +179,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
               <p className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เอกสารรถ (กรอกได้ถ้ามีข้อมูล)</p>
 
               <DocumentSection
+                idPrefix="act"
                 title="พรบ. (ประกันภาคบังคับ)"
                 state={act}
                 onChange={(field, value) => handleDocChange(setAct, field, value)}
@@ -181,12 +187,14 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 amountField={{ key: 'premium_amount', label: 'เบี้ยประกัน (บาท)' }}
               />
               <DocumentSection
+                idPrefix="tax"
                 title="ภาษีรถยนต์"
                 state={tax}
                 onChange={(field, value) => handleDocChange(setTax, field, value)}
                 amountField={{ key: 'fee_amount', label: 'ค่าธรรมเนียม (บาท)' }}
               />
               <DocumentSection
+                idPrefix="insurance"
                 title="ประกันภาคสมัครใจ"
                 state={insurance}
                 onChange={(field, value) => handleDocChange(setInsurance, field, value)}
@@ -196,14 +204,14 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           )}
 
           {(error || optionsError) && (
-            <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
+            <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
           )}
 
           <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+              className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
               style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
             >
               ยกเลิก
@@ -211,7 +219,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+              className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
             >
               {submitting ? 'กำลังบันทึก...' : 'บันทึก'}
@@ -226,7 +234,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 
 // การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
-function DocumentSection({ title, state, onChange, showCompany = false, amountField }) {
+function DocumentSection({ idPrefix, title, state, onChange, showCompany = false, amountField }) {
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
       <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -242,37 +250,40 @@ function DocumentSection({ title, state, onChange, showCompany = false, amountFi
         <div className="mt-3 space-y-2">
           {showCompany && (
             <div>
-              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
+              <label htmlFor={`${idPrefix}-company`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
               <input
+                id={`${idPrefix}-company`}
                 required
                 value={state.insurance_company}
                 onChange={(e) => onChange('insurance_company', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
                 style={inputStyle}
               />
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1">
-              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</label>
+              <label htmlFor={`${idPrefix}-last-paid-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</label>
               <input
+                id={`${idPrefix}-last-paid-date`}
                 required
                 type="date"
                 value={state.last_paid_date}
                 onChange={(e) => onChange('last_paid_date', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
                 style={inputStyle}
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</label>
+              <label htmlFor={`${idPrefix}-expire-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</label>
               <input
+                id={`${idPrefix}-expire-date`}
                 required
                 type="date"
                 value={state.expire_date}
                 onChange={(e) => onChange('expire_date', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
                 style={inputStyle}
               />
             </div>
@@ -280,15 +291,16 @@ function DocumentSection({ title, state, onChange, showCompany = false, amountFi
 
           {amountField && (
             <div>
-              <label className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
+              <label htmlFor={`${idPrefix}-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
               <input
+                id={`${idPrefix}-amount`}
                 required
                 type="number"
                 min="0"
                 step="0.01"
                 value={state[amountField.key]}
                 onChange={(e) => onChange(amountField.key, e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
                 style={inputStyle}
               />
             </div>

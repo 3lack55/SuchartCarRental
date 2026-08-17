@@ -1,7 +1,7 @@
 import pool from '../../config/db.js';
 import { getOrSetCache } from '../../config/cache.js';
 
-const OVERVIEW_CACHE_KEY = 'overview.dashboard';
+export const OVERVIEW_CACHE_KEY = 'overview.dashboard';
 const OVERVIEW_CACHE_TTL = 60; // วินาที
 
 export async function getOverview() {

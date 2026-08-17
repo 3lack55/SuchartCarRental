@@ -5,21 +5,22 @@ import {
   createDriver,
   updateDriver,
   deleteDriver,
+  restoreDriver,
 } from './driversApi.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 
 export const driverKeys = {
   all: ['drivers'],
-  list: (token, search) => ['drivers', token, { search }],
+  list: (token, search, includeInactive) => ['drivers', token, { search, includeInactive }],
   detail: (token, id) => ['driver', token, id],
 };
 
-export function useDrivers({ search } = {}) {
+export function useDrivers({ search, includeInactive } = {}) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: driverKeys.list(user?.token, search),
-    queryFn: () => getDrivers(user.token, { search }),
+    queryKey: driverKeys.list(user?.token, search, includeInactive),
+    queryFn: () => getDrivers(user.token, { search, includeInactive }),
     enabled: Boolean(user?.token),
   });
 }
@@ -67,6 +68,19 @@ export function useDeleteDriver() {
     mutationFn: (id) => deleteDriver(user?.token, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: driverKeys.all });
+    },
+  });
+}
+
+export function useRestoreDriver() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => restoreDriver(user?.token, id),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: driverKeys.all });
+      queryClient.invalidateQueries({ queryKey: driverKeys.detail(user?.token, id) });
     },
   });
 }

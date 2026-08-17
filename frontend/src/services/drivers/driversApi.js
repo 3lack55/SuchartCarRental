@@ -1,9 +1,10 @@
 import { API_BASE_URL } from "../../config/api.js";
 import { requestJson } from "../apiClient.js";
 
-export function getDrivers(token, { search } = {}) {
+export function getDrivers(token, { search, includeInactive } = {}) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
+  if (includeInactive) params.set('includeInactive', 'true');
   const qs = params.toString();
   return requestJson(`${API_BASE_URL}/api/drivers${qs ? `?${qs}` : ''}`, {
     method: "GET",
@@ -37,6 +38,13 @@ export function updateDriver(token, id, data) {
 export function deleteDriver(token, id) {
   return requestJson(`${API_BASE_URL}/api/drivers/${id}`, {
     method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function restoreDriver(token, id) {
+  return requestJson(`${API_BASE_URL}/api/drivers/${id}/restore`, {
+    method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
 }

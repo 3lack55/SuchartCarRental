@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useDeleteDriver, useDriver } from '../../services/drivers/driversQueries.js';
+import { useId, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDeleteDriver, useDriver, useRestoreDriver } from '../../services/drivers/driversQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
+import PlateBadge from '../globals/PlateBadge.jsx';
 
 function initials(firstName, lastName) {
     return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
@@ -22,15 +25,20 @@ function formatDateTime(value) {
 export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted }) {
     const [showConfirm, setShowConfirm] = useState(false);
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const titleId = useId();
+    const panelRef = useModalA11y(onClose);
 
     const { data, isLoading, error: queryError } = useDriver(driverId);
     const driver = data?.data ?? null;
     const deleteDriver = useDeleteDriver();
+    const restoreDriver = useRestoreDriver();
 
     const loading = isLoading;
     const error = queryError?.message ?? null;
     const deleting = deleteDriver.isPending;
-    const deleteError = deleteDriver.error?.message ?? null;
+    const restoring = restoreDriver.isPending;
+    const deleteError = deleteDriver.error?.message ?? restoreDriver.error?.message ?? null;
 
     async function handleDelete() {
         if (!user?.token || !driverId) return;
@@ -44,14 +52,20 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
         }
     }
 
-    // ปิด modal ด้วยปุ่ม Escape เพื่อ accessibility
-    useEffect(() => {
-        function handleKey(e) {
-            if (e.key === 'Escape') onClose();
+    async function handleRestore() {
+        if (!user?.token || !driverId) return;
+
+        try {
+            await restoreDriver.mutateAsync(driverId);
+        } catch {
+            // error is surfaced via restoreDriver.error
         }
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [onClose]);
+    }
+
+    function goToVehicle(vehicleId) {
+        onClose();
+        navigate(`/vehicles?open=${vehicleId}`);
+    }
 
     return (
         <div
@@ -59,15 +73,23 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
             style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}>
+            <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                tabIndex={-1}
+                className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl outline-none"
+                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}
+            >
                 {loading && (
-                    <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
+                    <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
                 )}
 
                 {error && (
                     <div className="p-6">
                         <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
-                        <button onClick={onClose} className="mt-4 text-sm underline" style={{ color: 'var(--sub-text)' }}>ปิด</button>
+                        <button onClick={onClose} className="mt-4 cursor-pointer text-sm underline transition-opacity hover:opacity-70" style={{ color: 'var(--sub-text)' }}>ปิด</button>
                     </div>
                 )}
 
@@ -79,7 +101,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                                     {initials(driver.first_name, driver.last_name)}
                                 </div>
                                 <div>
-                                    <p className="font-semibold" style={{ color: 'var(--page-text)' }}>
+                                    <p id={titleId} className="font-semibold" style={{ color: 'var(--page-text)' }}>
                                         {driver.prefix}{driver.first_name} {driver.last_name}
                                     </p>
                                     <span
@@ -93,7 +115,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             <button
                                 onClick={onClose}
                                 aria-label="ปิด"
-                                className="rounded-lg p-1.5 transition-colors"
+                                className="cursor-pointer rounded-lg p-1.5 transition-colors"
                                 style={{ color: 'var(--icon-muted)', backgroundColor: 'transparent' }}
                                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-soft)'; e.currentTarget.style.color = 'var(--page-text)'; }}
                                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--icon-muted)'; }}
@@ -102,7 +124,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 p-5 text-sm">
+                        <div className="grid grid-cols-1 gap-3 p-5 text-sm sm:grid-cols-2">
                             <div>
                                 <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
                                 <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{driver.phone}</p>
@@ -120,9 +142,18 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             ) : (
                                 <ul className="space-y-2">
                                     {driver.vehicles.map((v) => (
-                                        <li key={v.vehicle_id} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
-                                            <span style={{ color: 'var(--page-text)' }}>{v.plate_number} · {v.plate_province}</span>
-                                            <span style={{ color: 'var(--sub-text)' }}>{v.brand_model}</span>
+                                        <li key={v.vehicle_id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => goToVehicle(v.vehicle_id)}
+                                                className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors"
+                                                style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
+                                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--surface-border)'; }}
+                                            >
+                                                <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                                <span style={{ color: 'var(--sub-text)' }}>{v.brand_model}</span>
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -170,19 +201,30 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                         <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
                             <button
                                 onClick={() => onEdit(driver)}
-                                className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                                 style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                             >
                                 แก้ไข
                             </button>
-                            <button
-                                onClick={() => setShowConfirm(true)}
-                                disabled={deleting}
-                                className="flex-1 rounded-xl border py-2.5 text-sm font-medium disabled:opacity-50"
-                                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
-                            >
-                                {deleting ? 'กำลังลบ...' : 'ลบ'}
-                            </button>
+                            {driver.deleted ? (
+                                <button
+                                    onClick={handleRestore}
+                                    disabled={restoring}
+                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
+                                >
+                                    {restoring ? 'กำลังกู้คืน...' : 'กู้คืนคนขับ'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowConfirm(true)}
+                                    disabled={deleting}
+                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                                >
+                                    {deleting ? 'กำลังลบ...' : 'ลบ'}
+                                </button>
+                            )}
                         </div>
 
                         {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}

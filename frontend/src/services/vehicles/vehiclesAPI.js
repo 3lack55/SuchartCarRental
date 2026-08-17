@@ -1,9 +1,10 @@
 import { API_BASE_URL } from "../../config/api.js";
 import { requestJson } from "../apiClient.js";
 
-export function getVehicles(token, { search } = {}) {
+export function getVehicles(token, { search, includeInactive } = {}) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
+  if (includeInactive) params.set('includeInactive', 'true');
   const qs = params.toString();
   return requestJson(`${API_BASE_URL}/api/vehicles${qs ? `?${qs}` : ''}`, {
     method: "GET",

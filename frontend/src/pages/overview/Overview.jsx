@@ -112,7 +112,6 @@ function StatIcon({ type }) {
 function SummaryCard({ icon, title, value, description, variant = "blue", accentColor }) {
     const style = summaryVariants[variant] || summaryVariants.blue;
     const iconBg = accentColor ? accentColor.soft : style.iconBg;
-    const iconColor = accentColor ? accentColor.main : style.iconColor;
 
     return (
         <div className="rounded-2xl border p-5 shadow-sm" style={{ ...surfaceStyle, borderColor: "var(--surface-border)" }}>
@@ -123,7 +122,7 @@ function SummaryCard({ icon, title, value, description, variant = "blue", accent
                     <p className="mt-1 text-xs" style={{ color: "var(--page-text)", opacity: 0.75 }}>{description}</p>
                 </div>
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg, color: iconColor }}>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg, color: 'var(--on-primary)' }}>
                     <StatIcon type={icon} />
                 </div>
             </div>
@@ -147,12 +146,10 @@ function StatusRow({ label, value, variant = "warning" }) {
 }
 
 function DocumentCard({ title, icon, expiring, expired }) {
-    const { themeColor } = useTheme();
-
     return (
         <div className="rounded-2xl border p-5 shadow-sm" style={surfaceStyle}>
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--primary-color-soft)", color: themeColor }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--primary-color-soft)", color: 'var(--on-primary)' }}>
                     <StatIcon type={icon} />
                 </div>
 
@@ -207,14 +204,12 @@ export default function Overview() {
                 title: "รถไม่มีคนขับ",
                 value: `${safeNumber(overview.vehicles_without_driver)} คัน`,
                 description: "รถที่ยังไม่มีคนขับ",
-                variant: safeNumber(overview.vehicles_without_driver) > 0 ? "orange" : "blue",
             },
             {
                 icon: "document",
                 title: "เอกสารต้องดำเนินการ",
                 value: `${documentsTotal} รายการ`,
                 description: `${safeNumber(overview.documents_expiring_30d_total)} ใกล้หมดอายุ · ${safeNumber(overview.documents_expired_total)} หมดอายุ`,
-                variant: documentsTotal > 0 ? "red" : "blue",
             },
         ];
     }, [documentsTotal, overview]);
@@ -302,7 +297,7 @@ export default function Overview() {
     }
 
     return (
-        <main className="min-h-full overflow-y-auto">
+        <div className="min-h-full overflow-y-auto">
             <div className="mx-auto max-w-7xl">
                 <header className="mb-6">
                     <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--page-text)" }}>
@@ -321,7 +316,6 @@ export default function Overview() {
                             title={item.title}
                             value={item.value}
                             description={item.description}
-                            variant={item.variant || "blue"}
                             accentColor={
                                 item.variant === "blue"
                                     ? { soft: "var(--primary-color-soft)", main: themeColor }
@@ -342,8 +336,8 @@ export default function Overview() {
                             <div
                                 className="rounded-xl px-3 py-2 text-sm font-medium"
                                 style={{
-                                    backgroundColor: themeMode === "dark" ? "rgba(var(--primary-color-rgb), 0.18)" : "var(--primary-color-soft)",
-                                    color: themeColor,
+                                    backgroundColor: "var(--primary-color-soft)",
+                                    color: 'var(--on-primary)',
                                     border: "1px solid rgba(var(--primary-color-rgb), 0.22)",
                                 }}
                             >
@@ -417,7 +411,7 @@ export default function Overview() {
                                 className="flex h-10 w-10 items-center justify-center rounded-xl"
                                 style={{
                                     backgroundColor: themeMode === "dark" ? "rgba(var(--primary-color-rgb), 0.18)" : "var(--primary-color-soft)",
-                                    color: themeColor,
+                                    color: 'var(--on-primary)',
                                 }}
                             >
                                 <StatIcon type="maintenance" />
@@ -449,6 +443,6 @@ export default function Overview() {
                     </div>
                 </section>
             </div>
-        </main>
+        </div>
     );
 }

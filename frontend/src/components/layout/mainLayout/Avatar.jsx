@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../context/auth/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { LogOut, ChevronDown, Settings, Palette } from "lucide-react";
@@ -26,6 +26,7 @@ export default function Avatar() {
     const [isThemeExpanded, setIsThemeExpanded] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const triggerRef = useRef(null);
 
     const handleLogout = () => {
         logout();
@@ -39,9 +40,28 @@ export default function Avatar() {
 
     const gradient = getGradientFromName(user?.username || "U");
 
+    // Escape ปิดเมนู แล้วคืนโฟกัสกลับไปที่ปุ่มเปิดเมนู
+    useEffect(() => {
+        if (!isMenuOpen) return;
+        function handleKey(e) {
+            if (e.key === 'Escape') {
+                setIsMenuOpen(false);
+                setIsThemeExpanded(false);
+                triggerRef.current?.focus();
+            }
+        }
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [isMenuOpen]);
+
     return (
         <div className="relative">
-            <div
+            <button
+                type="button"
+                ref={triggerRef}
+                aria-haspopup="true"
+                aria-expanded={isMenuOpen}
+                aria-label="เมนูผู้ใช้"
                 className="avatar flex items-center gap-3 cursor-pointer group select-none rounded-l-full py-2 pl-2 transition-colors"
                 onClick={() => { setIsMenuOpen(!isMenuOpen); setIsThemeExpanded(false); }}
             >
@@ -64,15 +84,15 @@ export default function Avatar() {
                     />
                 </div>
 
-                <div className="flex flex-col items-start justify-center leading-tight">
+                <div className="hidden flex-col items-start justify-center leading-tight sm:flex">
                     <span className="font-semibold text-sm">{user?.username}</span>
                     <span className="text-xs opacity-60">{user?.role}</span>
                 </div>
 
                 <ChevronDown
-                    className={`w-4 h-4 opacity-50 transition-transform duration-200 mr-3 ${isMenuOpen ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 shrink-0 opacity-50 transition-transform duration-200 mr-3 ${isMenuOpen ? "rotate-180" : ""}`}
                 />
-            </div>
+            </button>
 
             {isMenuOpen && (
                 <>

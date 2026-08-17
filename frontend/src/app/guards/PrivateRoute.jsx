@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+    <div role="status" className="min-h-screen flex items-center justify-center bg-slate-900">
       <p className="text-slate-400">กำลังโหลด...</p>
     </div>
   );

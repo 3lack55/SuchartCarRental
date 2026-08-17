@@ -10,16 +10,16 @@ import { useAuth } from '../../context/auth/useAuth.js';
 
 export const vehicleKeys = {
   all: ['vehicles'],
-  list: (token, search) => ['vehicles', token, { search }],
+  list: (token, search, includeInactive) => ['vehicles', token, { search, includeInactive }],
   detail: (token, id) => ['vehicle', token, id],
 };
 
-export function useVehicles({ search } = {}) {
+export function useVehicles({ search, includeInactive } = {}) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: vehicleKeys.list(user?.token, search),
-    queryFn: () => getVehicles(user.token, { search }),
+    queryKey: vehicleKeys.list(user?.token, search, includeInactive),
+    queryFn: () => getVehicles(user.token, { search, includeInactive }),
     enabled: Boolean(user?.token),
   });
 }

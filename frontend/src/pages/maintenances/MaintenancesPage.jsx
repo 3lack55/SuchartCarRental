@@ -4,31 +4,84 @@ import { useMaintenances } from '../../services/maintenances/maintenancesQueries
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import MaintenanceDetailModal from '../../components/mainntenances/MaintenanceDetailModal.jsx';
 import MaintenanceFormModal from '../../components/mainntenances/MaintenanceFormModal.jsx';
+import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import PlateBadge from '../../components/globals/PlateBadge.jsx';
 
 function formatDate(value) {
     if (!value) return '-';
     return new Date(value).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function startOfDay(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function endOfDay(date) {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+}
+
+// คำนวณช่วงวันที่ตามตัวเลือก: สัปดาห์นี้ (จันทร์-ปัจจุบัน), เดือนนี้ (วันที่ 1-ปัจจุบัน), ปีนี้ (1 ม.ค.-ปัจจุบัน), หรือกำหนดเอง
+function getPeriodRange(period, customStart, customEnd) {
+    const now = new Date();
+
+    if (period === 'week') {
+        const day = now.getDay();
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        const start = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday));
+        return { start, end: endOfDay(now) };
+    }
+    if (period === 'month') {
+        return { start: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)), end: endOfDay(now) };
+    }
+    if (period === 'year') {
+        return { start: startOfDay(new Date(now.getFullYear(), 0, 1)), end: endOfDay(now) };
+    }
+    if (period === 'custom') {
+        return {
+            start: customStart ? startOfDay(customStart) : null,
+            end: customEnd ? endOfDay(customEnd) : null,
+        };
+    }
+    return { start: null, end: null };
+}
+
 export default function MaintenancesPage() {
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
+    const [garageTypeFilter, setGarageTypeFilter] = useState('');
+    const [period, setPeriod] = useState('all'); // 'all' | 'week' | 'month' | 'year' | 'custom'
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [formModal, setFormModal] = useState(null);
 
     const { user } = useAuth();
 
     const { data, isLoading, error } = useMaintenances({ search: debouncedSearch });
-    const maintenances = data?.data ?? [];
+    const allMaintenances = data?.data ?? [];
+    const { start: periodStart, end: periodEnd } = getPeriodRange(period, customStart, customEnd);
+    const maintenances = allMaintenances.filter((m) => {
+        if (garageTypeFilter && m.garage_type !== garageTypeFilter) return false;
+        if (periodStart || periodEnd) {
+            const serviceDate = new Date(m.service_date);
+            if (periodStart && serviceDate < periodStart) return false;
+            if (periodEnd && serviceDate > periodEnd) return false;
+        }
+        return true;
+    });
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const totalItems = maintenances.reduce((sum, item) => sum + Number(item.total_items || 0), 0);
     const totalCost = maintenances.reduce((sum, item) => sum + Number(item.total_cost || 0), 0);
 
     const stats = [
-        { label: 'ทั้งหมด', value: maintenances.length, tone: 'primary' },
-        { label: 'รายการ', value: totalItems, tone: 'success' },
-        { label: 'ค่าใช้จ่าย', value: `฿${totalCost.toLocaleString()}`, tone: 'muted' },
+        { label: 'ทั้งหมด', value: maintenances.length, tone: 'primary', description: 'จำนวนใบซ่อมบำรุงทั้งหมดในระบบ' },
+        { label: 'รายการ', value: totalItems, tone: 'success', description: 'จำนวนรายการซ่อมย่อยรวมทุกใบซ่อม' },
+        { label: 'ค่าใช้จ่าย', value: `฿${totalCost.toLocaleString()}`, tone: 'muted', description: 'ยอดค่าใช้จ่ายรวมของทุกใบซ่อม' },
     ];
 
     const buttonStyle = {
@@ -53,7 +106,7 @@ export default function MaintenancesPage() {
 
                 <button
                     onClick={() => setFormModal({ mode: 'create' })}
-                    className="rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
+                    className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
                     style={buttonStyle}
                 >
                     + บันทึกการซ่อม
@@ -63,18 +116,14 @@ export default function MaintenancesPage() {
             <section className="grid gap-4 md:grid-cols-3">
                 {stats.map((item) => (
                     <div key={item.label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                        <p className="text-xs" style={{ color: 'var(--sub-text)' }}>{item.label}</p>
-                        <div className="mt-2 flex items-end justify-between">
-                            <span className="text-2xl font-semibold" style={{ color: 'var(--page-text)' }}>{item.value}</span>
+                        <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
+                            {item.label}
+                            <InfoTooltip text={item.description} />
+                        </p>
+                        <div className="mt-2">
                             <span
-                                className="rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-[0.15em]"
+                                className="text-2xl font-semibold"
                                 style={{
-                                    backgroundColor:
-                                        item.tone === 'primary'
-                                            ? 'var(--primary-color-soft)'
-                                            : item.tone === 'success'
-                                                ? 'var(--status-success-soft)'
-                                                : 'var(--surface-soft)',
                                     color:
                                         item.tone === 'primary'
                                             ? 'var(--primary-color)'
@@ -83,7 +132,7 @@ export default function MaintenancesPage() {
                                                 : 'var(--page-text)',
                                 }}
                             >
-                                {item.tone}
+                                {item.value}
                             </span>
                         </div>
                     </div>
@@ -91,15 +140,16 @@ export default function MaintenancesPage() {
             </section>
 
             <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="relative w-full max-w-md">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--icon-muted)' }}>⌕</span>
                         <input
                             type="text"
+                            aria-label="ค้นหาชื่อศูนย์/อู่ หรือทะเบียนรถ"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="ค้นหาชื่อศูนย์/อู่ หรือทะเบียนรถ"
-                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none transition-all duration-200"
+                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
                             style={{
                                 backgroundColor: 'var(--surface-soft)',
                                 color: 'var(--page-text)',
@@ -116,17 +166,68 @@ export default function MaintenancesPage() {
                             }}
                         />
                     </div>
-                    <div className="text-sm" style={{ color: 'var(--sub-text)' }}>{maintenances.length} รายการ</div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <select
+                            aria-label="กรองตามช่วงเวลา"
+                            value={period}
+                            onChange={(e) => setPeriod(e.target.value)}
+                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                        >
+                            <option value="all">ทุกช่วงเวลา</option>
+                            <option value="week">สัปดาห์นี้</option>
+                            <option value="month">เดือนนี้</option>
+                            <option value="year">ปีนี้</option>
+                            <option value="custom">กำหนดเอง...</option>
+                        </select>
+
+                        {period === 'custom' && (
+                            <>
+                                <input
+                                    type="date"
+                                    aria-label="วันที่เริ่มต้น"
+                                    value={customStart}
+                                    onChange={(e) => setCustomStart(e.target.value)}
+                                    className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                    style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                                />
+                                <span className="text-sm" style={{ color: 'var(--sub-text)' }}>ถึง</span>
+                                <input
+                                    type="date"
+                                    aria-label="วันที่สิ้นสุด"
+                                    value={customEnd}
+                                    onChange={(e) => setCustomEnd(e.target.value)}
+                                    className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                    style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                                />
+                            </>
+                        )}
+
+                        <select
+                            aria-label="กรองตามประเภทสถานที่"
+                            value={garageTypeFilter}
+                            onChange={(e) => setGarageTypeFilter(e.target.value)}
+                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                        >
+                            <option value="">ทุกประเภทสถานที่</option>
+                            <option value="center">ศูนย์บริการ</option>
+                            <option value="shop">อู่ทั่วไป</option>
+                        </select>
+                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{maintenances.length} รายการ</div>
+                    </div>
                 </div>
 
-                {errorMessage && <p className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
+                {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
-                <div className="overflow-hidden rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                    <table className="w-full text-sm" style={{ color: 'var(--page-text)' }}>
+                <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                    <table className="w-full min-w-180 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>วันที่</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รถ</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รุ่น</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ศูนย์/อู่</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>จำนวนรายการ</th>
                                 <th className="px-4 py-3 text-right font-medium" style={{ color: 'var(--sub-text)' }}>ยอดรวม</th>
@@ -135,7 +236,7 @@ export default function MaintenancesPage() {
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={6} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -143,7 +244,7 @@ export default function MaintenancesPage() {
 
                             {!isLoading && maintenances.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={6} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลการซ่อมบำรุง
                                     </td>
                                 </tr>
@@ -153,14 +254,17 @@ export default function MaintenancesPage() {
                                 <tr
                                     key={m.maintenance_id}
                                     onClick={() => setSelectedId(m.maintenance_id)}
-                                    className="cursor-pointer transition-colors duration-150 hover:opacity-95"
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(m.maintenance_id); } }}
+                                    tabIndex={0}
+                                    aria-label={`ดูรายละเอียดใบซ่อมรถทะเบียน ${m.plate_number} วันที่ ${formatDate(m.service_date)}`}
+                                    className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
                                     style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                 >
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(m.service_date)}</td>
                                     <td className="px-4 py-3">
-                                        <div className="font-semibold" style={{ color: 'var(--page-text)' }}>{m.plate_number}</div>
-                                        <div style={{ color: 'var(--sub-text)', opacity: 0.8 }}>{m.plate_province}</div>
+                                        <PlateBadge plateNumber={m.plate_number} plateProvince={m.plate_province} />
                                     </td>
+                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.model}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.garage_name}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.total_items} รายการ</td>
                                     <td className="px-4 py-3 text-right font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(m.total_cost).toLocaleString()}</td>

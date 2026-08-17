@@ -18,3 +18,9 @@ export function getServiceCatalog() {
     method: "GET",
   });
 }
+
+export function getViolationReasons() {
+  return requestJson(`${API_BASE_URL}/api/lookups/violation-reasons`, {
+    method: "GET",
+  });
+}

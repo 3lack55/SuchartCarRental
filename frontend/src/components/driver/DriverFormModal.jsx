@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../../components/globals/Modal';
+import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import { useCreateDriver, useUpdateDriver } from '../../services/drivers/driversQueries.js';
 
 const PREFIX_OPTIONS = ['นาย', 'นาง', 'นางสาว'];
@@ -46,70 +47,81 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
             <form onSubmit={handleSubmit} className="space-y-4 p-5">
                 <div className="flex gap-3">
                     <div className="w-28">
-                        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คำนำหน้า</label>
+                        <label htmlFor="driver-prefix" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คำนำหน้า</label>
                         <select
+                            id="driver-prefix"
                             value={form.prefix}
                             onChange={(e) => handleChange('prefix', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all"
+                            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                             style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                         >
                             {PREFIX_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                     </div>
                     <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ชื่อ</label>
+                        <label htmlFor="driver-first-name" className="mb-1.5 flex items-center text-xs font-medium" style={{ color: 'var(--sub-text)' }}>
+                            ชื่อ
+                            <InfoTooltip text="ชื่อ-นามสกุลต้องไม่ซ้ำกับคนขับคนอื่นในระบบ" />
+                        </label>
                         <input
+                            id="driver-first-name"
                             required
                             value={form.first_name}
                             onChange={(e) => handleChange('first_name', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                             style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>นามสกุล</label>
+                    <label htmlFor="driver-last-name" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>นามสกุล</label>
                     <input
+                        id="driver-last-name"
                         required
                         value={form.last_name}
                         onChange={(e) => handleChange('last_name', e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เบอร์โทร</label>
+                    <label htmlFor="driver-phone" className="mb-1.5 flex items-center text-xs font-medium" style={{ color: 'var(--sub-text)' }}>
+                        เบอร์โทร
+                        <InfoTooltip text="ตัวเลข 10 หลัก และต้องไม่ซ้ำกับคนขับคนอื่นในระบบ" />
+                    </label>
                     <input
+                        id="driver-phone"
                         required
                         pattern="[0-9]{10}"
                         title="เบอร์โทรต้องเป็นตัวเลข 10 หลัก"
                         value={form.phone}
                         onChange={(e) => handleChange('phone', e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</label>
+                    <label htmlFor="driver-hire-date" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</label>
                     <input
+                        id="driver-hire-date"
                         type="date"
                         value={form.hire_date}
                         onChange={(e) => handleChange('hire_date', e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />
                 </div>
 
-                {error && <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+                {error && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
 
                 <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                        className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                         style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                     >
                         ยกเลิก
@@ -117,7 +129,7 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+                        className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                     >
                         {submitting ? 'กำลังบันทึก...' : 'บันทึก'}

@@ -7,6 +7,8 @@ import Overview from '../pages/overview/Overview';
 import DriversPage from '../pages/drivers/DriversPage';
 import VehiclesPage from '../pages/vehicles/VehiclePage';
 import MaintenancesPage from '../pages/maintenances/MaintenancesPage';
+import ViolationsPage from '../pages/violations/ViolationsPage';
+import DocumentsPage from '../pages/documents/DocumentsPage';
 
 export default function AppRoutes() {
   return (
@@ -19,9 +21,9 @@ export default function AppRoutes() {
         <Route path="overview" element={<Overview />} />
         <Route path="drivers" element={<DriversPage />} />
         <Route path="vehicles" element={<VehiclesPage />} />
-        <Route path="reports" element={<h1>Reports</h1>} />
+        <Route path="reports" element={<DocumentsPage />} />
         <Route path="maintenance" element={<MaintenancesPage />} />
-        <Route path="violations" element={<h1>Violations</h1>} />
+        <Route path="violations" element={<ViolationsPage />} />
       </Route>
     </Routes>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../globals/Modal.jsx';
+import InfoTooltip from '../globals/InfoTooltip.jsx';
 import { useCreateMaintenance, useUpdateMaintenance } from "../../services/maintenances/maintenancesQueries.js";
 import { useServiceCatalog } from '../../services/lookups/lookupQueries.js';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
@@ -10,6 +11,10 @@ function nextTempId() { return `tmp-${++tempIdCounter}`; }
 function emptyItem() {
     return { tempId: nextTempId(), service_type_id: '', service_category_id: '', service_item_id: '', quantity: 1, unit_price: '', remark: '' };
 }
+
+const labelStyle = { color: 'var(--sub-text)' };
+const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
+const disabledInputStyle = { ...inputStyle, backgroundColor: 'var(--surface)', opacity: 0.6, cursor: 'not-allowed' };
 
 // maintenance: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
 export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) {
@@ -86,7 +91,11 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
         return category?.items ?? [];
     }
 
-    const totalCost = items.reduce((sum, it) => sum + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
+    function lineTotal(it) {
+        return (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
+    }
+
+    const totalCost = items.reduce((sum, it) => sum + lineTotal(it), 0);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -121,18 +130,22 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
     return (
         <Modal title={isEdit ? 'แก้ไขใบซ่อมบำรุง' : 'บันทึกการซ่อมบำรุง'} onClose={onClose} maxWidth="max-w-2xl">
             {loadingOptions ? (
-                <div className="flex items-center justify-center p-16 text-stone-400">กำลังโหลดข้อมูล...</div>
+                <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-5 p-5">
-                    {/* header ใบซ่อม */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                            <label className="mb-1 block text-xs font-medium text-stone-500">รถ</label>
+                    {/* ข้อมูลใบซ่อม */}
+                    <div className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={labelStyle}>ข้อมูลใบซ่อม</p>
+
+                        <div>
+                            <label htmlFor="maintenance-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
                             <select
+                                id="maintenance-vehicle"
                                 required
                                 value={header.vehicle_id}
                                 onChange={(e) => updateHeader('vehicle_id', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={inputStyle}
                             >
                                 <option value="" disabled>เลือกรถ</option>
                                 {vehicles.map((v) => (
@@ -141,80 +154,112 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                             </select>
                         </div>
 
-                        <div>
-                            <label className="mb-1 block text-xs font-medium text-stone-500">วันที่ซ่อม</label>
-                            <input
-                                required
-                                type="date"
-                                value={header.service_date}
-                                onChange={(e) => updateHeader('service_date', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                            />
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="maintenance-service-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ซ่อม</label>
+                                <input
+                                    id="maintenance-service-date"
+                                    required
+                                    type="date"
+                                    value={header.service_date}
+                                    onChange={(e) => updateHeader('service_date', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={inputStyle}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="maintenance-garage-type" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                                    ประเภทสถานที่
+                                    <InfoTooltip text="ศูนย์บริการ = ศูนย์ตัวแทนจำหน่ายอย่างเป็นทางการ, อู่ทั่วไป = อู่ซ่อมนอกเครือข่าย" />
+                                </label>
+                                <select
+                                    id="maintenance-garage-type"
+                                    value={header.garage_type}
+                                    onChange={(e) => updateHeader('garage_type', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={inputStyle}
+                                >
+                                    <option value="center">ศูนย์บริการ</option>
+                                    <option value="shop">อู่ทั่วไป</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-medium text-stone-500">ประเภทสถานที่</label>
-                            <select
-                                value={header.garage_type}
-                                onChange={(e) => updateHeader('garage_type', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                            >
-                                <option value="center">ศูนย์บริการ</option>
-                                <option value="shop">อู่ทั่วไป</option>
-                            </select>
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="mb-1 block text-xs font-medium text-stone-500">ชื่อศูนย์/อู่</label>
+                            <label htmlFor="maintenance-garage-name" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ชื่อศูนย์/อู่</label>
                             <input
+                                id="maintenance-garage-name"
                                 required
                                 value={header.garage_name}
                                 onChange={(e) => updateHeader('garage_name', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={inputStyle}
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="maintenance-receipt-number" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                                    เลขที่ใบเสร็จ
+                                    <InfoTooltip text="ไม่บังคับ กรอกไว้เพื่ออ้างอิงกับใบเสร็จตัวจริง" />
+                                </label>
+                                <input
+                                    id="maintenance-receipt-number"
+                                    value={header.receipt_number}
+                                    onChange={(e) => updateHeader('receipt_number', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={inputStyle}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="maintenance-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                                    เลขไมล์ (กม.)
+                                    <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
+                                </label>
+                                <input
+                                    id="maintenance-mileage"
+                                    required
+                                    type="number"
+                                    min="0"
+                                    value={header.mileage}
+                                    onChange={(e) => updateHeader('mileage', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={inputStyle}
+                                />
+                            </div>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-medium text-stone-500">เลขที่ใบเสร็จ</label>
+                            <label htmlFor="maintenance-next-service-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                                นัดครั้งถัดไปที่เลขไมล์
+                                <InfoTooltip text="ไม่บังคับ ใช้แจ้งเตือนเมื่อรถวิ่งถึงเลขไมล์นี้ว่าถึงกำหนดเข้าซ่อมอีกครั้ง" />
+                            </label>
                             <input
-                                value={header.receipt_number}
-                                onChange={(e) => updateHeader('receipt_number', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-medium text-stone-500">เลขไมล์ (กม.)</label>
-                            <input
-                                required
-                                type="number"
-                                min="0"
-                                value={header.mileage}
-                                onChange={(e) => updateHeader('mileage', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                            />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="mb-1 block text-xs font-medium text-stone-500">นัดครั้งถัดไปที่เลขไมล์ (ไม่บังคับ)</label>
-                            <input
+                                id="maintenance-next-service-mileage"
                                 type="number"
                                 min="0"
                                 value={header.next_service_mileage}
                                 onChange={(e) => updateHeader('next_service_mileage', e.target.value)}
-                                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={inputStyle}
                             />
                         </div>
                     </div>
 
                     {/* รายการซ่อม */}
-                    <div>
-                        <div className="mb-2 flex items-center justify-between">
-                            <p className="text-sm font-medium text-stone-600">รายการซ่อม</p>
+                    <div className="space-y-3 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                        <div className="flex items-center justify-between">
+                            <p className="flex items-center text-xs font-semibold uppercase tracking-[0.12em]" style={labelStyle}>
+                                รายการซ่อม
+                                <InfoTooltip text="เลือกตามลำดับ ประเภท → หมวด → รายการ แล้วกรอกจำนวนและราคาต่อหน่วย" />
+                            </p>
                             <button
                                 type="button"
                                 onClick={addItemRow}
-                                className="text-sm font-medium text-emerald-600 hover:underline"
+                                className="cursor-pointer text-sm font-medium hover:underline"
+                                style={{ color: 'var(--primary-color)' }}
                             >
                                 + เพิ่มรายการ
                             </button>
@@ -222,26 +267,29 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                         <div className="space-y-3">
                             {items.map((it, idx) => (
-                                <div key={it.tempId} className="rounded-lg border border-stone-100 p-3">
+                                <div key={it.tempId} className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
                                     <div className="mb-2 flex items-center justify-between">
-                                        <span className="text-xs font-medium text-stone-400">รายการที่ {idx + 1}</span>
+                                        <span className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รายการที่ {idx + 1}</span>
                                         {items.length > 1 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeItemRow(it.tempId)}
-                                                className="text-xs text-red-500 hover:underline"
+                                                className="cursor-pointer text-xs hover:underline"
+                                                style={{ color: 'var(--status-danger)' }}
                                             >
                                                 ลบรายการนี้
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                         <select
                                             required
+                                            aria-label={`ประเภท รายการที่ ${idx + 1}`}
                                             value={it.service_type_id}
                                             onChange={(e) => updateItem(it.tempId, 'service_type_id', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={inputStyle}
                                         >
                                             <option value="" disabled>ประเภท</option>
                                             {catalog.map((t) => (
@@ -251,12 +299,14 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                                         <select
                                             required
+                                            aria-label={`หมวด รายการที่ ${idx + 1}`}
                                             disabled={!it.service_type_id}
                                             value={it.service_category_id}
                                             onChange={(e) => updateItem(it.tempId, 'service_category_id', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400 disabled:bg-stone-50"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={it.service_type_id ? inputStyle : disabledInputStyle}
                                         >
-                                            <option value="" disabled>หมวด</option>
+                                            <option value="" disabled>{it.service_type_id ? 'หมวด' : 'เลือกประเภทก่อน'}</option>
                                             {categoriesFor(it.service_type_id).map((c) => (
                                                 <option key={c.service_category_id} value={c.service_category_id}>{c.service_category_name}</option>
                                             ))}
@@ -264,28 +314,32 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                                         <select
                                             required
+                                            aria-label={`รายการ รายการที่ ${idx + 1}`}
                                             disabled={!it.service_category_id}
                                             value={it.service_item_id}
                                             onChange={(e) => updateItem(it.tempId, 'service_item_id', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400 disabled:bg-stone-50"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={it.service_category_id ? inputStyle : disabledInputStyle}
                                         >
-                                            <option value="" disabled>รายการ</option>
+                                            <option value="" disabled>{it.service_category_id ? 'รายการ' : 'เลือกหมวดก่อน'}</option>
                                             {itemsFor(it.service_type_id, it.service_category_id).map((i) => (
                                                 <option key={i.service_item_id} value={i.service_item_id}>{i.service_item_name}</option>
                                             ))}
                                         </select>
                                     </div>
 
-                                    <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
                                         <input
                                             required
                                             type="number"
                                             min="0"
                                             step="0.01"
                                             placeholder="จำนวน"
+                                            aria-label={`จำนวน รายการที่ ${idx + 1}`}
                                             value={it.quantity}
                                             onChange={(e) => updateItem(it.tempId, 'quantity', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={inputStyle}
                                         />
                                         <input
                                             required
@@ -293,41 +347,53 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                             min="0"
                                             step="0.01"
                                             placeholder="ราคาต่อหน่วย"
+                                            aria-label={`ราคาต่อหน่วย รายการที่ ${idx + 1}`}
                                             value={it.unit_price}
                                             onChange={(e) => updateItem(it.tempId, 'unit_price', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={inputStyle}
                                         />
                                         <input
                                             placeholder="หมายเหตุ (ไม่บังคับ)"
+                                            aria-label={`หมายเหตุ รายการที่ ${idx + 1}`}
                                             value={it.remark}
                                             onChange={(e) => updateItem(it.tempId, 'remark', e.target.value)}
-                                            className="rounded-lg border border-stone-200 px-2 py-1.5 text-sm outline-none focus:border-emerald-400"
+                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                            style={inputStyle}
                                         />
+                                    </div>
+
+                                    <div className="mt-2 text-right text-xs" style={{ color: 'var(--sub-text)' }}>
+                                        ยอดรายการนี้: ฿{lineTotal(it).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="mt-3 flex justify-end text-sm">
-                            <span className="text-stone-500">ยอดรวมทั้งหมด: </span>
-                            <span className="ml-1.5 font-medium text-stone-800">฿{totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <div className="flex justify-end text-sm">
+                            <span style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด: </span>
+                            <span className="ml-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>฿{totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
 
-                    {(error || optionsError) && <p className="text-sm text-red-600">{error || optionsError.message}</p>}
+                    {(error || optionsError) && (
+                        <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
+                    )}
 
-                    <div className="flex gap-2 border-t border-stone-100 pt-4">
+                    <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 rounded-lg border border-stone-200 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                            style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                         >
                             ยกเลิก
                         </button>
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                         >
                             {submitting ? 'กำลังบันทึก...' : 'บันทึก'}
                         </button>

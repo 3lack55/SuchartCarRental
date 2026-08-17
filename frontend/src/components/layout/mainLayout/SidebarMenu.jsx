@@ -2,7 +2,7 @@ import { LayoutDashboard, Users, Car, ScrollText, Wrench, Ban } from 'lucide-rea
 import { useTheme } from '../../../context/theme/useTheme';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const menuItems = [
     { id: 1, name: 'ภาพรวม', icon: <LayoutDashboard />, path: '/overview' },
@@ -13,10 +13,9 @@ const menuItems = [
     { id: 6, name: 'บันทึกการฝ่าฝืนกฎจราจร', icon: <Ban />, path: '/violations' },
 ];
 
-export default function SidebarMenu({ isSidebarOpen }) {
+export default function SidebarMenu({ isSidebarOpen, onNavigate }) {
     const { themeColor } = useTheme();
     const location = useLocation();
-    const navigate = useNavigate();
     const [hoveredItem, setHoveredItem] = useState(null);
     const [visible, setVisible] = useState(false); // คุม animation แยกจาก mount
     const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
@@ -57,17 +56,19 @@ export default function SidebarMenu({ isSidebarOpen }) {
     useEffect(() => () => clearTimeout(hideTimer.current), []);
 
     return (
-        <div className={`w-full h-full flex flex-col gap-2 p-2`}>
+        <nav aria-label="เมนูหลัก" className={`w-full h-full flex flex-col gap-2 p-2`}>
             {menuItems.map((item) => (
-                <div
+                <Link
                     key={item.id}
+                    to={item.path}
                     ref={(el) => (itemRefs.current[item.id] = el)}
-                    className={`group w-full h-12 flex items-center cursor-pointer overflow-hidden`}
-                    onClick={() => {
-                        navigate(item.path);
-                    }}
+                    aria-current={activeItem === item.id ? 'page' : undefined}
+                    className={`group w-full h-12 flex items-center overflow-hidden no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--primary-color-soft)`}
+                    onClick={() => onNavigate?.()}
                     onMouseEnter={() => handleMouseEnter(item)}
                     onMouseLeave={handleMouseLeave}
+                    onFocus={() => handleMouseEnter(item)}
+                    onBlur={handleMouseLeave}
                 >
                     <div className={`transition-all duration-75 ${isSidebarOpen ? 'h-full w-1.5' : 'h-0 w-0'} `}>
                         <div className={`transition-all duration-200 w-0 h-full rounded-2xl mr-3 ${activeItem === item.id ? 'w-1.5' : `group-hover:w-1.5`}`} style={{ backgroundColor: activeBackground }}></div>
@@ -86,7 +87,7 @@ export default function SidebarMenu({ isSidebarOpen }) {
                             <span className={`ml-3 truncate whitespace-nowrap tracking-wider`}>{item.name}</span>
                         </div>
                     </div>
-                </div>
+                </Link>
             ))}
 
             {!isSidebarOpen && hoveredItem && createPortal(
@@ -128,6 +129,6 @@ export default function SidebarMenu({ isSidebarOpen }) {
                 </div>,
                 document.body
             )}
-        </div>
+        </nav>
     );
 }

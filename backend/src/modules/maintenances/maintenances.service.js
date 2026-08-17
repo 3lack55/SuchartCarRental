@@ -1,9 +1,11 @@
 import pool from '../../config/db.js';
 import { AppError } from '../../middleware/errorHandler.js';
+import { invalidateCache } from '../../config/cache.js';
+import { OVERVIEW_CACHE_KEY } from '../overview/overview.service.js';
 
 export async function listMaintenances({ search, vehicleId } = {}) {
     let sql = `
-    SELECT maintenance_id, vehicle_id, plate_number, plate_province,
+    SELECT maintenance_id, vehicle_id, plate_number, plate_province, model,
         service_date, garage_name, garage_type, receipt_number,
         mileage, next_service_mileage, total_items, total_cost
     FROM view_maintenance_summary
@@ -91,6 +93,7 @@ export async function createMaintenance(data) {
         }
 
         await conn.commit();
+        invalidateCache(OVERVIEW_CACHE_KEY);
         return getMaintenanceById(maintenanceId);
     } catch (err) {
         await conn.rollback();
@@ -135,6 +138,7 @@ export async function updateMaintenance(maintenanceId, data) {
         }
 
         await conn.commit();
+        invalidateCache(OVERVIEW_CACHE_KEY);
         return getMaintenanceById(maintenanceId);
     } catch (err) {
         await conn.rollback();
@@ -149,5 +153,6 @@ export async function updateMaintenance(maintenanceId, data) {
 export async function deleteMaintenance(maintenanceId) {
     await getMaintenanceById(maintenanceId); // throw 404 ถ้าไม่มีจริง
     await pool.execute('DELETE FROM maintenances WHERE maintenance_id = ?', [maintenanceId]);
+    invalidateCache(OVERVIEW_CACHE_KEY);
     return { maintenance_id: maintenanceId, deleted: true };
 }

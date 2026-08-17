@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useId, useState } from 'react';
 import { useDeleteVehicle, useVehicle } from '../../services/vehicles/vehiclesQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { useModalA11y } from '../../hooks/useModalA11y.js';
+import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 
 const DOCUMENT_LABELS = {
   tax: 'ภาษี',
@@ -23,6 +25,8 @@ function documentStatusStyle(daysRemaining) {
 export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDeleted }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { user } = useAuth();
+  const titleId = useId();
+  const panelRef = useModalA11y(onClose);
 
   const { data, isLoading, error: queryError } = useVehicle(vehicleId);
   const vehicle = data?.data ?? data ?? null;
@@ -48,69 +52,48 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
     }
   }
 
-  useEffect(() => {
-    function handleKey(e) { if (e.key === 'Escape') onClose(); }
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl outline-none"
+        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}
+      >
         {loading && (
-          <div className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
+          <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
         )}
 
         {error && (
           <div className="p-6">
             <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
-            <button onClick={onClose} className="mt-4 text-sm underline" style={{ color: 'var(--sub-text)' }}>ปิด</button>
+            <button onClick={onClose} className="mt-4 cursor-pointer text-sm underline transition-opacity hover:opacity-70" style={{ color: 'var(--sub-text)' }}>ปิด</button>
           </div>
         )}
 
         {confirmOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }} onClick={(e) => { if (e.target === e.currentTarget) setConfirmOpen(false); }}>
-            <div className="w-full max-w-sm rounded-2xl border p-5 shadow-xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--page-text)' }}>ยืนยันการลบ</h3>
-              <p className="mt-2 text-sm" style={{ color: 'var(--sub-text)' }}>
-                คุณต้องการลบข้อมูลรถนี้ใช่หรือไม่?
-                <span className="mt-2 block font-medium" style={{ color: 'var(--page-text)' }}>
-                  {vehicle?.plate_number} · {vehicle?.plate_province}
-                </span>
-              </p>
-
-              <div className="mt-5 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setConfirmOpen(false)}
-                  className="flex-1 rounded-xl border py-2.5 text-sm font-medium"
-                  style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--status-danger)', color: '#ffffff' }}
-                >
-                  {deleting ? 'กำลังลบ...' : 'ตกลง'}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ConfirmDialog
+            title="ยืนยันการลบ"
+            message={`คุณต้องการลบข้อมูลรถนี้ใช่หรือไม่? ${vehicle?.plate_number} · ${vehicle?.plate_province}`}
+            confirmLabel="ตกลง"
+            loading={deleting}
+            onConfirm={handleDelete}
+            onCancel={() => setConfirmOpen(false)}
+          />
         )}
 
         {!loading && !error && vehicle && (
           <>
             <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
               <div>
-                <p className="font-semibold" style={{ color: 'var(--page-text)' }}>{vehicle.plate_number} · {vehicle.plate_province}</p>
+                <p id={titleId} className="font-semibold" style={{ color: 'var(--page-text)' }}>{vehicle.plate_number} · {vehicle.plate_province}</p>
                 <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
                   {vehicle.brand_model || 'ไม่ระบุรุ่น'}{vehicle.type ? ` · ${vehicle.type.type_name}` : ''}
                 </p>
@@ -118,7 +101,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
               <button
                 onClick={onClose}
                 aria-label="ปิด"
-                className="rounded-lg p-1.5 transition-colors"
+                className="cursor-pointer rounded-lg p-1.5 transition-colors"
                 style={{ color: 'var(--icon-muted)', backgroundColor: 'transparent' }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-soft)'; e.currentTarget.style.color = 'var(--page-text)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--icon-muted)'; }}
@@ -196,7 +179,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
             <div className="flex gap-2 p-5">
               <button
                 onClick={() => onEdit(vehicle)}
-                className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                 style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
               >
                 แก้ไข
@@ -204,7 +187,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
               <button
                 onClick={() => setConfirmOpen(true)}
                 disabled={deleting}
-                className="flex-1 rounded-xl border py-2.5 text-sm font-medium disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
               >
                 {deleting ? 'กำลังลบ...' : 'ลบ'}

@@ -106,7 +106,7 @@ export default function Register() {
     };
 
     return (
-            <div className="register-bg">
+            <main className="register-bg">
                 <div className={`register-card ${mounted ? "mounted" : ""}`}>
                     {/* Logo */}
                     <div className="logo-ring-r">
@@ -118,22 +118,23 @@ export default function Register() {
                         </svg>
                     </div>
 
-                    <h2 className="register-title">สมัครสมาชิก</h2>
+                    <h1 className="register-title">สมัครสมาชิก</h1>
                     <p className="register-subtitle">สร้างบัญชีใหม่ได้เลย ฟรี!</p>
 
-                    {serverError && <div className="server-error-r">{serverError}</div>}
-                    {success && <div className="success-msg">✓ {success}</div>}
+                    {serverError && <div role="alert" className="server-error-r">{serverError}</div>}
+                    {success && <div role="status" className="success-msg">✓ {success}</div>}
 
                     <form onSubmit={handleSubmit}>
                         {/* Username */}
                         <div className="field-group">
-                            <label className="field-label">Username</label>
+                            <label htmlFor="register-username" className="field-label">Username</label>
                             <div className={`input-wrapper-r ${focusedField === "username" ? "focused" : ""}`}>
                                 <svg className="input-icon-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                     <circle cx="12" cy="7" r="4" />
                                 </svg>
                                 <input
+                                    id="register-username"
                                     className={`auth-input-r ${fieldErrors.username ? "error" : form.username.length >= 3 ? "valid" : ""}`}
                                     placeholder="อย่างน้อย 3 ตัวอักษร"
                                     value={form.username}
@@ -147,18 +148,19 @@ export default function Register() {
                                     </svg>
                                 )}
                             </div>
-                            {fieldErrors.username && <p className="field-error">⚠ {fieldErrors.username}</p>}
+                            {fieldErrors.username && <p role="alert" className="field-error">⚠ {fieldErrors.username}</p>}
                         </div>
 
                         {/* Password */}
                         <div className="field-group">
-                            <label className="field-label">รหัสผ่าน</label>
+                            <label htmlFor="register-password" className="field-label">รหัสผ่าน</label>
                             <div className={`input-wrapper-r ${focusedField === "password" ? "focused" : ""}`}>
                                 <svg className="input-icon-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                 </svg>
                                 <input
+                                    id="register-password"
                                     type="password"
                                     className={`auth-input-r ${fieldErrors.password ? "error" : ""}`}
                                     placeholder="อย่างน้อย 6 ตัวอักษร"
@@ -169,17 +171,18 @@ export default function Register() {
                                 />
                             </div>
                             <PasswordStrength password={form.password} />
-                            {fieldErrors.password && <p className="field-error">⚠ {fieldErrors.password}</p>}
+                            {fieldErrors.password && <p role="alert" className="field-error">⚠ {fieldErrors.password}</p>}
                         </div>
 
                         {/* Confirm Password */}
                         <div className="field-group">
-                            <label className="field-label">ยืนยันรหัสผ่าน</label>
+                            <label htmlFor="register-confirm-password" className="field-label">ยืนยันรหัสผ่าน</label>
                             <div className={`input-wrapper-r ${focusedField === "confirmPassword" ? "focused" : ""}`}>
                                 <svg className="input-icon-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                 </svg>
                                 <input
+                                    id="register-confirm-password"
                                     type="password"
                                     className={`auth-input-r ${fieldErrors.confirmPassword ? "error" : form.confirmPassword && form.password === form.confirmPassword ? "valid" : ""}`}
                                     placeholder="กรอกรหัสผ่านอีกครั้ง"
@@ -194,7 +197,7 @@ export default function Register() {
                                     </svg>
                                 )}
                             </div>
-                            {fieldErrors.confirmPassword && <p className="field-error">⚠ {fieldErrors.confirmPassword}</p>}
+                            {fieldErrors.confirmPassword && <p role="alert" className="field-error">⚠ {fieldErrors.confirmPassword}</p>}
                         </div>
 
                         <button type="submit" className="submit-btn-r" disabled={loading}>
@@ -214,6 +217,6 @@ export default function Register() {
                         <Link to="/login" className="footer-link-r">เข้าสู่ระบบ</Link>
                     </p>
                 </div>
-            </div>
+            </main>
     );
 }

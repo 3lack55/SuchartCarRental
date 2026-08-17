@@ -1,9 +1,7 @@
 import pool from "../../config/db.js";
-import { getOrSetCache } from "../../config/cache.js";
+import { invalidateCache } from "../../config/cache.js";
 import { AppError } from "../../middleware/errorHandler.js"
-
-const VEHICLES_CACHE_KEY = "vehicles.list";
-const VEHICLES_CACHE_TTL = 3600; // 1 hour in seconds
+import { OVERVIEW_CACHE_KEY } from "../overview/overview.service.js";
 
 export async function listVehicles({ search, includeInactive } = {}) {
     let sql = `
@@ -156,6 +154,7 @@ export async function createVehicle(data) {
     }
 
     await conn.commit();
+    invalidateCache(OVERVIEW_CACHE_KEY);
     return getVehicleById(vehicleId);
   } catch (err) {
     await conn.rollback();
@@ -164,7 +163,7 @@ export async function createVehicle(data) {
     conn.release();
   }
 }
- 
+
 export async function updateVehicle(vehicleId, data) {
   const current = await getVehicleById(vehicleId);
  
@@ -181,14 +180,16 @@ export async function updateVehicle(vehicleId, data) {
   const values = fields.map((f) => data[f]);
  
   await pool.execute(`UPDATE vehicles SET ${setClause} WHERE vehicle_id = ?`, [...values, vehicleId]);
- 
+
+  invalidateCache(OVERVIEW_CACHE_KEY);
   return getVehicleById(vehicleId);
 }
- 
+
 // soft delete เท่านั้น เพราะ vehicle_taxes/vehicle_acts/vehicle_insurances/maintenances/violations
 // อ้างอิง vehicle_id แบบ ON DELETE RESTRICT ทั้งหมด ต้องเก็บประวัติไว้เสมอ
 export async function softDeleteVehicle(vehicleId) {
   await getVehicleById(vehicleId);
   await pool.execute('UPDATE vehicles SET deleted = 1 WHERE vehicle_id = ?', [vehicleId]);
+  invalidateCache(OVERVIEW_CACHE_KEY);
   return { vehicle_id: vehicleId, deleted: true };
 }

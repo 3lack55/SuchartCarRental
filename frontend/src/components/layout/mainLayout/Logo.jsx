@@ -20,7 +20,7 @@ export function Logo({ isSidebarOpen, setSidebarOpen }) {
             <button
                 style={{color:'var(--on-primary)', backgroundColor : 'var(--primary-color-soft)'}}
                 type="button"
-                className={`cursor-pointer z-50 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300 mt-3 hover:opacity-70`}
+                className={`hidden cursor-pointer z-50 h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300 mt-3 hover:opacity-70 md:flex`}
                 onClick={() => setSidebarOpen(!isSidebarOpen)}
                 aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
