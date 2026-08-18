@@ -37,7 +37,7 @@ CREATE TABLE `drivers` (
   PRIMARY KEY (`driver_id`),
   UNIQUE KEY `phone` (`phone`) /*!80000 INVISIBLE */,
   UNIQUE KEY `drivername` (`first_name`,`last_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -46,7 +46,7 @@ CREATE TABLE `drivers` (
 
 LOCK TABLES `drivers` WRITE;
 /*!40000 ALTER TABLE `drivers` DISABLE KEYS */;
-INSERT INTO `drivers` VALUES (1,'นาย','สมชาย','ใจร้าย','0891234567','2022-01-15 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:15:43'),(2,'นาย','วิชัย','รักงาน','0812345678','2022-03-01 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:41:19'),(3,'นาง','สุนีย์','ขยันดี','0898765432','2023-05-19 17:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:37:19'),(4,'นาย','ประยุทธ','มั่นคง','0865554321','2021-11-09 17:00:00',0,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,'นาย','อนุชา','พากเพียร','0876543210','2024-01-31 17:00:00',1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'นาย','ชนแหลก','แหกประกัน','0621378901','2026-08-01 00:00:00',0,'2026-08-14 16:17:12','2026-08-15 14:32:25');
+INSERT INTO `drivers` VALUES (1,'นาย','สมชาย','ใจร้าย','0891234567','2022-01-15 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:15:43'),(2,'นาย','วิชัย','รักงาน','0812345678','2022-03-01 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:41:19'),(3,'นาง','สุนีย์','ขยันดี','0898765432','2023-05-19 17:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:37:19'),(4,'นาย','ประยุทธ','มั่นคง','0865554321','2021-11-09 17:00:00',0,'2026-08-10 14:56:22','2026-08-17 12:22:42'),(5,'นาย','อนุชา','พากเพียร','0876543210','2024-01-31 17:00:00',1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'นาย','ชนแหลก','แหกประกัน','0621378901','2026-08-01 00:00:00',0,'2026-08-14 16:17:12','2026-08-17 12:22:42'),(8,'นาย','สมหมาย','ใจกล้า','0839578888','2026-08-18 00:00:00',0,'2026-08-17 17:57:03','2026-08-17 17:57:03');
 /*!40000 ALTER TABLE `drivers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -254,7 +254,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'bobo','$2b$12$/Y5CJrRFIae04dWCX1A3vuXQN3VwIlmQVaTFQjPsVAjx5XW8nH59O','admin',1,'2026-08-16 16:41:59','2026-08-10 14:56:22','2026-08-16 16:41:59'),(2,'manager1','$2b$12$abcdefghijklmnopqrstuv0123456789ABCDEFGHIJKLMNOPQRSTU','manager',1,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'staff1','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','staff',1,'2026-08-13 11:31:35','2026-08-10 14:56:22','2026-08-13 11:31:35'),(4,'staff2','$2b$12$abcdefghijklmnopqrstuv0123456789ABCDEFGHIJKLMNOPQRSTU','staff',0,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `users` VALUES (1,'bobo','$2b$12$/Y5CJrRFIae04dWCX1A3vuXQN3VwIlmQVaTFQjPsVAjx5XW8nH59O','admin',1,'2026-08-17 18:09:24','2026-08-10 14:56:22','2026-08-17 18:09:24'),(2,'manager1','$2b$12$abcdefghijklmnopqrstuv0123456789ABCDEFGHIJKLMNOPQRSTU','manager',1,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'staff1','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','staff',1,'2026-08-13 11:31:35','2026-08-10 14:56:22','2026-08-13 11:31:35'),(4,'staff2','$2b$12$abcdefghijklmnopqrstuv0123456789ABCDEFGHIJKLMNOPQRSTU','staff',0,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -279,7 +279,7 @@ CREATE TABLE `vehicle_acts` (
   KEY `idx_act_expire` (`expire_date`),
   CONSTRAINT `vehicle_acts_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_act_dates` CHECK ((`expire_date` > `last_paid_date`))
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -345,7 +345,7 @@ CREATE TABLE `vehicle_taxes` (
   KEY `idx_tax_expire` (`expire_date`),
   CONSTRAINT `vehicle_taxes_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_tax_dates` CHECK ((`expire_date` > `last_paid_date`))
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -409,7 +409,7 @@ CREATE TABLE `vehicles` (
   CONSTRAINT `vehicles_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `vehicles_ibfk_2` FOREIGN KEY (`plate_province_id`) REFERENCES `provinces` (`province_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `vehicles_ibfk_3` FOREIGN KEY (`type_id`) REFERENCES `vehicle_type` (`type_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -418,7 +418,7 @@ CREATE TABLE `vehicles` (
 
 LOCK TABLES `vehicles` WRITE;
 /*!40000 ALTER TABLE `vehicles` DISABLE KEYS */;
-INSERT INTO `vehicles` VALUES (1,'Toyota Hilux Revo 2022','1 กข 1234',1,1,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(2,'Toyota Commuter 2021','2 ขค 5678',1,2,2,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(3,'Honda City 2023','กท 9956',9,3,3,0,'2026-08-10 14:56:22','2026-08-15 14:37:37'),(4,'Isuzu D-Max 2020','3 งจ 4321',14,4,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(5,'Hino 6 ล้อ 2019','4 ฉช 8765',21,NULL,4,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(6,'Hyundai H-1','1 กจ 5627',21,6,2,0,'2026-08-15 14:39:43','2026-08-15 14:40:34'),(7,'Toyota Commuter ','1 หญ',1,6,2,0,'2026-08-15 14:41:24','2026-08-15 15:06:06');
+INSERT INTO `vehicles` VALUES (1,'Toyota Hilux Revo 2022','1 กข 1234',1,1,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(2,'Toyota Commuter 2021','2 ขค 5678',1,2,2,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(3,'Honda City 2023','กท 9956',9,3,3,0,'2026-08-10 14:56:22','2026-08-15 14:37:37'),(4,'Isuzu D-Max 2020','3 งจ 4321',14,4,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(5,'Hino 6 ล้อ 2019','4 ฉช 8765',21,NULL,4,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(6,'Hyundai H-1','1 กจ 5627',21,6,2,0,'2026-08-15 14:39:43','2026-08-15 14:40:34'),(7,'Toyota Commuter ','1 หญ',1,6,2,0,'2026-08-15 14:41:24','2026-08-15 15:06:06'),(8,'React Query Test Car (edited)','ทดสอบ1826',2,NULL,NULL,1,'2026-08-16 17:14:21','2026-08-16 17:14:23');
 /*!40000 ALTER TABLE `vehicles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -528,6 +528,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `maintenance_id`,
  1 AS `vehicle_id`,
  1 AS `plate_number`,
+ 1 AS `model`,
  1 AS `plate_province`,
  1 AS `service_date`,
  1 AS `garage_name`,
@@ -587,7 +588,7 @@ CREATE TABLE `violations` (
   CONSTRAINT `violations_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_2` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_3` FOREIGN KEY (`reason_id`) REFERENCES `violations_reasons` (`reason_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -596,7 +597,7 @@ CREATE TABLE `violations` (
 
 LOCK TABLES `violations` WRITE;
 /*!40000 ALTER TABLE `violations` DISABLE KEYS */;
-INSERT INTO `violations` VALUES (1,1,1,1,'2026-06-10 14:23:00',1000.00,1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,2,3,'2026-07-02 09:15:00',500.00,0,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,3,2,'2026-07-18 17:40:00',1000.00,1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,4,5,'2026-05-25 11:05:00',400.00,0,'2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `violations` VALUES (1,1,1,1,'2026-06-10 14:23:00',1000.00,0,'2026-08-10 14:56:22','2026-08-17 17:56:13'),(2,2,2,3,'2026-07-02 09:15:00',500.00,1,'2026-08-10 14:56:22','2026-08-17 18:12:19'),(3,3,3,2,'2026-07-18 17:40:00',1000.00,1,'2026-08-10 14:56:22','2026-08-17 18:09:32'),(4,4,4,5,'2026-05-25 11:05:00',400.00,0,'2026-08-10 14:56:22','2026-08-17 17:40:13');
 /*!40000 ALTER TABLE `violations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -719,7 +720,7 @@ UNLOCK TABLES;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_maintenance_summary` AS select `m`.`maintenance_id` AS `maintenance_id`,`m`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`m`.`service_date` AS `service_date`,`m`.`garage_name` AS `garage_name`,`m`.`garage_type` AS `garage_type`,`m`.`receipt_number` AS `receipt_number`,`m`.`mileage` AS `mileage`,`m`.`next_service_mileage` AS `next_service_mileage`,count(`md`.`detail_id`) AS `total_items`,coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) AS `total_cost` from (((`maintenances` `m` join `vehicles` `v` on((`v`.`vehicle_id` = `m`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) group by `m`.`maintenance_id`,`m`.`vehicle_id`,`v`.`plate_number`,`p`.`name_th`,`m`.`service_date`,`m`.`garage_name`,`m`.`garage_type`,`m`.`receipt_number`,`m`.`mileage`,`m`.`next_service_mileage` */;
+/*!50001 VIEW `view_maintenance_summary` AS select `m`.`maintenance_id` AS `maintenance_id`,`m`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`v`.`brand_model` AS `model`,`p`.`name_th` AS `plate_province`,`m`.`service_date` AS `service_date`,`m`.`garage_name` AS `garage_name`,`m`.`garage_type` AS `garage_type`,`m`.`receipt_number` AS `receipt_number`,`m`.`mileage` AS `mileage`,`m`.`next_service_mileage` AS `next_service_mileage`,count(`md`.`detail_id`) AS `total_items`,coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) AS `total_cost` from (((`maintenances` `m` join `vehicles` `v` on((`v`.`vehicle_id` = `m`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) group by `m`.`maintenance_id`,`m`.`vehicle_id`,`v`.`plate_number`,`p`.`name_th`,`m`.`service_date`,`m`.`garage_name`,`m`.`garage_type`,`m`.`receipt_number`,`m`.`mileage`,`m`.`next_service_mileage` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -751,4 +752,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-16 23:45:02
+-- Dump completed on 2026-08-18  9:59:47
