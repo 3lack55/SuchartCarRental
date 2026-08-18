@@ -48,3 +48,12 @@ export async function deleteVehicleController(req, res, next) {
     next(err);
   }
 }
+
+export async function restoreVehicleController(req, res, next) {
+  try {
+    const result = await vehiclesService.restoreVehicle(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}

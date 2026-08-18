@@ -5,6 +5,7 @@ import { useViolations } from '../../services/violations/violationsQueries.js';
 import { useViolationReasons } from '../../services/lookups/lookupQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import ViolationDetailModal from '../../components/violations/ViolationDetailModal.jsx';
 import ViolationFormModal from '../../components/violations/ViolationFormModal.jsx';
@@ -171,41 +172,39 @@ export default function ViolationsPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <select
-                            aria-label="กรองตามสถานะการจ่าย"
+                        <Select
+                            id="violation-paid-filter"
+                            ariaLabel="กรองตามสถานะการจ่าย"
+                            className="w-44"
                             value={paidFilter}
-                            onChange={(e) => setPaidFilter(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="">ทุกสถานะการจ่าย</option>
-                            <option value="false">ยังไม่จ่าย</option>
-                            <option value="true">จ่ายแล้ว</option>
-                        </select>
-                        <select
-                            aria-label="กรองตามสาเหตุ"
+                            onChange={setPaidFilter}
+                            options={[
+                                { value: '', label: 'ทุกสถานะการจ่าย' },
+                                { value: 'false', label: 'ยังไม่จ่าย' },
+                                { value: 'true', label: 'จ่ายแล้ว' },
+                            ]}
+                        />
+                        <Select
+                            id="violation-reason-filter"
+                            ariaLabel="กรองตามสาเหตุ"
+                            className="w-44"
                             value={reasonFilter}
-                            onChange={(e) => setReasonFilter(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="">ทุกสาเหตุ</option>
-                            {reasons.map((r) => (
-                                <option key={r.reason_id} value={r.reason_id}>{r.reason_name}</option>
-                            ))}
-                        </select>
-                        <select
-                            aria-label="กรองตามช่วงเวลา"
+                            onChange={setReasonFilter}
+                            options={[{ value: '', label: 'ทุกสาเหตุ' }, ...reasons.map((r) => ({ value: String(r.reason_id), label: r.reason_name }))]}
+                        />
+                        <Select
+                            id="violation-period-filter"
+                            ariaLabel="กรองตามช่วงเวลา"
+                            className="w-40"
                             value={period}
-                            onChange={(e) => setPeriod(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="all">ทุกช่วงเวลา</option>
-                            <option value="week">สัปดาห์นี้</option>
-                            <option value="month">เดือนนี้</option>
-                            <option value="year">ปีนี้</option>
-                        </select>
+                            onChange={setPeriod}
+                            options={[
+                                { value: 'all', label: 'ทุกช่วงเวลา' },
+                                { value: 'week', label: 'สัปดาห์นี้' },
+                                { value: 'month', label: 'เดือนนี้' },
+                                { value: 'year', label: 'ปีนี้' },
+                            ]}
+                        />
                         <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{violations.length} รายการ</div>
                     </div>
                 </div>
@@ -260,7 +259,7 @@ export default function ViolationsPage() {
                                     <td className="px-4 py-3 text-right font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(v.fine).toLocaleString()}</td>
                                     <td className="px-4 py-3">
                                         <span
-                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate"
                                             style={v.is_paid
                                                 ? { backgroundColor: 'var(--status-success-soft)', color: 'var(--status-success)' }
                                                 : { backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}

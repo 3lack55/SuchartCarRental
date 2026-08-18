@@ -41,3 +41,10 @@ export function deleteVehicle(token, id) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export function restoreVehicle(token, id) {
+  return requestJson(`${API_BASE_URL}/api/vehicles/${id}/restore`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

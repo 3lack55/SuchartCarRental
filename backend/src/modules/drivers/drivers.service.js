@@ -115,7 +115,22 @@ export async function updateDriver(driverId, data) {
 
 export async function softDeleteDriver(driverId) {
     await getDriverById(driverId);
-    await pool.execute('UPDATE drivers SET deleted = 1 WHERE driver_id = ?', [driverId]);
+
+    // soft delete เป็นแค่ UPDATE deleted=1 ไม่ใช่ DELETE จริง FK ON DELETE SET NULL ของ vehicles.driver_id
+    // จึงไม่ทำงาน ต้องเคลียร์รถที่คนขับคนนี้ดูแลอยู่กลับเป็น "ยังไม่มีคนขับ" เอง
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+        await conn.execute('UPDATE drivers SET deleted = 1 WHERE driver_id = ?', [driverId]);
+        await conn.execute('UPDATE vehicles SET driver_id = NULL WHERE driver_id = ?', [driverId]);
+        await conn.commit();
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
+
     invalidateCache(OVERVIEW_CACHE_KEY);
     return { driver_id: driverId, deleted: true };
 }

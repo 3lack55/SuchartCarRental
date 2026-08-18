@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import Modal from '../globals/Modal.jsx';
 import InfoTooltip from '../globals/InfoTooltip.jsx';
+import Select from '../globals/Select.jsx';
+import DatePicker from '../globals/DatePicker.jsx';
 import { useCreateMaintenance, useUpdateMaintenance } from "../../services/maintenances/maintenancesQueries.js";
-import { useServiceCatalog } from '../../services/lookups/lookupQueries.js';
+import { useCreateServiceType, useCreateServiceCategory, useCreateServiceItem, useServiceCatalog } from '../../services/lookups/lookupQueries.js';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 
 let tempIdCounter = 0;
@@ -14,7 +17,7 @@ function emptyItem() {
 
 const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
-const disabledInputStyle = { ...inputStyle, backgroundColor: 'var(--surface)', opacity: 0.6, cursor: 'not-allowed' };
+const errorInputStyle = { ...inputStyle, borderColor: 'var(--status-danger)' };
 
 // maintenance: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
 export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) {
@@ -22,6 +25,9 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
     const catalogQuery = useServiceCatalog();
     const vehiclesQuery = useVehicles();
+    const createServiceType = useCreateServiceType();
+    const createServiceCategory = useCreateServiceCategory();
+    const createServiceItem = useCreateServiceItem();
 
     const catalog = catalogQuery.data?.data ?? [];
     const vehicles = vehiclesQuery.data?.data ?? [];
@@ -29,7 +35,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
     const optionsError = catalogQuery.error || vehiclesQuery.error;
 
     const [header, setHeader] = useState({
-        vehicle_id: maintenance?.vehicle_id ?? '',
+        vehicle_id: maintenance?.vehicle_id ? String(maintenance.vehicle_id) : '',
         service_date: maintenance?.service_date ? maintenance.service_date.slice(0, 10) : '',
         garage_name: maintenance?.garage_name ?? '',
         garage_type: maintenance?.garage_type ?? 'center',
@@ -42,9 +48,9 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
         maintenance?.items?.length
             ? maintenance.items.map((i) => ({
                 tempId: nextTempId(),
-                service_type_id: i.service_type_id,
-                service_category_id: i.service_category_id,
-                service_item_id: i.service_item_id,
+                service_type_id: String(i.service_type_id),
+                service_category_id: String(i.service_category_id),
+                service_item_id: String(i.service_item_id),
                 quantity: i.quantity,
                 unit_price: i.unit_price,
                 remark: i.remark ?? '',
@@ -52,6 +58,8 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
             : [emptyItem()]
     );
 
+    const [headerErrors, setHeaderErrors] = useState({});
+    const [itemErrors, setItemErrors] = useState({});
     const [error, setError] = useState(null);
 
     const createMaintenance = useCreateMaintenance();
@@ -60,6 +68,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
     function updateHeader(field, value) {
         setHeader((prev) => ({ ...prev, [field]: value }));
+        setHeaderErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
     }
 
     function updateItem(tempId, field, value) {
@@ -71,6 +80,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
             if (field === 'service_category_id') { updated.service_item_id = ''; }
             return updated;
         }));
+        setItemErrors((prev) => (prev[tempId]?.[field] ? { ...prev, [tempId]: { ...prev[tempId], [field]: undefined } } : prev));
     }
 
     function addItemRow() {
@@ -79,6 +89,12 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
     function removeItemRow(tempId) {
         setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.tempId !== tempId) : prev));
+        setItemErrors((prev) => {
+            if (!prev[tempId]) return prev;
+            const next = { ...prev };
+            delete next[tempId];
+            return next;
+        });
     }
 
     function categoriesFor(typeId) {
@@ -91,15 +107,57 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
         return category?.items ?? [];
     }
 
+    // เพิ่มประเภท/หมวด/รายการใหม่เข้าแคตตาล็อกได้ทันทีจาก dropdown โดยไม่ต้องออกไปหน้าตั้งค่า แล้วเลือกให้อัตโนมัติ
+    async function handleCreateType(tempId, name) {
+        const result = await createServiceType.mutateAsync(name);
+        updateItem(tempId, 'service_type_id', String(result.data.service_type_id));
+    }
+
+    async function handleCreateCategory(tempId, typeId, name) {
+        const result = await createServiceCategory.mutateAsync({ name, serviceTypeId: Number(typeId) });
+        updateItem(tempId, 'service_category_id', String(result.data.service_category_id));
+    }
+
+    async function handleCreateItem(tempId, categoryId, name) {
+        const result = await createServiceItem.mutateAsync({ name, categoryId: Number(categoryId) });
+        updateItem(tempId, 'service_item_id', String(result.data.service_item_id));
+    }
+
     function lineTotal(it) {
         return (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
     }
 
     const totalCost = items.reduce((sum, it) => sum + lineTotal(it), 0);
 
+    function validate() {
+        const nextHeaderErrors = {};
+        if (!header.vehicle_id) nextHeaderErrors.vehicle_id = 'กรุณาเลือกรถ';
+        if (!header.service_date) nextHeaderErrors.service_date = 'กรุณาเลือกวันที่ซ่อม';
+        if (!header.garage_name.trim()) nextHeaderErrors.garage_name = 'กรุณากรอกชื่อศูนย์/อู่';
+        if (!String(header.mileage).trim()) nextHeaderErrors.mileage = 'กรุณากรอกเลขไมล์';
+
+        const nextItemErrors = {};
+        items.forEach((it) => {
+            const e = {};
+            if (!it.service_type_id) e.service_type_id = 'เลือกประเภท';
+            if (!it.service_category_id) e.service_category_id = 'เลือกหมวด';
+            if (!it.service_item_id) e.service_item_id = 'เลือกรายการ';
+            if (!String(it.quantity).trim()) e.quantity = 'กรอกจำนวน';
+            if (!String(it.unit_price).trim()) e.unit_price = 'กรอกราคาต่อหน่วย';
+            if (Object.keys(e).length > 0) nextItemErrors[it.tempId] = e;
+        });
+
+        return { header: nextHeaderErrors, items: nextItemErrors };
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
         setError(null);
+
+        const { header: nextHeaderErrors, items: nextItemErrors } = validate();
+        setHeaderErrors(nextHeaderErrors);
+        setItemErrors(nextItemErrors);
+        if (Object.keys(nextHeaderErrors).length > 0 || Object.keys(nextItemErrors).length > 0) return;
 
         try {
             const payload = {
@@ -128,44 +186,38 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
     }
 
     return (
-        <Modal title={isEdit ? 'แก้ไขใบซ่อมบำรุง' : 'บันทึกการซ่อมบำรุง'} onClose={onClose} maxWidth="max-w-2xl">
+        <Modal title={isEdit ? 'แก้ไขใบซ่อมบำรุง' : 'บันทึกการซ่อมบำรุง'} onClose={onClose} maxWidth="max-w-6xl" maxHeight='max-h-[95vh]'>
             {loadingOptions ? (
                 <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-5 p-5">
+                <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
                     {/* ข้อมูลใบซ่อม */}
                     <div className="space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={labelStyle}>ข้อมูลใบซ่อม</p>
 
                         <div>
                             <label htmlFor="maintenance-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
-                            <select
+                            <Select
                                 id="maintenance-vehicle"
-                                required
                                 value={header.vehicle_id}
-                                onChange={(e) => updateHeader('vehicle_id', e.target.value)}
-                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                style={inputStyle}
-                            >
-                                <option value="" disabled>เลือกรถ</option>
-                                {vehicles.map((v) => (
-                                    <option key={v.vehicle_id} value={v.vehicle_id}>{v.plate_number} · {v.plate_province}{v.brand_model ? ` (${v.brand_model})` : ''}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => updateHeader('vehicle_id', value)}
+                                placeholder="เลือกรถ"
+                                error={Boolean(headerErrors.vehicle_id)}
+                                options={vehicles.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
+                            />
+                            {headerErrors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{headerErrors.vehicle_id}</p>}
                         </div>
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
                                 <label htmlFor="maintenance-service-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ซ่อม</label>
-                                <input
+                                <DatePicker
                                     id="maintenance-service-date"
-                                    required
-                                    type="date"
                                     value={header.service_date}
-                                    onChange={(e) => updateHeader('service_date', e.target.value)}
-                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                    style={inputStyle}
+                                    onChange={(value) => updateHeader('service_date', value)}
+                                    error={Boolean(headerErrors.service_date)}
                                 />
+                                {headerErrors.service_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{headerErrors.service_date}</p>}
                             </div>
 
                             <div>
@@ -173,32 +225,31 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     ประเภทสถานที่
                                     <InfoTooltip text="ศูนย์บริการ = ศูนย์ตัวแทนจำหน่ายอย่างเป็นทางการ, อู่ทั่วไป = อู่ซ่อมนอกเครือข่าย" />
                                 </label>
-                                <select
+                                <Select
                                     id="maintenance-garage-type"
                                     value={header.garage_type}
-                                    onChange={(e) => updateHeader('garage_type', e.target.value)}
-                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                    style={inputStyle}
-                                >
-                                    <option value="center">ศูนย์บริการ</option>
-                                    <option value="shop">อู่ทั่วไป</option>
-                                </select>
+                                    onChange={(value) => updateHeader('garage_type', value)}
+                                    options={[
+                                        { value: 'center', label: 'ศูนย์บริการ' },
+                                        { value: 'shop', label: 'อู่ทั่วไป' },
+                                    ]}
+                                />
                             </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="maintenance-garage-name" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ชื่อศูนย์/อู่</label>
-                            <input
-                                id="maintenance-garage-name"
-                                required
-                                value={header.garage_name}
-                                onChange={(e) => updateHeader('garage_name', e.target.value)}
-                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                style={inputStyle}
-                            />
-                        </div>
-
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="maintenance-garage-name" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ชื่อศูนย์/อู่</label>
+                                <input
+                                    id="maintenance-garage-name"
+                                    value={header.garage_name}
+                                    onChange={(e) => updateHeader('garage_name', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={headerErrors.garage_name ? errorInputStyle : inputStyle}
+                                />
+                                {headerErrors.garage_name && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{headerErrors.garage_name}</p>}
+                            </div>
+
                             <div>
                                 <label htmlFor="maintenance-receipt-number" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
                                     เลขที่ใบเสร็จ
@@ -212,7 +263,9 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     style={inputStyle}
                                 />
                             </div>
+                        </div>
 
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
                                 <label htmlFor="maintenance-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
                                     เลขไมล์ (กม.)
@@ -220,31 +273,31 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                 </label>
                                 <input
                                     id="maintenance-mileage"
-                                    required
                                     type="number"
                                     min="0"
                                     value={header.mileage}
                                     onChange={(e) => updateHeader('mileage', e.target.value)}
                                     className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                    style={headerErrors.mileage ? errorInputStyle : inputStyle}
+                                />
+                                {headerErrors.mileage && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{headerErrors.mileage}</p>}
+                            </div>
+
+                            <div>
+                                <label htmlFor="maintenance-next-service-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                                    นัดครั้งถัดไปที่เลขไมล์
+                                    <InfoTooltip text="ไม่บังคับ ใช้แจ้งเตือนเมื่อรถวิ่งถึงเลขไมล์นี้ว่าถึงกำหนดเข้าซ่อมอีกครั้ง" />
+                                </label>
+                                <input
+                                    id="maintenance-next-service-mileage"
+                                    type="number"
+                                    min="0"
+                                    value={header.next_service_mileage}
+                                    onChange={(e) => updateHeader('next_service_mileage', e.target.value)}
+                                    className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                                     style={inputStyle}
                                 />
                             </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="maintenance-next-service-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                                นัดครั้งถัดไปที่เลขไมล์
-                                <InfoTooltip text="ไม่บังคับ ใช้แจ้งเตือนเมื่อรถวิ่งถึงเลขไมล์นี้ว่าถึงกำหนดเข้าซ่อมอีกครั้ง" />
-                            </label>
-                            <input
-                                id="maintenance-next-service-mileage"
-                                type="number"
-                                min="0"
-                                value={header.next_service_mileage}
-                                onChange={(e) => updateHeader('next_service_mileage', e.target.value)}
-                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                style={inputStyle}
-                            />
                         </div>
                     </div>
 
@@ -265,114 +318,141 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                             </button>
                         </div>
 
-                        <div className="space-y-3">
-                            {items.map((it, idx) => (
-                                <div key={it.tempId} className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <span className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รายการที่ {idx + 1}</span>
-                                        {items.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeItemRow(it.tempId)}
-                                                className="cursor-pointer text-xs hover:underline"
-                                                style={{ color: 'var(--status-danger)' }}
-                                            >
-                                                ลบรายการนี้
-                                            </button>
-                                        )}
-                                    </div>
+                        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--surface-border)' }}>
+                            <table className="w-full min-w-220 text-sm" style={{ color: 'var(--page-text)' }}>
+                                <thead>
+                                    <tr 
+                                        style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}
+                                    >
+                                        <th className="min-w-36 px-2 py-2 text-left font-medium">ประเภท</th>
+                                        <th className="min-w-36 px-2 py-2 text-left font-medium">หมวด</th>
+                                        <th className="min-w-40 px-2 py-2 text-left font-medium">รายการ</th>
+                                        <th className="min-w-20 px-2 py-2 text-left font-medium">จำนวน</th>
+                                        <th className="min-w-24 px-2 py-2 text-left font-medium">ราคา/หน่วย</th>
+                                        <th className="min-w-32 px-2 py-2 text-left font-medium">หมายเหตุ</th>
+                                        <th className="min-w-24 px-2 py-2 text-right font-medium">รวม</th>
+                                        <th className="w-9 px-2 py-2"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {items.map((it, idx) => {
+                                        const errs = itemErrors[it.tempId] ?? {};
+                                        return (
+                                            <tr key={it.tempId} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                                                <td className="px-2 py-2 align-top">
+                                                    <Select
+                                                        id={`item-type-${it.tempId}`}
+                                                        ariaLabel={`ประเภท รายการที่ ${idx + 1}`}
+                                                        placeholder="ประเภท"
+                                                        value={it.service_type_id}
+                                                        onChange={(value) => updateItem(it.tempId, 'service_type_id', value)}
+                                                        onCreate={(name) => handleCreateType(it.tempId, name)}
+                                                        error={Boolean(errs.service_type_id)}
+                                                        options={catalog.map((t) => ({ value: String(t.service_type_id), label: t.service_type_name }))}
+                                                    />
+                                                    {errs.service_type_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errs.service_type_id}</p>}
+                                                </td>
 
-                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                        <select
-                                            required
-                                            aria-label={`ประเภท รายการที่ ${idx + 1}`}
-                                            value={it.service_type_id}
-                                            onChange={(e) => updateItem(it.tempId, 'service_type_id', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={inputStyle}
-                                        >
-                                            <option value="" disabled>ประเภท</option>
-                                            {catalog.map((t) => (
-                                                <option key={t.service_type_id} value={t.service_type_id}>{t.service_type_name}</option>
-                                            ))}
-                                        </select>
+                                                <td className="px-2 py-2 align-top">
+                                                    <Select
+                                                        id={`item-category-${it.tempId}`}
+                                                        ariaLabel={`หมวด รายการที่ ${idx + 1}`}
+                                                        placeholder={it.service_type_id ? 'หมวด' : 'เลือกประเภทก่อน'}
+                                                        disabled={!it.service_type_id}
+                                                        value={it.service_category_id}
+                                                        onChange={(value) => updateItem(it.tempId, 'service_category_id', value)}
+                                                        onCreate={it.service_type_id ? (name) => handleCreateCategory(it.tempId, it.service_type_id, name) : undefined}
+                                                        error={Boolean(errs.service_category_id)}
+                                                        options={categoriesFor(it.service_type_id).map((c) => ({ value: String(c.service_category_id), label: c.service_category_name }))}
+                                                    />
+                                                    {errs.service_category_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errs.service_category_id}</p>}
+                                                </td>
 
-                                        <select
-                                            required
-                                            aria-label={`หมวด รายการที่ ${idx + 1}`}
-                                            disabled={!it.service_type_id}
-                                            value={it.service_category_id}
-                                            onChange={(e) => updateItem(it.tempId, 'service_category_id', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={it.service_type_id ? inputStyle : disabledInputStyle}
-                                        >
-                                            <option value="" disabled>{it.service_type_id ? 'หมวด' : 'เลือกประเภทก่อน'}</option>
-                                            {categoriesFor(it.service_type_id).map((c) => (
-                                                <option key={c.service_category_id} value={c.service_category_id}>{c.service_category_name}</option>
-                                            ))}
-                                        </select>
+                                                <td className="px-2 py-2 align-top">
+                                                    <Select
+                                                        id={`item-item-${it.tempId}`}
+                                                        ariaLabel={`รายการ รายการที่ ${idx + 1}`}
+                                                        placeholder={it.service_category_id ? 'รายการ' : 'เลือกหมวดก่อน'}
+                                                        disabled={!it.service_category_id}
+                                                        value={it.service_item_id}
+                                                        onChange={(value) => updateItem(it.tempId, 'service_item_id', value)}
+                                                        onCreate={it.service_category_id ? (name) => handleCreateItem(it.tempId, it.service_category_id, name) : undefined}
+                                                        error={Boolean(errs.service_item_id)}
+                                                        options={itemsFor(it.service_type_id, it.service_category_id).map((i) => ({ value: String(i.service_item_id), label: i.service_item_name }))}
+                                                    />
+                                                    {errs.service_item_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errs.service_item_id}</p>}
+                                                </td>
 
-                                        <select
-                                            required
-                                            aria-label={`รายการ รายการที่ ${idx + 1}`}
-                                            disabled={!it.service_category_id}
-                                            value={it.service_item_id}
-                                            onChange={(e) => updateItem(it.tempId, 'service_item_id', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={it.service_category_id ? inputStyle : disabledInputStyle}
-                                        >
-                                            <option value="" disabled>{it.service_category_id ? 'รายการ' : 'เลือกหมวดก่อน'}</option>
-                                            {itemsFor(it.service_type_id, it.service_category_id).map((i) => (
-                                                <option key={i.service_item_id} value={i.service_item_id}>{i.service_item_name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                                <td className="px-2 py-2 align-top">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        aria-label={`จำนวน รายการที่ ${idx + 1}`}
+                                                        value={it.quantity}
+                                                        onChange={(e) => updateItem(it.tempId, 'quantity', e.target.value)}
+                                                        className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                                        style={errs.quantity ? errorInputStyle : inputStyle}
+                                                    />
+                                                    {errs.quantity && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errs.quantity}</p>}
+                                                </td>
 
-                                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                        <input
-                                            required
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="จำนวน"
-                                            aria-label={`จำนวน รายการที่ ${idx + 1}`}
-                                            value={it.quantity}
-                                            onChange={(e) => updateItem(it.tempId, 'quantity', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={inputStyle}
-                                        />
-                                        <input
-                                            required
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="ราคาต่อหน่วย"
-                                            aria-label={`ราคาต่อหน่วย รายการที่ ${idx + 1}`}
-                                            value={it.unit_price}
-                                            onChange={(e) => updateItem(it.tempId, 'unit_price', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={inputStyle}
-                                        />
-                                        <input
-                                            placeholder="หมายเหตุ (ไม่บังคับ)"
-                                            aria-label={`หมายเหตุ รายการที่ ${idx + 1}`}
-                                            value={it.remark}
-                                            onChange={(e) => updateItem(it.tempId, 'remark', e.target.value)}
-                                            className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                                            style={inputStyle}
-                                        />
-                                    </div>
+                                                <td className="px-2 py-2 align-top">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        aria-label={`ราคาต่อหน่วย รายการที่ ${idx + 1}`}
+                                                        value={it.unit_price}
+                                                        onChange={(e) => updateItem(it.tempId, 'unit_price', e.target.value)}
+                                                        className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                                        style={errs.unit_price ? errorInputStyle : inputStyle}
+                                                    />
+                                                    {errs.unit_price && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errs.unit_price}</p>}
+                                                </td>
 
-                                    <div className="mt-2 text-right text-xs" style={{ color: 'var(--sub-text)' }}>
-                                        ยอดรายการนี้: ฿{lineTotal(it).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                                <td className="px-2 py-2 align-top">
+                                                    <input
+                                                        placeholder="ไม่บังคับ"
+                                                        aria-label={`หมายเหตุ รายการที่ ${idx + 1}`}
+                                                        value={it.remark}
+                                                        onChange={(e) => updateItem(it.tempId, 'remark', e.target.value)}
+                                                        className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                                                        style={inputStyle}
+                                                    />
+                                                </td>
 
-                        <div className="flex justify-end text-sm">
-                            <span style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด: </span>
-                            <span className="ml-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>฿{totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                <td className="px-2 py-2 text-right align-top" style={{ color: 'var(--page-text)' }}>
+                                                    ฿{lineTotal(it).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </td>
+
+                                                <td className="px-2 py-2 align-top text-center">
+                                                    {items.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeItemRow(it.tempId)}
+                                                            aria-label={`ลบรายการที่ ${idx + 1}`}
+                                                            className="cursor-pointer rounded-lg p-1.5 transition-colors hover:opacity-80"
+                                                            style={{ color: 'var(--status-danger)' }}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan={6} className="px-2 py-2.5 text-right text-sm" style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด</td>
+                                        <td className="px-2 py-2.5 text-right font-semibold" style={{ color: 'var(--page-text)' }}>
+                                            ฿{totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 

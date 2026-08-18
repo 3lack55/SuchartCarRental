@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import Modal from '../../components/globals/Modal';
+import Select from '../../components/globals/Select.jsx';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import VehicleDetailModal from '../../components/vehicle/VehicleDetailModal';
@@ -49,12 +51,12 @@ export default function VehiclesPage() {
     if (driverFilter === 'without') vehicles = vehicles.filter((v) => !v.driver);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
-    const withDriverCount = vehicles.filter((v) => v.driver).length;
     const withoutDriverCount = vehicles.filter((v) => !v.driver).length;
+    const incompleteDocsCount = vehicles.filter((v) => v.documents_incomplete).length;
 
     const stats = [
         { label: 'ทั้งหมด', value: vehicles.length, tone: 'primary', description: 'จำนวนรถที่แสดงอยู่ในขณะนี้' },
-        { label: 'มีคนขับประจำ', value: withDriverCount, tone: 'success', description: 'จำนวนรถที่มีคนขับประจำแล้ว' },
+        { label: 'เอกสารไม่สมบูรณ์', value: incompleteDocsCount, tone: 'danger', description: 'จำนวนรถที่ขาดเอกสาร (พ.ร.บ./ภาษี/ประกัน) หรือมีเอกสารหมดอายุ' },
         { label: 'ไม่มีคนขับประจำ', value: withoutDriverCount, tone: 'warning', description: 'จำนวนรถที่ยังไม่มีคนขับประจำ' },
     ];
 
@@ -66,7 +68,7 @@ export default function VehiclesPage() {
     };
 
     const toggleButtonStyle = showInactive
-        ? { backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)', border: '1px solid var(--primary-color)' }
+        ? { backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)', border: '1px solid var(--primary-color)' }
         : { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' };
 
     function handleSaved(message = 'บันทึกข้อมูลรถเรียบร้อย') {
@@ -117,7 +119,9 @@ export default function VehiclesPage() {
                                             ? 'var(--page-text)'
                                             : item.tone === 'warning'
                                                 ? 'var(--status-warning)'
-                                                : 'var(--status-success)',
+                                                : item.tone === 'danger'
+                                                    ? 'var(--status-danger)'
+                                                    : 'var(--status-success)',
                                 }}
                             >
                                 {item.value}
@@ -156,29 +160,26 @@ export default function VehiclesPage() {
                     </div>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-3">
-                        <select
-                            aria-label="กรองตามประเภทรถ"
+                        <Select
+                            id="vehicle-type-filter"
+                            ariaLabel="กรองตามประเภทรถ"
+                            className="w-40"
                             value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="">ทุกประเภทรถ</option>
-                            {typeOptions.map((t) => (
-                                <option key={t} value={t}>{t}</option>
-                            ))}
-                        </select>
-                        <select
-                            aria-label="กรองตามคนขับ"
+                            onChange={setTypeFilter}
+                            options={[{ value: '', label: 'ทุกประเภทรถ' }, ...typeOptions.map((t) => ({ value: t, label: t }))]}
+                        />
+                        <Select
+                            id="vehicle-driver-filter"
+                            ariaLabel="กรองตามคนขับ"
+                            className="w-44"
                             value={driverFilter}
-                            onChange={(e) => setDriverFilter(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="">ทุกคัน</option>
-                            <option value="with">มีคนขับประจำ</option>
-                            <option value="without">ไม่มีคนขับประจำ</option>
-                        </select>
+                            onChange={setDriverFilter}
+                            options={[
+                                { value: '', label: 'ทุกคัน' },
+                                { value: 'with', label: 'มีคนขับประจำ' },
+                                { value: 'without', label: 'ไม่มีคนขับประจำ' },
+                            ]}
+                        />
                         <button
                             type="button"
                             onClick={() => setShowInactive((prev) => !prev)}
@@ -227,12 +228,21 @@ export default function VehiclesPage() {
                                     onClick={() => setSelectedVehicleId(v.vehicle_id)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVehicleId(v.vehicle_id); } }}
                                     tabIndex={0}
-                                    aria-label={`ดูรายละเอียดรถทะเบียน ${v.plate_number} ${v.plate_province}`}
+                                    aria-label={`ดูรายละเอียดรถทะเบียน ${v.plate_number} ${v.plate_province}${v.documents_incomplete ? ' เอกสารรถขาดหรือหมดอายุ' : ''}`}
                                     className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
                                     style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                 >
                                     <td className="px-4 py-3">
-                                        <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                        <div className="flex items-center gap-2">
+                                            <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                            {v.documents_incomplete && (
+                                                <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                    <InfoTooltip text="เอกสารรถขาดหรือหมดอายุ" label="เอกสารรถขาดหรือหมดอายุ">
+                                                        <AlertTriangle size={16} style={{ color: 'var(--status-danger)' }} />
+                                                    </InfoTooltip>
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.type_name || '-'}</td>
@@ -241,7 +251,7 @@ export default function VehiclesPage() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <span
-                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate"
                                             style={
                                                 v.deleted
                                                     ? { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', opacity: 0.75 }

@@ -113,11 +113,11 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                                         }}
                                     >
                                         <div>
-                                            <p style={{ color: 'var(--page-text)' }}>{formatDate(h.last_paid_date)} – {formatDate(h.expire_date)}</p>
-                                            {meta?.hasProvider && <p style={{ color: 'var(--sub-text)' }}>{h.provider || '-'}</p>}
+                                            <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)' }}>{formatDate(h.last_paid_date)} – {formatDate(h.expire_date)}</p>
+                                            {meta?.hasProvider && <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider || '-'}</p>}
                                         </div>
                                         {h.document_id === document.document_id && (
-                                            <span className="text-xs font-medium" style={{ color: 'var(--primary-color)' }}>ปัจจุบัน</span>
+                                            <span className="text-xs font-medium" style={{ color: 'var(--on-primary)', opacity: 0.5 }}>ปัจจุบัน</span>
                                         )}
                                     </div>
                                 ))}

@@ -5,8 +5,10 @@ import {
   createVehicle,
   updateVehicle,
   deleteVehicle,
+  restoreVehicle,
 } from './vehiclesAPI.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { invalidateFleetQueries } from '../queryInvalidation.js';
 
 export const vehicleKeys = {
   all: ['vehicles'],
@@ -39,10 +41,9 @@ export function useCreateVehicle() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // เพิ่มรถอาจผูกคนขับประจำและแนบเอกสาร (พรบ./ภาษี/ประกัน) มาพร้อมกันได้ จึงต้อง invalidate กว้างๆ
     mutationFn: (data) => createVehicle(user?.token, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: vehicleKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -51,11 +52,9 @@ export function useUpdateVehicle() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // แก้ทะเบียน/คนขับประจำของรถ กระทบทั้งคนขับเก่า-ใหม่ และหน้าเอกสาร/ซ่อมบำรุงที่โชว์ทะเบียนรถ จึงต้อง invalidate กว้างๆ
     mutationFn: ({ id, data }) => updateVehicle(user?.token, id, data),
-    onSuccess: (_result, { id }) => {
-      queryClient.invalidateQueries({ queryKey: vehicleKeys.all });
-      queryClient.invalidateQueries({ queryKey: vehicleKeys.detail(user?.token, id) });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -64,9 +63,18 @@ export function useDeleteVehicle() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // ปลดระวางรถแล้ว รถต้องหายไปจากรายการ "รถที่ดูแล" ของคนขับที่เคยผูกอยู่ด้วย
     mutationFn: (id) => deleteVehicle(user?.token, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: vehicleKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
+  });
+}
+
+export function useRestoreVehicle() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => restoreVehicle(user?.token, id),
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }

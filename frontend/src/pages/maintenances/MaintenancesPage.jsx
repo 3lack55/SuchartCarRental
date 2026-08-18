@@ -6,6 +6,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import MaintenanceDetailModal from '../../components/mainntenances/MaintenanceDetailModal.jsx';
 import MaintenanceFormModal from '../../components/mainntenances/MaintenanceFormModal.jsx';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 
 function formatDate(value) {
@@ -89,7 +90,7 @@ export default function MaintenancesPage() {
     const stats = [
         { label: 'ทั้งหมด', value: maintenances.length, tone: 'primary', description: 'จำนวนใบซ่อมบำรุงทั้งหมดในระบบ' },
         { label: 'รายการ', value: totalItems, tone: 'success', description: 'จำนวนรายการซ่อมย่อยรวมทุกใบซ่อม' },
-        { label: 'ค่าใช้จ่าย', value: `฿${totalCost.toLocaleString()}`, tone: 'muted', description: 'ยอดค่าใช้จ่ายรวมของทุกใบซ่อม' },
+        { label: 'ค่าใช้จ่าย', value: `฿${totalCost.toLocaleString()}`, tone: 'yellow', description: 'ยอดค่าใช้จ่ายรวมของทุกใบซ่อม' },
     ];
 
     const buttonStyle = {
@@ -137,7 +138,7 @@ export default function MaintenancesPage() {
                                             ? 'var(--page-text)'
                                             : item.tone === 'success'
                                                 ? 'var(--status-success)'
-                                                : 'var(--page-text)',
+                                                : '#F2952C',
                                 }}
                             >
                                 {item.value}
@@ -176,19 +177,20 @@ export default function MaintenancesPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <select
-                            aria-label="กรองตามช่วงเวลา"
+                        <Select
+                            id="maintenance-period-filter"
+                            ariaLabel="กรองตามช่วงเวลา"
+                            className="w-40"
                             value={period}
-                            onChange={(e) => setPeriod(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="all">ทุกช่วงเวลา</option>
-                            <option value="week">สัปดาห์นี้</option>
-                            <option value="month">เดือนนี้</option>
-                            <option value="year">ปีนี้</option>
-                            <option value="custom">กำหนดเอง...</option>
-                        </select>
+                            onChange={setPeriod}
+                            options={[
+                                { value: 'all', label: 'ทุกช่วงเวลา' },
+                                { value: 'week', label: 'สัปดาห์นี้' },
+                                { value: 'month', label: 'เดือนนี้' },
+                                { value: 'year', label: 'ปีนี้' },
+                                { value: 'custom', label: 'กำหนดเอง...' },
+                            ]}
+                        />
 
                         {period === 'custom' && (
                             <>
@@ -212,17 +214,18 @@ export default function MaintenancesPage() {
                             </>
                         )}
 
-                        <select
-                            aria-label="กรองตามประเภทสถานที่"
+                        <Select
+                            id="maintenance-garage-type-filter"
+                            ariaLabel="กรองตามประเภทสถานที่"
+                            className="w-44"
                             value={garageTypeFilter}
-                            onChange={(e) => setGarageTypeFilter(e.target.value)}
-                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
-                        >
-                            <option value="">ทุกประเภทสถานที่</option>
-                            <option value="center">ศูนย์บริการ</option>
-                            <option value="shop">อู่ทั่วไป</option>
-                        </select>
+                            onChange={setGarageTypeFilter}
+                            options={[
+                                { value: '', label: 'ทุกประเภทสถานที่' },
+                                { value: 'center', label: 'ศูนย์บริการ' },
+                                { value: 'shop', label: 'อู่ทั่วไป' },
+                            ]}
+                        />
                         <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{maintenances.length} รายการ</div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/auth/useAuth.js';
 import { useDocuments } from '../../services/documents/documentsQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import DocumentDetailModal from '../../components/documents/DocumentDetailModal.jsx';
 import DocumentFormModal from '../../components/documents/DocumentFormModal.jsx';
@@ -53,12 +54,6 @@ export default function DocumentsPage() {
         color: 'var(--on-primary)',
         border: '1px solid var(--primary-color)',
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
-    };
-
-    const selectStyle = {
-        backgroundColor: 'var(--surface-soft)',
-        color: 'var(--page-text)',
-        border: '1px solid var(--surface-border)',
     };
 
     function handleSaved() {
@@ -138,18 +133,27 @@ export default function DocumentsPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <select aria-label="กรองตามประเภทเอกสาร" value={documentType} onChange={(e) => setDocumentType(e.target.value)} className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)" style={selectStyle}>
-                            <option value="">ทุกประเภทเอกสาร</option>
-                            {Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => (
-                                <option key={type} value={type}>{m.label}</option>
-                            ))}
-                        </select>
-                        <select aria-label="กรองตามสถานะเอกสาร" value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)" style={selectStyle}>
-                            <option value="">ทุกสถานะ</option>
-                            <option value="expired">หมดอายุแล้ว</option>
-                            <option value="expiring">ใกล้หมดอายุ (30 วัน)</option>
-                            <option value="valid">ปกติ</option>
-                        </select>
+                        <Select
+                            id="document-type-filter"
+                            ariaLabel="กรองตามประเภทเอกสาร"
+                            className="w-44"
+                            value={documentType}
+                            onChange={setDocumentType}
+                            options={[{ value: '', label: 'ทุกประเภทเอกสาร' }, ...Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => ({ value: type, label: m.label }))]}
+                        />
+                        <Select
+                            id="document-status-filter"
+                            ariaLabel="กรองตามสถานะเอกสาร"
+                            className="w-44"
+                            value={status}
+                            onChange={setStatus}
+                            options={[
+                                { value: '', label: 'ทุกสถานะ' },
+                                { value: 'expired', label: 'หมดอายุแล้ว' },
+                                { value: 'expiring', label: 'ใกล้หมดอายุ (30 วัน)' },
+                                { value: 'valid', label: 'ปกติ' },
+                            ]}
+                        />
                         <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{documents.length} รายการ</div>
                     </div>
                 </div>
@@ -204,10 +208,10 @@ export default function DocumentsPage() {
                                         <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{d.provider || '-'}</td>
                                         <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.last_paid_date)}</td>
                                         <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.expire_date)}</td>
-                                        <td className="px-4 py-3">
-                                            <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: rowStatus.bg, color: rowStatus.color }}>
+                                        <td className="px-4 py-3 ">
+                                            <div className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate w-full h-full justify-center" style={{ backgroundColor: rowStatus.bg, color: rowStatus.color }}>
                                                 {rowStatus.label}
-                                            </span>
+                                            </div>
                                         </td>
                                     </tr>
                                 );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../globals/Modal.jsx';
 import InfoTooltip from '../globals/InfoTooltip.jsx';
+import DatePicker from '../globals/DatePicker.jsx';
 import { useCreateDocument, useUpdateDocument } from '../../services/documents/documentsQueries.js';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 import { DOCUMENT_TYPE_META } from './documentMeta.js';
@@ -9,7 +10,8 @@ const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 const lockedStyle = { ...inputStyle, opacity: 0.7, cursor: 'not-allowed' };
 
-// mode: 'create' (เลือกรถ/ประเภทได้อิสระ), 'renew' (ต่ออายุ ล็อกรถ/ประเภทจาก renewFrom, ค่าอื่นว่างไว้ให้กรอกใหม่), 'edit' (แก้ไข record เดิม)
+// mode: 'create' (เลือกรถ/ประเภทได้อิสระ), 'renew' (ต่ออายุ ล็อกรถ/ประเภทจาก renewFrom, ค่าอื่นว่างไว้ให้กรอกใหม่),
+// 'add' (เพิ่มเอกสารที่ยังขาดจากหน้ารายละเอียดรถ ล็อกรถ/ประเภทเหมือน renew), 'edit' (แก้ไข record เดิม)
 export default function DocumentFormModal({ mode = 'create', document, renewFrom, onClose, onSaved }) {
     const isEdit = mode === 'edit';
     const locked = mode !== 'create';
@@ -26,7 +28,8 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
         expire_date: isEdit && document?.expire_date ? document.expire_date.slice(0, 10) : '',
         amount: isEdit ? (document?.amount ?? '') : '',
     });
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     const createDocument = useCreateDocument();
     const updateDocument = useUpdateDocument();
@@ -36,11 +39,30 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
 
     function handleChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
+        setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+    }
+
+    function validate() {
+        const nextErrors = {};
+        if (!locked) {
+            if (!form.vehicle_id) nextErrors.vehicle_id = 'กรุณาเลือกรถ';
+            if (!form.document_type) nextErrors.document_type = 'กรุณาเลือกประเภทเอกสาร';
+        }
+        if (meta?.hasProvider && !form.provider.trim()) nextErrors.provider = 'กรุณากรอกบริษัทประกัน';
+        if (!form.last_paid_date) nextErrors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
+        if (!form.expire_date) nextErrors.expire_date = 'กรุณาเลือกวันหมดอายุ';
+        else if (form.last_paid_date && form.expire_date <= form.last_paid_date) nextErrors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
+        if (meta?.hasAmount && !String(form.amount).trim()) nextErrors.amount = `กรุณากรอก${meta.amountLabel}`;
+        return nextErrors;
     }
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setError(null);
+        setFormError(null);
+
+        const nextErrors = validate();
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
 
         try {
             const payload = {
@@ -66,7 +88,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
             const successMessage = isEdit ? 'แก้ไขข้อมูลเอกสารเรียบร้อย' : 'บันทึกเอกสารเรียบร้อย';
             onSaved?.(saved, successMessage);
         } catch (err) {
-            setError(err.message);
+            setFormError(err.message);
         }
     }
 
@@ -74,9 +96,9 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
 
     return (
         <Modal title={title} onClose={onClose}>
-            <form onSubmit={handleSubmit} className="space-y-4 p-5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
                 {mode === 'renew' && (
-                    <p className="rounded-xl px-3 py-2 text-xs" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)' }}>
+                    <p className="rounded-xl px-3 py-2 text-xs" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}>
                         การต่ออายุจะบันทึกเป็นรายการใหม่ และเก็บประวัติเอกสารเดิมไว้ให้ครบ
                     </p>
                 )}
@@ -90,11 +112,10 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                     ) : (
                         <select
                             id="document-vehicle"
-                            required
                             value={form.vehicle_id}
                             onChange={(e) => handleChange('vehicle_id', e.target.value)}
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            style={{ ...inputStyle, borderColor: errors.vehicle_id ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         >
                             <option value="" disabled>เลือกรถ</option>
                             {vehicles.map((v) => (
@@ -102,6 +123,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                             ))}
                         </select>
                     )}
+                    {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
                 </div>
 
                 <div>
@@ -113,11 +135,10 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                     ) : (
                         <select
                             id="document-type"
-                            required
                             value={form.document_type}
                             onChange={(e) => handleChange('document_type', e.target.value)}
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            style={{ ...inputStyle, borderColor: errors.document_type ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         >
                             <option value="" disabled>เลือกประเภทเอกสาร</option>
                             {Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => (
@@ -125,6 +146,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                             ))}
                         </select>
                     )}
+                    {errors.document_type && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.document_type}</p>}
                 </div>
 
                 {meta?.hasProvider && (
@@ -132,42 +154,39 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         <label htmlFor="document-provider" className="mb-1.5 block text-xs font-medium" style={labelStyle}>บริษัทประกัน</label>
                         <input
                             id="document-provider"
-                            required
                             value={form.provider}
                             onChange={(e) => handleChange('provider', e.target.value)}
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            style={{ ...inputStyle, borderColor: errors.provider ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         />
+                        {errors.provider && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.provider}</p>}
                     </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                         <label htmlFor="document-last-paid-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ชำระล่าสุด</label>
-                        <input
+                        <DatePicker
                             id="document-last-paid-date"
-                            required
-                            type="date"
                             value={form.last_paid_date}
-                            onChange={(e) => handleChange('last_paid_date', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            onChange={(value) => handleChange('last_paid_date', value)}
+                            error={Boolean(errors.last_paid_date)}
                         />
+                        {errors.last_paid_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.last_paid_date}</p>}
                     </div>
                     <div>
                         <label htmlFor="document-expire-date" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
                             วันหมดอายุ
                             <InfoTooltip text="ต้องอยู่หลังวันที่ชำระล่าสุด" />
                         </label>
-                        <input
+                        <DatePicker
                             id="document-expire-date"
-                            required
-                            type="date"
                             value={form.expire_date}
-                            onChange={(e) => handleChange('expire_date', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            onChange={(value) => handleChange('expire_date', value)}
+                            min={form.last_paid_date || undefined}
+                            error={Boolean(errors.expire_date)}
                         />
+                        {errors.expire_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.expire_date}</p>}
                     </div>
                 </div>
 
@@ -176,19 +195,19 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         <label htmlFor="document-amount" className="mb-1.5 block text-xs font-medium" style={labelStyle}>{meta.amountLabel}</label>
                         <input
                             id="document-amount"
-                            required
                             type="number"
                             min="0"
                             step="0.01"
                             value={form.amount}
                             onChange={(e) => handleChange('amount', e.target.value)}
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
+                            style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         />
+                        {errors.amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.amount}</p>}
                     </div>
                 )}
 
-                {error && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+                {formError && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError}</p>}
 
                 <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
                     <button

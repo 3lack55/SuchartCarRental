@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import Modal from '../globals/Modal.jsx';
 import InfoTooltip from '../globals/InfoTooltip.jsx';
+import Select from '../globals/Select.jsx';
+import DatePicker from '../globals/DatePicker.jsx';
+import TimePicker from '../globals/TimePicker.jsx';
 import { useCreateViolation, useUpdateViolation } from '../../services/violations/violationsQueries.js';
 import { useViolationReasons } from '../../services/lookups/lookupQueries.js';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
@@ -8,11 +11,14 @@ import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 
 const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
+const errorInputStyle = { ...inputStyle, borderColor: 'var(--status-danger)' };
 
-// แปลง "2026-06-10 14:23:00" (จาก backend) เป็น "2026-06-10T14:23" (สำหรับ input type=datetime-local)
-function toDatetimeLocalValue(value) {
-    if (!value) return '';
-    return value.replace(' ', 'T').slice(0, 16);
+// แยก "2026-06-10 14:23:00" (จาก backend) เป็นวันที่ ("2026-06-10" ให้ DatePicker) กับเวลา ("14:23" ให้ TimePicker)
+// เก็บเป็น field แยกกันในฟอร์ม ไม่รวมเป็น string เดียว เพื่อให้เลือกเวลาก่อนเลือกวันที่ได้โดยค่าไม่หาย
+function splitIncidentDatetime(value) {
+    if (!value) return { date: '', time: '' };
+    const [date = '', time = ''] = value.replace(' ', 'T').slice(0, 16).split('T');
+    return { date, time };
 }
 
 // violation: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
@@ -29,15 +35,18 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
     const loadingOptions = reasonsQuery.isLoading || driversQuery.isLoading || vehiclesQuery.isLoading;
     const optionsError = reasonsQuery.error || driversQuery.error || vehiclesQuery.error;
 
+    const { date: initialIncidentDate, time: initialIncidentTime } = splitIncidentDatetime(violation?.incident_datetime);
     const [form, setForm] = useState({
-        driver_id: violation?.driver_id ?? '',
-        vehicle_id: violation?.vehicle_id ?? '',
-        reason_id: violation?.reason_id ?? '',
-        incident_datetime: toDatetimeLocalValue(violation?.incident_datetime),
+        driver_id: violation?.driver_id ? String(violation.driver_id) : '',
+        vehicle_id: violation?.vehicle_id ? String(violation.vehicle_id) : '',
+        reason_id: violation?.reason_id ? String(violation.reason_id) : '',
+        incident_date: initialIncidentDate,
+        incident_time: initialIncidentTime,
         fine: violation?.fine ?? '',
         is_paid: violation?.is_paid === 1 || violation?.is_paid === true,
     });
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     const createViolation = useCreateViolation();
     const updateViolation = useUpdateViolation();
@@ -45,6 +54,9 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
 
     function handleChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
+        // incident_date/incident_time ใช้ error message ร่วมกันตัวเดียว (incident_datetime) เพราะโชว์เป็นฟิลด์เดียวในสายตาผู้ใช้
+        const errorKey = field === 'incident_date' || field === 'incident_time' ? 'incident_datetime' : field;
+        setErrors((prev) => (prev[errorKey] ? { ...prev, [errorKey]: undefined } : prev));
     }
 
     // เลือกคนขับแล้วเติมรถที่คนขับดูแลอยู่ให้อัตโนมัติ: มีคันเดียวก็เลือกให้เลย มีหลายคันก็ปล่อยให้เลือกเอง
@@ -55,6 +67,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
             driver_id: value,
             vehicle_id: driverVehicles.length === 1 ? String(driverVehicles[0].vehicle_id) : '',
         }));
+        setErrors((prev) => ({ ...prev, driver_id: undefined, vehicle_id: undefined }));
     }
 
     const driverVehicles = form.driver_id ? vehicles.filter((v) => v.driver?.driver_id === Number(form.driver_id)) : [];
@@ -64,16 +77,30 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
         if (currentVehicle) vehicleOptions = [...vehicleOptions, currentVehicle];
     }
 
+    function validate() {
+        const nextErrors = {};
+        if (!form.driver_id) nextErrors.driver_id = 'กรุณาเลือกคนขับ';
+        if (!form.vehicle_id) nextErrors.vehicle_id = 'กรุณาเลือกรถ';
+        if (!form.reason_id) nextErrors.reason_id = 'กรุณาเลือกสาเหตุ';
+        if (!form.incident_date || !form.incident_time) nextErrors.incident_datetime = 'กรุณาระบุวันที่และเวลา';
+        if (!String(form.fine).trim()) nextErrors.fine = 'กรุณากรอกค่าปรับ';
+        return nextErrors;
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
-        setError(null);
+        setFormError(null);
+
+        const nextErrors = validate();
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
 
         try {
             const payload = {
                 driver_id: Number(form.driver_id),
                 vehicle_id: Number(form.vehicle_id),
                 reason_id: Number(form.reason_id),
-                incident_datetime: form.incident_datetime,
+                incident_datetime: `${form.incident_date}T${form.incident_time}`,
                 fine: Number(form.fine),
                 is_paid: form.is_paid,
             };
@@ -84,7 +111,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
             const successMessage = isEdit ? 'แก้ไขข้อมูลใบสั่งเรียบร้อย' : 'บันทึกใบสั่งเรียบร้อย';
             onSaved?.(saved, successMessage);
         } catch (err) {
-            setError(err.message);
+            setFormError(err.message);
         }
     }
 
@@ -93,22 +120,18 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
             {loadingOptions ? (
                 <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4 p-5">
+                <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
                     <div>
                         <label htmlFor="violation-driver" className="mb-1.5 block text-xs font-medium" style={labelStyle}>คนขับ</label>
-                        <select
+                        <Select
                             id="violation-driver"
-                            required
                             value={form.driver_id}
-                            onChange={(e) => handleDriverChange(e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
-                        >
-                            <option value="" disabled>เลือกคนขับ</option>
-                            {drivers.map((d) => (
-                                <option key={d.driver_id} value={d.driver_id}>{d.prefix}{d.first_name} {d.last_name}</option>
-                            ))}
-                        </select>
+                            onChange={handleDriverChange}
+                            placeholder="เลือกคนขับ"
+                            error={Boolean(errors.driver_id)}
+                            options={drivers.map((d) => ({ value: String(d.driver_id), label: `${d.prefix}${d.first_name} ${d.last_name}` }))}
+                        />
+                        {errors.driver_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.driver_id}</p>}
                     </div>
 
                     <div>
@@ -116,69 +139,68 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                             รถ
                             <InfoTooltip text="เลือกคนขับก่อน ระบบจะเติมรถที่คนขับคนนั้นดูแลให้อัตโนมัติ ถ้าดูแลหลายคันจะให้เลือกเอง" />
                         </label>
-                        <select
+                        <Select
                             id="violation-vehicle"
-                            required
                             value={form.vehicle_id}
-                            onChange={(e) => handleChange('vehicle_id', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
-                        >
-                            <option value="" disabled>เลือกรถ</option>
-                            {vehicleOptions.map((v) => (
-                                <option key={v.vehicle_id} value={v.vehicle_id}>{v.plate_number} · {v.plate_province}{v.brand_model ? ` (${v.brand_model})` : ''}</option>
-                            ))}
-                        </select>
+                            onChange={(value) => handleChange('vehicle_id', value)}
+                            placeholder="เลือกรถ"
+                            error={Boolean(errors.vehicle_id)}
+                            options={vehicleOptions.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
+                        />
+                        {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
                     </div>
 
                     <div>
                         <label htmlFor="violation-reason" className="mb-1.5 block text-xs font-medium" style={labelStyle}>สาเหตุ</label>
-                        <select
+                        <Select
                             id="violation-reason"
-                            required
                             value={form.reason_id}
-                            onChange={(e) => handleChange('reason_id', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={inputStyle}
-                        >
-                            <option value="" disabled>เลือกสาเหตุ</option>
-                            {reasons.map((r) => (
-                                <option key={r.reason_id} value={r.reason_id}>{r.reason_name}</option>
-                            ))}
-                        </select>
+                            onChange={(value) => handleChange('reason_id', value)}
+                            placeholder="เลือกสาเหตุ"
+                            error={Boolean(errors.reason_id)}
+                            options={reasons.map((r) => ({ value: String(r.reason_id), label: r.reason_name }))}
+                        />
+                        {errors.reason_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.reason_id}</p>}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                            <label htmlFor="violation-datetime" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                                วันที่และเวลาที่เกิดเหตุ
-                                <InfoTooltip text="วันเวลาที่เกิดการฝ่าฝืน ตามที่ระบุในใบสั่ง" />
-                            </label>
-                            <input
-                                id="violation-datetime"
-                                required
-                                type="datetime-local"
-                                value={form.incident_datetime}
-                                onChange={(e) => handleChange('incident_datetime', e.target.value)}
-                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                style={inputStyle}
+                    <div>
+                        <label htmlFor="violation-date" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                            วันที่และเวลาที่เกิดเหตุ
+                            <InfoTooltip text="วันเวลาที่เกิดการฝ่าฝืน ตามที่ระบุในใบสั่ง" />
+                        </label>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <DatePicker
+                                    id="violation-date"
+                                    value={form.incident_date}
+                                    onChange={(value) => handleChange('incident_date', value)}
+                                    error={Boolean(errors.incident_datetime)}
+                                />
+                            </div>
+                            <TimePicker
+                                id="violation-time"
+                                className="w-28"
+                                value={form.incident_time}
+                                onChange={(value) => handleChange('incident_time', value)}
+                                error={Boolean(errors.incident_datetime)}
                             />
                         </div>
+                        {errors.incident_datetime && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.incident_datetime}</p>}
+                    </div>
 
-                        <div>
-                            <label htmlFor="violation-fine" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ค่าปรับ (บาท)</label>
-                            <input
-                                id="violation-fine"
-                                required
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={form.fine}
-                                onChange={(e) => handleChange('fine', e.target.value)}
-                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                                style={inputStyle}
-                            />
-                        </div>
+                    <div>
+                        <label htmlFor="violation-fine" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ค่าปรับ (บาท)</label>
+                        <input
+                            id="violation-fine"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.fine}
+                            onChange={(e) => handleChange('fine', e.target.value)}
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                            style={errors.fine ? errorInputStyle : inputStyle}
+                        />
+                        {errors.fine && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.fine}</p>}
                     </div>
 
                     <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -186,12 +208,13 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                             type="checkbox"
                             checked={form.is_paid}
                             onChange={(e) => handleChange('is_paid', e.target.checked)}
+                            style={{ accentColor: 'var(--primary-color)' }}
                         />
                         จ่ายค่าปรับแล้ว
                     </label>
 
-                    {(error || optionsError) && (
-                        <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
+                    {(formError || optionsError) && (
+                        <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError || optionsError.message}</p>
                     )}
 
                     <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>

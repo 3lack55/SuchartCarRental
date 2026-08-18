@@ -1,7 +1,8 @@
-import { useState } from "react";
-import Modal from '../globals/Modal.jsx';
+import { useId, useState } from "react";
+import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx'
 import InfoTooltip from '../globals/InfoTooltip.jsx';
+import PlateBadge from '../globals/PlateBadge.jsx';
 import { useDeleteMaintenance, useMaintenance } from "../../services/maintenances/maintenancesQueries.js";
 
 function formatDate(value) {
@@ -11,6 +12,8 @@ function formatDate(value) {
 
 export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit, onDeleted }) {
     const [showConfirm, setShowConfirm] = useState(false);
+    const titleId = useId();
+    const panelRef = useModalA11y(onClose);
 
     const { data, isLoading, error: queryError } = useMaintenance(maintenanceId);
     const maintenance = data?.data ?? null;
@@ -31,105 +34,138 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
     }
 
     return (
-        <Modal
-            title={loading ? 'กำลังโหลด...' : `ใบซ่อม #${maintenanceId}`}
-            onClose={onClose}
-            maxWidth="max-w-xl"
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            {loading && (
-                <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
-            )}
+            <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                tabIndex={-1}
+                className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border shadow-xl outline-none"
+                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}
+            >
+                {loading && (
+                    <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
+                )}
 
-            {error && (
-                <div className="p-6">
-                    <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
-                </div>
-            )}
-
-            {!loading && !error && maintenance && (
-                <>
-                    <div className="grid grid-cols-1 gap-3 border-b p-5 text-sm sm:grid-cols-2" style={{ borderColor: 'var(--surface-border)' }}>
-                        <div>
-                            <p style={{ color: 'var(--sub-text)' }}>รถ</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.plate_number} · {maintenance.plate_province}</p>
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--sub-text)' }}>วันที่ซ่อม</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(maintenance.service_date)}</p>
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--sub-text)' }}>ศูนย์/อู่</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
-                                {maintenance.garage_name}
-                                <span className="ml-1.5 text-xs" style={{ color: 'var(--icon-muted)' }}>
-                                    ({maintenance.garage_type === 'center' ? 'ศูนย์บริการ' : 'อู่ทั่วไป'})
-                                </span>
-                            </p>
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--sub-text)' }}>เลขที่ใบเสร็จ</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number || '-'}</p>
-                        </div>
-                        <div>
-                            <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
-                                เลขไมล์
-                                <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
-                            </p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
-                        </div>
-                        <div>
-                            <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
-                                นัดครั้งถัดไป
-                                <InfoTooltip text="ระยะทาง (กม.) ที่แนะนำให้นำรถเข้าซ่อมบำรุงครั้งถัดไป" />
-                            </p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
-                                {maintenance.next_service_mileage ? `${Number(maintenance.next_service_mileage).toLocaleString()} กม.` : '-'}
-                            </p>
-                        </div>
+                {error && (
+                    <div className="p-6">
+                        <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
+                        <button onClick={onClose} className="mt-4 cursor-pointer text-sm underline transition-opacity hover:opacity-70" style={{ color: 'var(--sub-text)' }}>ปิด</button>
                     </div>
+                )}
 
-                    <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                        <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รายการซ่อม</p>
-                        <ul className="space-y-2">
-                            {maintenance.items.map((item) => (
-                                <li key={item.detail_id} className="flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
-                                    <div>
-                                        <p style={{ color: 'var(--page-text)' }}>{item.service_item_name}</p>
-                                        <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
-                                            {item.service_type_name} · {item.service_category_name} · {item.quantity} x ฿{Number(item.unit_price).toLocaleString()}
-                                        </p>
-                                        {item.remark && <p className="mt-0.5 text-xs" style={{ color: 'var(--sub-text)' }}>หมายเหตุ: {item.remark}</p>}
-                                    </div>
-                                    <span style={{ color: 'var(--page-text)' }}>฿{Number(item.line_total).toLocaleString()}</span>
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="mt-3 flex justify-end text-sm">
-                            <span style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด: </span>
-                            <span className="ml-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>฿{Number(maintenance.total_cost).toLocaleString()}</span>
+                {!loading && !error && maintenance && (
+                    <>
+                        <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+                            <div className="flex items-center gap-3">
+                                <PlateBadge plateNumber={maintenance.plate_number} plateProvince={maintenance.plate_province} />
+                                <div>
+                                    <p id={titleId} className="font-semibold" style={{ color: 'var(--page-text)' }}>{formatDate(maintenance.service_date)}</p>
+                                    <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
+                                        {maintenance.garage_name}
+                                        <span className="ml-1.5 text-xs" style={{ color: 'var(--icon-muted)' }}>
+                                            ({maintenance.garage_type === 'center' ? 'ศูนย์บริการ' : 'อู่ทั่วไป'})
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                aria-label="ปิด"
+                                className="cursor-pointer rounded-lg p-1.5 transition-colors"
+                                style={{ color: 'var(--icon-muted)', backgroundColor: 'transparent' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-soft)'; e.currentTarget.style.color = 'var(--page-text)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--icon-muted)'; }}
+                            >
+                                ✕
+                            </button>
                         </div>
-                    </div>
 
-                    <div className="flex gap-2 p-5">
-                        <button
-                            onClick={() => onEdit(maintenance)}
-                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
-                            style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
-                        >
-                            แก้ไข
-                        </button>
-                        <button
-                            onClick={() => setShowConfirm(true)}
-                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
-                            style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
-                        >
-                            ลบ
-                        </button>
-                    </div>
+                        <div className="grid grid-cols-2 gap-3 border-b p-5 text-sm sm:grid-cols-3" style={{ borderColor: 'var(--surface-border)' }}>
+                            <div>
+                                <p style={{ color: 'var(--sub-text)' }}>เลขที่ใบเสร็จ</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                    เลขไมล์
+                                    <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
+                                </p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
+                            </div>
+                            <div>
+                                <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                    นัดครั้งถัดไป
+                                    <InfoTooltip text="ระยะทาง (กม.) ที่แนะนำให้นำรถเข้าซ่อมบำรุงครั้งถัดไป" />
+                                </p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
+                                    {maintenance.next_service_mileage ? `${Number(maintenance.next_service_mileage).toLocaleString()} กม.` : '-'}
+                                </p>
+                            </div>
+                        </div>
 
-                    {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}
-                </>
-            )}
+                        <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
+                            <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รายการซ่อม</p>
+                            <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--surface-border)' }}>
+                                <table className="w-full min-w-120 text-sm" style={{ color: 'var(--page-text)' }}>
+                                    <thead>
+                                        <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
+                                            <th className="px-3 py-2 text-left font-medium">รายการ</th>
+                                            <th className="px-3 py-2 text-right font-medium">จำนวน</th>
+                                            <th className="px-3 py-2 text-right font-medium">ราคา/หน่วย</th>
+                                            <th className="px-3 py-2 text-right font-medium">รวม</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {maintenance.items.map((item) => (
+                                            <tr key={item.detail_id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                                                <td className="px-3 py-2.5 align-top">
+                                                    <p style={{ color: 'var(--page-text)' }}>{item.service_item_name}</p>
+                                                    <p className="text-xs" style={{ color: 'var(--sub-text)' }}>{item.service_type_name} · {item.service_category_name}</p>
+                                                    {item.remark && <p className="mt-0.5 text-xs" style={{ color: 'var(--sub-text)' }}>หมายเหตุ: {item.remark}</p>}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>{item.quantity}</td>
+                                                <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>฿{Number(item.unit_price).toLocaleString()}</td>
+                                                <td className="px-3 py-2.5 text-right align-top font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(item.line_total).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colSpan={3} className="px-3 py-2.5 text-right" style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด</td>
+                                            <td className="px-3 py-2.5 text-right font-semibold" style={{ color: 'var(--page-text)' }}>฿{Number(maintenance.total_cost).toLocaleString()}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 p-5">
+                            <button
+                                onClick={() => onEdit(maintenance)}
+                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
+                            >
+                                แก้ไข
+                            </button>
+                            <button
+                                onClick={() => setShowConfirm(true)}
+                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                            >
+                                ลบ
+                            </button>
+                        </div>
+
+                        {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}
+                    </>
+                )}
+            </div>
 
             {showConfirm && (
                 <ConfirmDialog
@@ -141,6 +177,6 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                     onCancel={() => setShowConfirm(false)}
                 />
             )}
-        </Modal>
+        </div>
     );
 }

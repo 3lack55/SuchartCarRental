@@ -1,8 +1,10 @@
 import { useId, useState } from 'react';
-import { useDeleteVehicle, useVehicle } from '../../services/vehicles/vehiclesQueries.js';
+import { useDeleteVehicle, useRestoreVehicle, useVehicle } from '../../services/vehicles/vehiclesQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
+import DocumentFormModal from '../documents/DocumentFormModal.jsx';
+import { DOCUMENT_TYPE_META } from '../documents/documentMeta.js';
 import { formatPhone } from '../../utils/phone.js';
 
 const DOCUMENT_LABELS = {
@@ -25,6 +27,8 @@ function documentStatusStyle(daysRemaining) {
 
 export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDeleted }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // ประเภทเอกสารที่กำลังเพิ่มอยู่ (จากปุ่ม "+ เพิ่ม" ของเอกสารที่ยังขาด) หรือ null ถ้าไม่ได้เปิดฟอร์ม
+  const [addDocType, setAddDocType] = useState(null);
   const { user } = useAuth();
   const titleId = useId();
   const panelRef = useModalA11y(onClose);
@@ -32,12 +36,14 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
   const { data, isLoading, error: queryError } = useVehicle(vehicleId);
   const vehicle = data?.data ?? data ?? null;
   const deleteVehicle = useDeleteVehicle();
+  const restoreVehicle = useRestoreVehicle();
 
   const loading = isLoading;
   const error = !user?.token
     ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน'
-    : queryError?.message || deleteVehicle.error?.message || null;
+    : queryError?.message || deleteVehicle.error?.message || restoreVehicle.error?.message || null;
   const deleting = deleteVehicle.isPending;
+  const restoring = restoreVehicle.isPending;
 
   async function handleDelete() {
     if (!user?.token || !vehicleId) return;
@@ -52,6 +58,20 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
       setConfirmOpen(false);
     }
   }
+
+  async function handleRestore() {
+    if (!user?.token || !vehicleId) return;
+
+    try {
+      await restoreVehicle.mutateAsync(vehicleId);
+    } catch {
+      // error is surfaced via restoreVehicle.error
+    }
+  }
+
+  const missingDocumentTypes = vehicle
+    ? Object.keys(DOCUMENT_TYPE_META).filter((type) => !vehicle.documents.some((d) => d.document_type === type))
+    : [];
 
   return (
     <div
@@ -94,7 +114,15 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
           <>
             <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
               <div>
-                <p id={titleId} className="font-semibold" style={{ color: 'var(--page-text)' }}>{vehicle.plate_number} · {vehicle.plate_province}</p>
+                <div className="flex items-center gap-2">
+                  <p id={titleId} className="font-semibold" style={{ color: 'var(--page-text)' }}>{vehicle.plate_number} · {vehicle.plate_province}</p>
+                  <span
+                    className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    style={vehicle.deleted ? { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', opacity: 0.75 } : { backgroundColor: 'var(--status-success-soft)', color: 'var(--status-success)' }}
+                  >
+                    {vehicle.deleted ? 'ปลดระวาง' : 'ใช้งานอยู่'}
+                  </span>
+                </div>
                 <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
                   {vehicle.brand_model || 'ไม่ระบุรุ่น'}{vehicle.type ? ` · ${vehicle.type.type_name}` : ''}
                 </p>
@@ -130,7 +158,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
 
             <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
               <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ภาษี พรบ. และประกัน</p>
-              {vehicle.documents.length === 0 ? (
+              {vehicle.documents.length === 0 && missingDocumentTypes.length === 0 ? (
                 <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีข้อมูลเอกสาร</p>
               ) : (
                 <ul className="space-y-2">
@@ -152,6 +180,27 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                       </li>
                     );
                   })}
+                  {/* เอกสารที่ยังไม่มี: เพิ่มได้จากตรงนี้เลยแทนที่จะต้องไปหน้าเอกสารแล้วค้นหารถคันนี้ใหม่ */}
+                  {missingDocumentTypes.map((type) => (
+                    <li
+                      key={type}
+                      className="flex items-center justify-between rounded-xl border border-dashed px-3 py-2 text-sm"
+                      style={{ borderColor: 'var(--surface-border)' }}
+                    >
+                      <div>
+                        <p style={{ color: 'var(--page-text)' }}>{DOCUMENT_TYPE_META[type].label}</p>
+                        <p className="text-xs" style={{ color: 'var(--status-danger)' }}>ยังไม่มีข้อมูล</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAddDocType(type)}
+                        className="cursor-pointer rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}
+                      >
+                        + เพิ่ม
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
@@ -185,18 +234,43 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
               >
                 แก้ไข
               </button>
-              <button
-                onClick={() => setConfirmOpen(true)}
-                disabled={deleting}
-                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
-              >
-                {deleting ? 'กำลังลบ...' : 'ลบ'}
-              </button>
+              {vehicle.deleted ? (
+                <button
+                  onClick={handleRestore}
+                  disabled={restoring}
+                  className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
+                >
+                  {restoring ? 'กำลังกู้คืน...' : 'กู้คืนรถ'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={deleting}
+                  className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                >
+                  {deleting ? 'กำลังลบ...' : 'ลบ'}
+                </button>
+              )}
             </div>
           </>
         )}
       </div>
+
+      {addDocType && vehicle && (
+        <DocumentFormModal
+          mode="add"
+          renewFrom={{
+            vehicle_id: vehicle.vehicle_id,
+            plate_number: vehicle.plate_number,
+            plate_province: vehicle.plate_province,
+            document_type: addDocType,
+          }}
+          onClose={() => setAddDocType(null)}
+          onSaved={() => setAddDocType(null)}
+        />
+      )}
     </div>
   );
 }

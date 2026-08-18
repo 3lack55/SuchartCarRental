@@ -17,7 +17,7 @@ export default function Topbar({ onOpenMobileNav }) {
   const title = pageTitles[location.pathname] || '';
 
   return (
-    <header className={`w-full h-16 flex items-center justify-between gap-3 border-b pl-4 pr-4`} style={{ backgroundColor: 'var(--page-bg)', borderColor: 'var(--surface-border)' }}>
+    <header className={`w-full h-16 flex items-center justify-between gap-3 border-b pl-4 `} style={{ backgroundColor: 'var(--page-bg)', borderColor: 'var(--surface-border)' }}>
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"

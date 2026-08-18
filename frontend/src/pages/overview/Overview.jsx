@@ -135,7 +135,7 @@ function SummaryCard({ icon, title, value, description, variant = "blue", accent
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <p className="text-sm" style={{ color: "var(--page-text)" }}>{title}</p>
-                    <p className="mt-2 text-3xl font-semibold" style={{ color: "red" }}>{value}</p>
+                    <p className="mt-2 text-3xl font-semibold" style={{color: style.valueColor}} >{value}</p>
                     <p className="mt-1 text-xs" style={{ color: "var(--page-text)", opacity: 0.75 }}>{description}</p>
                 </div>
 
@@ -246,6 +246,7 @@ export default function Overview() {
                 title: "เอกสารต้องดำเนินการ",
                 value: `${documentsTotal} รายการ`,
                 description: `${safeNumber(overview.documents_expiring_30d_total)} ใกล้หมดอายุ · ${safeNumber(overview.documents_expired_total)} หมดอายุ`,
+                variant: "red",
                 to: "/reports",
             },
         ];
@@ -357,8 +358,9 @@ export default function Overview() {
                             value={item.value}
                             description={item.description}
                             onNavigate={item.to ? () => navigate(item.to) : undefined}
+                            variant={item.variant}
                             accentColor={
-                                item.variant === "blue"
+                                item.variant === "red"
                                     ? { soft: "var(--primary-color-soft)", main: themeColor }
                                     : undefined
                             }

@@ -7,6 +7,7 @@ import {
   deleteMaintenance,
 } from './mainTenanceApi.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { invalidateFleetQueries } from '../queryInvalidation.js';
 
 export const maintenanceKeys = {
   all: ['maintenances'],
@@ -39,10 +40,9 @@ export function useCreateMaintenance() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // ใบซ่อมใหม่กระทบ "ประวัติซ่อมบำรุง" ในหน้ารายละเอียดรถ และยอดสรุปเดือนนี้ในหน้าภาพรวม
     mutationFn: (data) => createMaintenance(user?.token, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -52,10 +52,7 @@ export function useUpdateMaintenance() {
 
   return useMutation({
     mutationFn: ({ id, data }) => updateMaintenance(user?.token, id, data),
-    onSuccess: (_result, { id }) => {
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all });
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.detail(user?.token, id) });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -65,8 +62,6 @@ export function useDeleteMaintenance() {
 
   return useMutation({
     mutationFn: (id) => deleteMaintenance(user?.token, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }

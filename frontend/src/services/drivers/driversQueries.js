@@ -8,6 +8,7 @@ import {
   restoreDriver,
 } from './driversApi.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { invalidateFleetQueries } from '../queryInvalidation.js';
 
 export const driverKeys = {
   all: ['drivers'],
@@ -41,9 +42,7 @@ export function useCreateDriver() {
 
   return useMutation({
     mutationFn: (data) => createDriver(user?.token, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: driverKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -52,11 +51,9 @@ export function useUpdateDriver() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // แก้ชื่อ/เบอร์คนขับแล้ว ชื่อที่โชว์อยู่ในตารางรถ (คอลัมน์คนขับ) ก็ค้างได้เหมือนกัน จึงต้อง invalidate กว้างๆ ด้วย
     mutationFn: ({ id, data }) => updateDriver(user?.token, id, data),
-    onSuccess: (_result, { id }) => {
-      queryClient.invalidateQueries({ queryKey: driverKeys.all });
-      queryClient.invalidateQueries({ queryKey: driverKeys.detail(user?.token, id) });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -65,10 +62,9 @@ export function useDeleteDriver() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // ลบคนขับแล้ว backend จะเคลียร์ driver_id ของรถที่คนขับคนนี้ดูแลอยู่ด้วย ต้อง invalidate รายการรถตามไปด้วย
     mutationFn: (id) => deleteDriver(user?.token, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: driverKeys.all });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }
 
@@ -78,9 +74,6 @@ export function useRestoreDriver() {
 
   return useMutation({
     mutationFn: (id) => restoreDriver(user?.token, id),
-    onSuccess: (_result, id) => {
-      queryClient.invalidateQueries({ queryKey: driverKeys.all });
-      queryClient.invalidateQueries({ queryKey: driverKeys.detail(user?.token, id) });
-    },
+    onSuccess: () => invalidateFleetQueries(queryClient),
   });
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import DriverDetailModal from '../../components/driver/DriverDetailModal';
 import DriverFormModal from '../../components/driver/DriverFormModal';
 import Modal from '../../components/globals/Modal';
@@ -184,7 +185,7 @@ export default function DriversPage() {
                                     onClick={() => setSelectedDriverId(d.driver_id)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDriverId(d.driver_id); } }}
                                     tabIndex={0}
-                                    aria-label={`ดูรายละเอียดคนขับ ${d.prefix}${d.first_name} ${d.last_name}`}
+                                    aria-label={`ดูรายละเอียดคนขับ ${d.prefix}${d.first_name} ${d.last_name}${Number(d.unpaid_violations_count) > 0 ? ' มีค่าปรับค้างจ่าย' : ''}`}
                                     className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
                                     style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                 >
@@ -194,12 +195,21 @@ export default function DriversPage() {
                                                 {initials(d.first_name, d.last_name)}
                                             </div>
                                             <div>
-                                                <div className="font-semibold" style={{ color: 'var(--page-text)' }}>{d.prefix}{d.first_name} {d.last_name}</div>
+                                                <div className="flex items-center gap-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>
+                                                    {d.prefix}{d.first_name} {d.last_name}
+                                                    {Number(d.unpaid_violations_count) > 0 && (
+                                                        <span onClick={(e) => e.stopPropagation()}>
+                                                            <InfoTooltip text={`มีค่าปรับค้างจ่าย ${d.unpaid_violations_count} รายการ`} label="มีค่าปรับค้างจ่าย">
+                                                                <AlertTriangle size={16} style={{ color: 'var(--status-danger)' }} />
+                                                            </InfoTooltip>
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div style={{ color: 'var(--sub-text)', opacity: 0.75 }}>คนขับประจำ</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
                                     <td className="px-4 py-3">
                                         <span

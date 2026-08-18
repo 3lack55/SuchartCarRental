@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Modal from '../globals/Modal';
+import Select from '../globals/Select.jsx';
+import DatePicker from '../globals/DatePicker.jsx';
 import { useCreateVehicle, useUpdateVehicle } from '../../services/vehicles/vehiclesQueries.js';
 import { useProvinces, useVehicleTypes } from '../../services/lookups/lookupQueries.js';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
@@ -21,9 +23,9 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   const [form, setForm] = useState({
     brand_model: vehicle?.brand_model ?? '',
     plate_number: vehicle?.plate_number ?? '',
-    plate_province_id: vehicle?.plate_province_id ?? '',
-    type_id: vehicle?.type?.type_id ?? '',
-    driver_id: vehicle?.driver?.driver_id ?? '',
+    plate_province_id: vehicle?.plate_province_id ? String(vehicle.plate_province_id) : '',
+    type_id: vehicle?.type?.type_id ? String(vehicle.type.type_id) : '',
+    driver_id: vehicle?.driver?.driver_id ? String(vehicle.driver.driver_id) : '',
   });
 
   // เอกสารแนบตอนเพิ่มรถใหม่: กรอกได้ก็ต่อเมื่อมีข้อมูลจริง (ไม่บังคับ)
@@ -32,6 +34,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
 
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [docErrors, setDocErrors] = useState({ act: {}, tax: {}, insurance: {} });
 
   const createVehicle = useCreateVehicle();
   const updateVehicle = useUpdateVehicle();
@@ -39,15 +43,52 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
   }
 
-  function handleDocChange(setter, field, value) {
+  function handleDocChange(key, setter, field, value) {
     setter((prev) => ({ ...prev, [field]: value }));
+    setDocErrors((prev) => (prev[key][field] ? { ...prev, [key]: { ...prev[key], [field]: undefined } } : prev));
+  }
+
+  function validate() {
+    const errors = {};
+    if (!form.plate_number.trim()) errors.plate_number = 'กรุณากรอกทะเบียนรถ';
+    if (!form.plate_province_id) errors.plate_province_id = 'กรุณาเลือกจังหวัด';
+    return errors;
+  }
+
+  // เช็คเฉพาะการ์ดเอกสารที่ติ๊กเปิดไว้ (enabled) เท่านั้น การ์ดที่ปิดอยู่ไม่ต้องกรอกอะไร
+  function validateDocSection(state, { showCompany, amountField }) {
+    if (!state.enabled) return {};
+    const errors = {};
+    if (showCompany && !state.insurance_company.trim()) errors.insurance_company = 'กรุณากรอกบริษัทประกัน';
+    if (!state.last_paid_date) errors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
+    if (!state.expire_date) errors.expire_date = 'กรุณาเลือกวันหมดอายุ';
+    else if (state.last_paid_date && state.expire_date <= state.last_paid_date) errors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
+    if (amountField && !String(state[amountField.key]).trim()) errors[amountField.key] = `กรุณากรอก${amountField.label}`;
+    return errors;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+
+    const nextErrors = validate();
+    setFieldErrors(nextErrors);
+
+    let hasDocErrors = false;
+    if (!isEdit) {
+      const nextDocErrors = {
+        act: validateDocSection(act, { showCompany: true, amountField: { key: 'premium_amount', label: 'เบี้ยประกัน' } }),
+        tax: validateDocSection(tax, { showCompany: false, amountField: { key: 'fee_amount', label: 'ค่าธรรมเนียม' } }),
+        insurance: validateDocSection(insurance, { showCompany: true, amountField: null }),
+      };
+      setDocErrors(nextDocErrors);
+      hasDocErrors = Object.values(nextDocErrors).some((e) => Object.keys(e).length > 0);
+    }
+
+    if (Object.keys(nextErrors).length > 0 || hasDocErrors) return;
 
     try {
       const payload = {
@@ -89,7 +130,11 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
       const successMessage = isEdit ? 'แก้ไขข้อมูลรถเรียบร้อย' : 'เพิ่มรถเรียบร้อย';
       onSaved?.(saved, successMessage);
     } catch (err) {
-      setError(err.message);
+      if (err.message.includes('ทะเบียนรถ')) {
+        setFieldErrors((prev) => ({ ...prev, plate_number: err.message }));
+      } else {
+        setError(err.message);
+      }
     }
   }
 
@@ -116,62 +161,48 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
               <label htmlFor="vehicle-plate-number" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</label>
               <input
                 id="vehicle-plate-number"
-                required
+                aria-invalid={Boolean(fieldErrors.plate_number)}
                 value={form.plate_number}
                 onChange={(e) => handleChange('plate_number', e.target.value)}
                 placeholder="เช่น 1กข1234"
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
+                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: fieldErrors.plate_number ? 'var(--status-danger)' : 'var(--surface-border)' }}
               />
+              {fieldErrors.plate_number && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{fieldErrors.plate_number}</p>}
             </div>
             <div className="flex-1">
               <label htmlFor="vehicle-plate-province" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด</label>
-              <select
+              <Select
                 id="vehicle-plate-province"
-                required
                 value={form.plate_province_id}
-                onChange={(e) => handleChange('plate_province_id', e.target.value)}
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
-              >
-                <option value="" disabled>เลือกจังหวัด</option>
-                {provinces?.map((p) => (
-                  <option key={p.province_id} value={p.province_id}>{p.name_th}</option>
-                ))}
-              </select>
+                onChange={(value) => handleChange('plate_province_id', value)}
+                placeholder="เลือกจังหวัด"
+                error={Boolean(fieldErrors.plate_province_id)}
+                options={provinces.map((p) => ({ value: String(p.province_id), label: p.name_th }))}
+              />
+              {fieldErrors.plate_province_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{fieldErrors.plate_province_id}</p>}
             </div>
           </div>
 
-          <div>
-            <label htmlFor="vehicle-type" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทรถ</label>
-            <select
-              id="vehicle-type"
-              value={form.type_id}
-              onChange={(e) => handleChange('type_id', e.target.value)}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-              style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
-            >
-              <option value="">ไม่ระบุ</option>
-              {types.map((t) => (
-                <option key={t.type_id} value={t.type_id}>{t.type_name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="vehicle-driver" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คนขับประจำ</label>
-            <select
-              id="vehicle-driver"
-              value={form.driver_id}
-              onChange={(e) => handleChange('driver_id', e.target.value)}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-              style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
-            >
-              <option value="">ไม่มีคนขับประจำ</option>
-              {drivers.map((d) => (
-                <option key={d.driver_id} value={d.driver_id}>{d.prefix}{d.first_name} {d.last_name}</option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex-1">
+              <label htmlFor="vehicle-type" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทรถ</label>
+              <Select
+                id="vehicle-type"
+                value={form.type_id}
+                onChange={(value) => handleChange('type_id', value)}
+                options={[{ value: '', label: 'ไม่ระบุ' }, ...types.map((t) => ({ value: String(t.type_id), label: t.type_name }))]}
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="vehicle-driver" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คนขับประจำ</label>
+              <Select
+                id="vehicle-driver"
+                value={form.driver_id}
+                onChange={(value) => handleChange('driver_id', value)}
+                options={[{ value: '', label: 'ไม่มีคนขับประจำ' }, ...drivers.map((d) => ({ value: String(d.driver_id), label: `${d.prefix}${d.first_name} ${d.last_name}` }))]}
+              />
+            </div>
           </div>
 
           {!isEdit && (
@@ -182,7 +213,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 idPrefix="act"
                 title="พรบ. (ประกันภาคบังคับ)"
                 state={act}
-                onChange={(field, value) => handleDocChange(setAct, field, value)}
+                errors={docErrors.act}
+                onChange={(field, value) => handleDocChange('act', setAct, field, value)}
                 showCompany
                 amountField={{ key: 'premium_amount', label: 'เบี้ยประกัน (บาท)' }}
               />
@@ -190,14 +222,16 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 idPrefix="tax"
                 title="ภาษีรถยนต์"
                 state={tax}
-                onChange={(field, value) => handleDocChange(setTax, field, value)}
+                errors={docErrors.tax}
+                onChange={(field, value) => handleDocChange('tax', setTax, field, value)}
                 amountField={{ key: 'fee_amount', label: 'ค่าธรรมเนียม (บาท)' }}
               />
               <DocumentSection
                 idPrefix="insurance"
                 title="ประกันภาคสมัครใจ"
                 state={insurance}
-                onChange={(field, value) => handleDocChange(setInsurance, field, value)}
+                errors={docErrors.insurance}
+                onChange={(field, value) => handleDocChange('insurance', setInsurance, field, value)}
                 showCompany
               />
             </div>
@@ -234,7 +268,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 
 // การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
-function DocumentSection({ idPrefix, title, state, onChange, showCompany = false, amountField }) {
+function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCompany = false, amountField }) {
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
       <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -242,6 +276,7 @@ function DocumentSection({ idPrefix, title, state, onChange, showCompany = false
           type="checkbox"
           checked={state.enabled}
           onChange={(e) => onChange('enabled', e.target.checked)}
+          style={{ accentColor: 'var(--primary-color)' }}
         />
         {title}
       </label>
@@ -253,39 +288,36 @@ function DocumentSection({ idPrefix, title, state, onChange, showCompany = false
               <label htmlFor={`${idPrefix}-company`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
               <input
                 id={`${idPrefix}-company`}
-                required
                 value={state.insurance_company}
                 onChange={(e) => onChange('insurance_company', e.target.value)}
                 className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={inputStyle}
+                style={{ ...inputStyle, borderColor: errors.insurance_company ? 'var(--status-danger)' : 'var(--surface-border)' }}
               />
+              {errors.insurance_company && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.insurance_company}</p>}
             </div>
           )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1">
               <label htmlFor={`${idPrefix}-last-paid-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</label>
-              <input
+              <DatePicker
                 id={`${idPrefix}-last-paid-date`}
-                required
-                type="date"
                 value={state.last_paid_date}
-                onChange={(e) => onChange('last_paid_date', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={inputStyle}
+                onChange={(value) => onChange('last_paid_date', value)}
+                error={Boolean(errors.last_paid_date)}
               />
+              {errors.last_paid_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.last_paid_date}</p>}
             </div>
             <div className="flex-1">
               <label htmlFor={`${idPrefix}-expire-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</label>
-              <input
+              <DatePicker
                 id={`${idPrefix}-expire-date`}
-                required
-                type="date"
                 value={state.expire_date}
-                onChange={(e) => onChange('expire_date', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={inputStyle}
+                onChange={(value) => onChange('expire_date', value)}
+                min={state.last_paid_date || undefined}
+                error={Boolean(errors.expire_date)}
               />
+              {errors.expire_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.expire_date}</p>}
             </div>
           </div>
 
@@ -294,15 +326,15 @@ function DocumentSection({ idPrefix, title, state, onChange, showCompany = false
               <label htmlFor={`${idPrefix}-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
               <input
                 id={`${idPrefix}-amount`}
-                required
                 type="number"
                 min="0"
                 step="0.01"
                 value={state[amountField.key]}
                 onChange={(e) => onChange(amountField.key, e.target.value)}
                 className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={inputStyle}
+                style={{ ...inputStyle, borderColor: errors[amountField.key] ? 'var(--status-danger)' : 'var(--surface-border)' }}
               />
+              {errors[amountField.key] && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors[amountField.key]}</p>}
             </div>
           )}
         </div>

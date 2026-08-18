@@ -98,7 +98,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                     <>
                         <div className="flex items-start justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
                             <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--primary-color)' }}>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}>
                                     {initials(driver.first_name, driver.last_name)}
                                 </div>
                                 <div>
@@ -125,107 +125,109 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 p-5 text-sm sm:grid-cols-2">
-                            <div>
-                                <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatPhone(driver.phone)}</p>
+                        <div className='p-5'>
+                            <div className="grid grid-cols-1 gap-3 pb-3 text-sm sm:grid-cols-2">
+                                <div>
+                                    <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
+                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatPhone(driver.phone)}</p>
+                                </div>
+                                <div>
+                                    <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>
+                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
-                            </div>
-                        </div>
 
-                        <div className="border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                            <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รถที่ดูแล</p>
-                            {driver.vehicles.length === 0 ? (
-                                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีรถที่ดูแลอยู่ในขณะนี้</p>
-                            ) : (
-                                <ul className="space-y-2">
-                                    {driver.vehicles.map((v) => (
-                                        <li key={v.vehicle_id}>
-                                            <button
-                                                type="button"
-                                                onClick={() => goToVehicle(v.vehicle_id)}
-                                                className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors"
-                                                style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
-                                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
-                                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--surface-border)'; }}
-                                            >
-                                                <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
-                                                <span style={{ color: 'var(--sub-text)' }}>{v.brand_model}</span>
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-
-                        <div className="border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                            <div className="mb-2 flex items-center justify-between gap-3">
-                                <p className="text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติการทำผิดกฎจราจร</p>
-                                {driver.unpaid_violations > 0 && (
-                                    <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
-                                        ค้างจ่าย {driver.unpaid_violations} รายการ
-                                    </span>
+                            <div className="border-t py-3" style={{ borderColor: 'var(--surface-border)' }}>
+                                <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รถที่ดูแล</p>
+                                {driver.vehicles.length === 0 ? (
+                                    <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีรถที่ดูแลอยู่ในขณะนี้</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {driver.vehicles.map((v) => (
+                                            <li key={v.vehicle_id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => goToVehicle(v.vehicle_id)}
+                                                    className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors"
+                                                    style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--surface-border)'; }}
+                                                >
+                                                    <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                                    <span style={{ color: 'var(--sub-text)' }}>{v.brand_model}</span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 )}
                             </div>
 
-                            {driver.violations.length === 0 ? (
-                                <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีประวัติการทำผิดกฎจราจร</p>
-                            ) : (
-                                <ul className="space-y-2">
-                                    {driver.violations.map((v) => (
-                                        <li
-                                            key={v.violation_id}
-                                            className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm"
-                                            style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
-                                        >
-                                            <div>
-                                                <p style={{ color: 'var(--page-text)' }}>{v.reason_name}</p>
-                                                <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
-                                                    {formatDateTime(v.incident_datetime)} · {v.plate_number}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p style={{ color: 'var(--page-text)' }}>฿{Number(v.fine).toLocaleString()}</p>
-                                                <span className="text-xs font-medium" style={v.is_paid ? { color: 'var(--status-success)' } : { color: 'var(--status-danger)' }}>
-                                                    {v.is_paid ? 'จ่ายแล้ว' : 'ยังไม่จ่าย'}
-                                                </span>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
+                            <div className="border-t py-3" style={{ borderColor: 'var(--surface-border)' }}>
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                    <p className="text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติการทำผิดกฎจราจร</p>
+                                    {driver.unpaid_violations > 0 && (
+                                        <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
+                                            ค้างจ่าย {driver.unpaid_violations} รายการ
+                                        </span>
+                                    )}
+                                </div>
 
-                        <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                            <button
-                                onClick={() => onEdit(driver)}
-                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
-                                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
-                            >
-                                แก้ไข
-                            </button>
-                            {driver.deleted ? (
+                                {driver.violations.length === 0 ? (
+                                    <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีประวัติการทำผิดกฎจราจร</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {driver.violations.map((v) => (
+                                            <li
+                                                key={v.violation_id}
+                                                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm"
+                                                style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}
+                                            >
+                                                <div>
+                                                    <p style={{ color: 'var(--page-text)' }}>{v.reason_name}</p>
+                                                    <p className="text-xs" style={{ color: 'var(--sub-text)' }}>
+                                                        {formatDateTime(v.incident_datetime)} · {v.plate_number}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p style={{ color: 'var(--page-text)' }}>฿{Number(v.fine).toLocaleString()}</p>
+                                                    <span className="text-xs font-medium" style={v.is_paid ? { color: 'var(--status-success)' } : { color: 'var(--status-danger)' }}>
+                                                        {v.is_paid ? 'จ่ายแล้ว' : 'ยังไม่จ่าย'}
+                                                    </span>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
                                 <button
-                                    onClick={handleRestore}
-                                    disabled={restoring}
-                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                                    style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
+                                    onClick={() => onEdit(driver)}
+                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                    style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                                 >
-                                    {restoring ? 'กำลังกู้คืน...' : 'กู้คืนคนขับ'}
+                                    แก้ไข
                                 </button>
-                            ) : (
-                                <button
-                                    onClick={() => setShowConfirm(true)}
-                                    disabled={deleting}
-                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                                    style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
-                                >
-                                    {deleting ? 'กำลังลบ...' : 'ลบ'}
-                                </button>
-                            )}
+                                {driver.deleted ? (
+                                    <button
+                                        onClick={handleRestore}
+                                        disabled={restoring}
+                                        className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                        style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
+                                    >
+                                        {restoring ? 'กำลังกู้คืน...' : 'กู้คืนคนขับ'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowConfirm(true)}
+                                        disabled={deleting}
+                                        className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                        style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                                    >
+                                        {deleting ? 'กำลังลบ...' : 'ลบ'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}

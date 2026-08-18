@@ -9,11 +9,19 @@ export async function listVehicles({ search, includeInactive } = {}) {
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted,
         p.name_th AS plate_province,
         t.type_name,
-        d.driver_id, d.prefix, d.first_name, d.last_name
+        d.driver_id, d.prefix, d.first_name, d.last_name,
+        (COALESCE(doc_stats.doc_count, 0) < 3 OR COALESCE(doc_stats.expired_count, 0) > 0) AS documents_incomplete
     FROM vehicles v
     JOIN provinces p ON p.province_id = v.plate_province_id
     LEFT JOIN vehicle_type t ON t.type_id = v.type_id
     LEFT JOIN drivers d ON d.driver_id = v.driver_id
+    LEFT JOIN (
+        SELECT vehicle_id,
+            COUNT(*) AS doc_count,
+            SUM(CASE WHEN days_remaining < 0 THEN 1 ELSE 0 END) AS expired_count
+        FROM view_current_documents
+        GROUP BY vehicle_id
+    ) doc_stats ON doc_stats.vehicle_id = v.vehicle_id
     WHERE 1 = 1
   `;
     const params = [];
@@ -39,6 +47,7 @@ export async function listVehicles({ search, includeInactive } = {}) {
         type_name: r.type_name,
         deleted: r.deleted,
         driver: r.driver_id ? { driver_id: r.driver_id, name: `${r.prefix}${r.first_name} ${r.last_name}` } : null,
+        documents_incomplete: Boolean(r.documents_incomplete),
     }));
 }
 
@@ -192,4 +201,11 @@ export async function softDeleteVehicle(vehicleId) {
   await pool.execute('UPDATE vehicles SET deleted = 1 WHERE vehicle_id = ?', [vehicleId]);
   invalidateCache(OVERVIEW_CACHE_KEY);
   return { vehicle_id: vehicleId, deleted: true };
+}
+
+export async function restoreVehicle(vehicleId) {
+  await getVehicleById(vehicleId);
+  await pool.execute('UPDATE vehicles SET deleted = 0 WHERE vehicle_id = ?', [vehicleId]);
+  invalidateCache(OVERVIEW_CACHE_KEY);
+  return { vehicle_id: vehicleId, deleted: false };
 }

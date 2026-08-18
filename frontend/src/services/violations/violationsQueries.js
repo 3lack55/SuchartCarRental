@@ -7,6 +7,7 @@ import {
     deleteViolation,
 } from './violationsApi.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { invalidateFleetQueries } from '../queryInvalidation.js';
 
 export const violationKeys = {
     all: ['violations'],
@@ -34,24 +35,14 @@ export function useViolation(id) {
     });
 }
 
-// การฝ่าฝืนกระทบทั้งรายการคนขับ/รถ (unpaid_violations) และภาพรวม จึงล้าง cache ที่เกี่ยวข้องให้หมดทุกครั้ง
-function invalidateRelated(queryClient) {
-    queryClient.invalidateQueries({ queryKey: violationKeys.all });
-    queryClient.invalidateQueries({ queryKey: ['violation'] });
-    queryClient.invalidateQueries({ queryKey: ['driver'] });
-    queryClient.invalidateQueries({ queryKey: ['drivers'] });
-    queryClient.invalidateQueries({ queryKey: ['vehicle'] });
-    queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-    queryClient.invalidateQueries({ queryKey: ['overview'] });
-}
-
 export function useCreateViolation() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
 
     return useMutation({
+        // การฝ่าฝืนกระทบทั้งรายการคนขับ/รถ (unpaid_violations) และภาพรวม จึงล้าง cache ที่เกี่ยวข้องให้หมดทุกครั้ง
         mutationFn: (data) => createViolation(user?.token, data),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }
 
@@ -61,7 +52,7 @@ export function useUpdateViolation() {
 
     return useMutation({
         mutationFn: ({ id, data }) => updateViolation(user?.token, id, data),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }
 
@@ -71,6 +62,6 @@ export function useDeleteViolation() {
 
     return useMutation({
         mutationFn: (id) => deleteViolation(user?.token, id),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }

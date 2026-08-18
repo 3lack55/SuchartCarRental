@@ -8,6 +8,7 @@ import {
     deleteDocument,
 } from './documentsApi.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { invalidateFleetQueries } from '../queryInvalidation.js';
 
 export const documentKeys = {
     all: ['documents'],
@@ -46,22 +47,14 @@ export function useDocumentHistory(documentType, vehicleId, { enabled = true } =
     });
 }
 
-// เอกสารกระทบภาพรวม (documents_expiring_30d_total ฯลฯ) จึงล้าง cache ของ overview ด้วยทุกครั้ง
-function invalidateRelated(queryClient) {
-    queryClient.invalidateQueries({ queryKey: documentKeys.all });
-    queryClient.invalidateQueries({ queryKey: ['document'] });
-    queryClient.invalidateQueries({ queryKey: ['document-history'] });
-    queryClient.invalidateQueries({ queryKey: ['vehicle'] });
-    queryClient.invalidateQueries({ queryKey: ['overview'] });
-}
-
 export function useCreateDocument() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
 
     return useMutation({
+        // เอกสารใหม่กระทบสถานะ "เอกสารไม่สมบูรณ์" ในหน้ารถ (ทั้งการ์ดสรุปและไอคอนเตือนรายแถว) และภาพรวม
         mutationFn: (data) => createDocument(user?.token, data),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }
 
@@ -71,7 +64,7 @@ export function useUpdateDocument() {
 
     return useMutation({
         mutationFn: ({ documentType, documentId, data }) => updateDocument(user?.token, documentType, documentId, data),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }
 
@@ -81,6 +74,6 @@ export function useDeleteDocument() {
 
     return useMutation({
         mutationFn: ({ documentType, documentId }) => deleteDocument(user?.token, documentType, documentId),
-        onSuccess: () => invalidateRelated(queryClient),
+        onSuccess: () => invalidateFleetQueries(queryClient),
     });
 }

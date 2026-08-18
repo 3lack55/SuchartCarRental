@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 
-export default function Modal({ title, onClose, children, maxWidth = 'max-w-lg' }) {
+export default function Modal({ title, onClose, children, maxWidth = 'max-w-2lg', maxHeight = 'max-h-[85vh]' }) {
   const titleId = useId();
   const panelRef = useModalA11y(onClose);
 
@@ -17,7 +17,7 @@ export default function Modal({ title, onClose, children, maxWidth = 'max-w-lg' 
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`w-full ${maxWidth} max-h-[85vh] overflow-y-auto rounded-2xl shadow-xl border outline-none`}
+        className={`w-full ${maxWidth} ${maxHeight} overflow-y-auto rounded-2xl shadow-xl border outline-none`}
         style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}
       >
         <div className="flex items-center justify-between border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
