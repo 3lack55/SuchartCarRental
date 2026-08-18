@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth/useAuth.js';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import PlateBadge from '../globals/PlateBadge.jsx';
+import { formatPhone } from '../../utils/phone.js';
 
 function initials(firstName, lastName) {
     return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
@@ -127,7 +128,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                         <div className="grid grid-cols-1 gap-3 p-5 text-sm sm:grid-cols-2">
                             <div>
                                 <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{driver.phone}</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatPhone(driver.phone)}</p>
                             </div>
                             <div>
                                 <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useViolations } from '../../services/violations/violationsQueries.js';
 import { useViolationReasons } from '../../services/lookups/lookupQueries.js';
@@ -15,11 +16,42 @@ function formatDateTime(value) {
     });
 }
 
+const PERIOD_OPTIONS = ['all', 'week', 'month', 'year'];
+
+// คำนวณช่วงวันที่ตามตัวเลือก: สัปดาห์นี้ (จันทร์-ปัจจุบัน), เดือนนี้ (วันที่ 1-ปัจจุบัน), ปีนี้ (1 ม.ค.-ปัจจุบัน)
+function getPeriodRange(period) {
+    const now = new Date();
+    const endOfDay = (date) => { const d = new Date(date); d.setHours(23, 59, 59, 999); return d; };
+    const startOfDay = (date) => { const d = new Date(date); d.setHours(0, 0, 0, 0); return d; };
+
+    if (period === 'week') {
+        const day = now.getDay();
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        return { start: startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday)), end: endOfDay(now) };
+    }
+    if (period === 'month') {
+        return { start: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)), end: endOfDay(now) };
+    }
+    if (period === 'year') {
+        return { start: startOfDay(new Date(now.getFullYear(), 0, 1)), end: endOfDay(now) };
+    }
+    return { start: null, end: null };
+}
+
 export default function ViolationsPage() {
+    const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
-    const [paidFilter, setPaidFilter] = useState(''); // '' | 'true' | 'false'
+    // มาจากหน้าภาพรวมพร้อมตัวกรอง เช่น ?paid=false หรือ ?period=month
+    const [paidFilter, setPaidFilter] = useState(() => {
+        const value = searchParams.get('paid');
+        return value === 'true' || value === 'false' ? value : '';
+    }); // '' | 'true' | 'false'
     const [reasonFilter, setReasonFilter] = useState('');
+    const [period, setPeriod] = useState(() => {
+        const value = searchParams.get('period');
+        return PERIOD_OPTIONS.includes(value) ? value : 'all';
+    }); // 'all' | 'week' | 'month' | 'year'
     const [selectedId, setSelectedId] = useState(null);
     const [formModal, setFormModal] = useState(null);
 
@@ -32,9 +64,18 @@ export default function ViolationsPage() {
         isPaid: paidFilter === '' ? undefined : paidFilter === 'true',
     });
     const allViolations = data?.data ?? [];
-    const violations = reasonFilter
+    const { start: periodStart, end: periodEnd } = getPeriodRange(period);
+    let violations = reasonFilter
         ? allViolations.filter((v) => String(v.reason_id) === reasonFilter)
         : allViolations;
+    if (periodStart || periodEnd) {
+        violations = violations.filter((v) => {
+            const incidentDate = new Date(v.incident_datetime);
+            if (periodStart && incidentDate < periodStart) return false;
+            if (periodEnd && incidentDate > periodEnd) return false;
+            return true;
+        });
+    }
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const unpaid = violations.filter((v) => !v.is_paid);
@@ -42,8 +83,8 @@ export default function ViolationsPage() {
 
     const stats = [
         { label: 'ทั้งหมด', value: violations.length, tone: 'primary', description: 'จำนวนใบสั่งทั้งหมดในระบบ' },
-        { label: 'ค้างจ่าย', value: unpaid.length, tone: 'muted', description: 'จำนวนใบสั่งที่ยังไม่ได้ชำระค่าปรับ' },
-        { label: 'ยอดค้างจ่าย', value: `฿${unpaidTotal.toLocaleString()}`, tone: 'success', description: 'ยอดรวมค่าปรับของใบสั่งที่ยังไม่จ่าย' },
+        { label: 'ค้างจ่าย', value: unpaid.length, tone: 'danger', description: 'จำนวนใบสั่งที่ยังไม่ได้ชำระค่าปรับ' },
+        { label: 'ยอดค้างจ่าย', value: `฿${unpaidTotal.toLocaleString()}`, tone: 'danger', description: 'ยอดรวมค่าปรับของใบสั่งที่ยังไม่จ่าย' },
     ];
 
     const buttonStyle = {
@@ -88,10 +129,10 @@ export default function ViolationsPage() {
                                 style={{
                                     color:
                                         item.tone === 'primary'
-                                            ? 'var(--primary-color)'
+                                            ? 'var(--page-text)'
                                             : item.tone === 'success'
                                                 ? 'var(--status-success)'
-                                                : 'var(--page-text)',
+                                                : 'var(--status-danger)',
                                 }}
                             >
                                 {item.value}
@@ -152,6 +193,18 @@ export default function ViolationsPage() {
                             {reasons.map((r) => (
                                 <option key={r.reason_id} value={r.reason_id}>{r.reason_name}</option>
                             ))}
+                        </select>
+                        <select
+                            aria-label="กรองตามช่วงเวลา"
+                            value={period}
+                            onChange={(e) => setPeriod(e.target.value)}
+                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                        >
+                            <option value="all">ทุกช่วงเวลา</option>
+                            <option value="week">สัปดาห์นี้</option>
+                            <option value="month">เดือนนี้</option>
+                            <option value="year">ปีนี้</option>
                         </select>
                         <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{violations.length} รายการ</div>
                     </div>

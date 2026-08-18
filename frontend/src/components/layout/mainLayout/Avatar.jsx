@@ -120,7 +120,7 @@ export default function Avatar() {
                             <div className="p-1 border-b " style={{ borderColor: "var(--surface-border)" }}>
                                 <p className="text-xs text-slate-400 px-2 py-1">สำหรับผู้ดูแลระบบ (Admin)</p>
 
-                                <Link to="/">
+                                <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
                                     <button className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-emerald-500/10 hover:text-emerald-400 rounded-lg transition-colors cursor-pointer">
                                         <Settings className="w-5 h-5" />
                                         <span>จัดการระบบ</span>

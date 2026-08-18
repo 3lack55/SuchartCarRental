@@ -3,6 +3,7 @@ import { useDeleteVehicle, useVehicle } from '../../services/vehicles/vehiclesQu
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
+import { formatPhone } from '../../utils/phone.js';
 
 const DOCUMENT_LABELS = {
   tax: 'ภาษี',
@@ -115,7 +116,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
               {vehicle.driver ? (
                 <div className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
                   <span style={{ color: 'var(--page-text)' }}>{vehicle.driver.name}</span>
-                  <span style={{ color: 'var(--sub-text)' }}>{vehicle.driver.phone}</span>
+                  <span style={{ color: 'var(--sub-text)' }}>{formatPhone(vehicle.driver.phone)}</span>
                 </div>
               ) : (
                 <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีคนขับประจำ</p>

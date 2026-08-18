@@ -9,6 +9,7 @@ import VehiclesPage from '../pages/vehicles/VehiclePage';
 import MaintenancesPage from '../pages/maintenances/MaintenancesPage';
 import ViolationsPage from '../pages/violations/ViolationsPage';
 import DocumentsPage from '../pages/documents/DocumentsPage';
+import SettingsPage from '../pages/settings/SettingsPage';
 
 export default function AppRoutes() {
   return (
@@ -24,6 +25,7 @@ export default function AppRoutes() {
         <Route path="reports" element={<DocumentsPage />} />
         <Route path="maintenance" element={<MaintenancesPage />} />
         <Route path="violations" element={<ViolationsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   );

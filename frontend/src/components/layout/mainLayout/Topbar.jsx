@@ -9,6 +9,7 @@ const pageTitles = {
   '/reports': 'พรบ ภาษี และประกัน',
   '/maintenance': 'บันทึกการซ่อมบำรุง',
   '/violations': 'บันทึกการฝ่าฝืนกฎจราจร',
+  '/settings': 'ตั้งค่าตัวเลือกในระบบ',
 };
 
 export default function Topbar({ onOpenMobileNav }) {

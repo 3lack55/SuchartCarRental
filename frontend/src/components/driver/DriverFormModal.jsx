@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../../components/globals/Modal';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import { useCreateDriver, useUpdateDriver } from '../../services/drivers/driversQueries.js';
+import { formatPhone } from '../../utils/phone.js';
 
 const PREFIX_OPTIONS = ['นาย', 'นาง', 'นางสาว'];
 
@@ -24,6 +25,11 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
 
     function handleChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
+    }
+
+    function handlePhoneChange(value) {
+        const digits = value.replace(/\D/g, '').slice(0, 10);
+        handleChange('phone', digits);
     }
 
     async function handleSubmit(e) {
@@ -94,10 +100,12 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                     <input
                         id="driver-phone"
                         required
-                        pattern="[0-9]{10}"
+                        inputMode="numeric"
+                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
                         title="เบอร์โทรต้องเป็นตัวเลข 10 หลัก"
-                        value={form.phone}
-                        onChange={(e) => handleChange('phone', e.target.value)}
+                        placeholder="081-234-5678"
+                        value={formatPhone(form.phone)}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
                         className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' }}
                     />

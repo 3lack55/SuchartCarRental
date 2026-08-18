@@ -6,6 +6,7 @@ import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import { useAuth } from '../../context/auth/useAuth';
+import { formatPhone } from '../../utils/phone.js';
 
 function initials(firstName, lastName) {
     return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
@@ -94,7 +95,7 @@ export default function DriversPage() {
                                 style={{
                                     color:
                                         item.tone === 'primary'
-                                            ? 'var(--primary-color)'
+                                            ? 'var(--page-text)'
                                             : item.tone === 'danger'
                                                 ? 'var(--status-danger)'
                                                 : 'var(--status-success)',
@@ -198,7 +199,7 @@ export default function DriversPage() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{d.phone}</td>
+                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
                                     <td className="px-4 py-3">
                                         <span

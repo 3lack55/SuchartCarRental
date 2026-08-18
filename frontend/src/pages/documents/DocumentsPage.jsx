@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useDocuments } from '../../services/documents/documentsQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
@@ -13,11 +14,21 @@ function formatDate(value) {
     return new Date(value).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const DOCUMENT_STATUS_OPTIONS = ['expired', 'expiring', 'valid'];
+
 export default function DocumentsPage() {
+    const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
-    const [documentType, setDocumentType] = useState('');
-    const [status, setStatus] = useState('');
+    // มาจากหน้าภาพรวมพร้อมตัวกรอง เช่น ?type=insurance&status=expired
+    const [documentType, setDocumentType] = useState(() => {
+        const value = searchParams.get('type');
+        return value && DOCUMENT_TYPE_META[value] ? value : '';
+    });
+    const [status, setStatus] = useState(() => {
+        const value = searchParams.get('status');
+        return DOCUMENT_STATUS_OPTIONS.includes(value) ? value : '';
+    });
     const [selected, setSelected] = useState(null); // { documentType, documentId }
     const [formModal, setFormModal] = useState(null); // { mode: 'create' | 'renew' | 'edit', renewFrom?, document? }
 

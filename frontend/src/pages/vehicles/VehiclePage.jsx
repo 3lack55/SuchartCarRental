@@ -15,6 +15,11 @@ export default function VehiclesPage() {
     const debouncedSearch = useDebouncedValue(search, 300);
     const [showInactive, setShowInactive] = useState(false);
     const [typeFilter, setTypeFilter] = useState('');
+    // เปิดหน้าพร้อมกรองคนขับ เช่น "รถไม่มีคนขับ" จากหน้าภาพรวม (?driver=with|without)
+    const [driverFilter, setDriverFilter] = useState(() => {
+        const value = searchParams.get('driver');
+        return value === 'with' || value === 'without' ? value : '';
+    });
     const [successMessage, setSuccessMessage] = useState('');
     // เปิดรายละเอียดรถอัตโนมัติเมื่อมาจากลิงก์ภายนอก เช่น "รถที่ดูแล" ในหน้าคนขับ (?open=<id>)
     const [selectedVehicleId, setSelectedVehicleId] = useState(() => {
@@ -39,7 +44,9 @@ export default function VehiclesPage() {
     const { data, isLoading, error } = useVehicles({ search: debouncedSearch, includeInactive: showInactive });
     const allVehicles = data?.data ?? [];
     const typeOptions = [...new Set(allVehicles.map((v) => v.type_name).filter(Boolean))].sort();
-    const vehicles = typeFilter ? allVehicles.filter((v) => v.type_name === typeFilter) : allVehicles;
+    let vehicles = typeFilter ? allVehicles.filter((v) => v.type_name === typeFilter) : allVehicles;
+    if (driverFilter === 'with') vehicles = vehicles.filter((v) => v.driver);
+    if (driverFilter === 'without') vehicles = vehicles.filter((v) => !v.driver);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
 
     const withDriverCount = vehicles.filter((v) => v.driver).length;
@@ -107,7 +114,7 @@ export default function VehiclesPage() {
                                 style={{
                                     color:
                                         item.tone === 'primary'
-                                            ? 'var(--primary-color)'
+                                            ? 'var(--page-text)'
                                             : item.tone === 'warning'
                                                 ? 'var(--status-warning)'
                                                 : 'var(--status-success)',
@@ -160,6 +167,17 @@ export default function VehiclesPage() {
                             {typeOptions.map((t) => (
                                 <option key={t} value={t}>{t}</option>
                             ))}
+                        </select>
+                        <select
+                            aria-label="กรองตามคนขับ"
+                            value={driverFilter}
+                            onChange={(e) => setDriverFilter(e.target.value)}
+                            className="rounded-xl px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                        >
+                            <option value="">ทุกคัน</option>
+                            <option value="with">มีคนขับประจำ</option>
+                            <option value="without">ไม่มีคนขับประจำ</option>
                         </select>
                         <button
                             type="button"

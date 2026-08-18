@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useMaintenances } from '../../services/maintenances/maintenancesQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
@@ -49,11 +50,18 @@ function getPeriodRange(period, customStart, customEnd) {
     return { start: null, end: null };
 }
 
+const PERIOD_OPTIONS = ['all', 'week', 'month', 'year', 'custom'];
+
 export default function MaintenancesPage() {
+    const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
     const [garageTypeFilter, setGarageTypeFilter] = useState('');
-    const [period, setPeriod] = useState('all'); // 'all' | 'week' | 'month' | 'year' | 'custom'
+    // มาจากหน้าภาพรวมพร้อมตัวกรอง เช่น ?period=month
+    const [period, setPeriod] = useState(() => {
+        const value = searchParams.get('period');
+        return PERIOD_OPTIONS.includes(value) ? value : 'all';
+    }); // 'all' | 'week' | 'month' | 'year' | 'custom'
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [selectedId, setSelectedId] = useState(null);
@@ -126,7 +134,7 @@ export default function MaintenancesPage() {
                                 style={{
                                     color:
                                         item.tone === 'primary'
-                                            ? 'var(--primary-color)'
+                                            ? 'var(--page-text)'
                                             : item.tone === 'success'
                                                 ? 'var(--status-success)'
                                                 : 'var(--page-text)',

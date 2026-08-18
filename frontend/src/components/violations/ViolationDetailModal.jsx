@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../globals/Modal.jsx';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import { useDeleteViolation, useUpdateViolation, useViolation } from '../../services/violations/violationsQueries.js';
+import { formatPhone } from '../../utils/phone.js';
 
 function formatDateTime(value) {
     if (!value) return '-';
@@ -79,7 +80,7 @@ export default function ViolationDetailModal({ violationId, onClose, onEdit, onD
                         </div>
                         <div>
                             <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{violation.driver_phone}</p>
+                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatPhone(violation.driver_phone)}</p>
                         </div>
                         <div>
                             <p style={{ color: 'var(--sub-text)' }}>รถ</p>
