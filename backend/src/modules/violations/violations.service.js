@@ -10,34 +10,47 @@ const VIOLATION_DETAIL_COLUMNS = `
     reason_id, reason_name
 `;
 
-export async function listViolations({ search, driverId, vehicleId, isPaid } = {}) {
-    let sql = `SELECT ${VIOLATION_DETAIL_COLUMNS} FROM view_violation_detail WHERE 1 = 1`;
+export async function listViolations({ search, driverId, vehicleId, isPaid, page, limit } = {}) {
+    let where = 'WHERE 1 = 1';
     const params = [];
 
     if (driverId) {
-        sql += ' AND driver_id = ?';
+        where += ' AND driver_id = ?';
         params.push(driverId);
     }
 
     if (vehicleId) {
-        sql += ' AND vehicle_id = ?';
+        where += ' AND vehicle_id = ?';
         params.push(vehicleId);
     }
 
     if (isPaid !== undefined) {
-        sql += ' AND is_paid = ?';
+        where += ' AND is_paid = ?';
         params.push(isPaid ? 1 : 0);
     }
 
     if (search) {
-        sql += ' AND (driver_name LIKE ? OR plate_number LIKE ? OR reason_name LIKE ?)';
+        where += ' AND (driver_name LIKE ? OR plate_number LIKE ? OR reason_name LIKE ?)';
         params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    sql += ' ORDER BY incident_datetime DESC, violation_id DESC';
+    const baseSql = `SELECT ${VIOLATION_DETAIL_COLUMNS} FROM view_violation_detail ${where} ORDER BY incident_datetime DESC, violation_id DESC`;
 
-    const [rows] = await pool.execute(sql, params);
-    return rows;
+    // ไม่ส่ง page/limit มา -> คืนทั้งหมดเหมือนพฤติกรรมเดิม (หน้าเว็บปัจจุบันแบ่งหน้าแบบ client-side)
+    // ส่งมา -> แบ่งหน้าฝั่ง server แทน สำหรับ dataset ที่โตขึ้นในอนาคต
+    if (page === undefined && limit === undefined) {
+        const [rows] = await pool.execute(baseSql, params);
+        return rows;
+    }
+
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM view_violation_detail ${where}`, params);
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(200, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const [rows] = await pool.query(`${baseSql} LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
+    return { violations: rows, total, page: safePage, limit: safeLimit };
 }
 
 export async function getViolationById(violationId) {

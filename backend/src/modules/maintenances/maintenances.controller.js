@@ -3,10 +3,12 @@ import { logActivity } from '../../utils/activityLog.js';
 
 export async function listMaintenancesController(req, res, next) {
     try {
-        const { search, vehicle_id } = req.query;
+        const { search, vehicle_id, page, limit } = req.query;
         const maintenances = await maintenancesService.listMaintenances({
             search,
             vehicleId: vehicle_id ? Number(vehicle_id) : undefined,
+            page,
+            limit,
         });
         res.json({ success: true, data: maintenances });
     } catch (err) {

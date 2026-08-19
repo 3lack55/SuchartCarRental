@@ -3,10 +3,12 @@ import { logActivity } from '../../utils/activityLog.js';
 
 export async function listVehiclesController(req, res, next) {
   try {
-    const { search, includeInactive } = req.query;
+    const { search, includeInactive, page, limit } = req.query;
     const vehicles = await vehiclesService.listVehicles({
       search,
       includeInactive: includeInactive === 'true',
+      page,
+      limit,
     });
     res.json({ success: true, data: vehicles });
   } catch (err) {

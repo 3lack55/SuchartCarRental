@@ -3,12 +3,14 @@ import { logActivity } from '../../utils/activityLog.js';
 
 export async function listViolationsController(req, res, next) {
     try {
-        const { search, driver_id, vehicle_id, is_paid } = req.query;
+        const { search, driver_id, vehicle_id, is_paid, page, limit } = req.query;
         const violations = await violationsService.listViolations({
             search,
             driverId: driver_id ? Number(driver_id) : undefined,
             vehicleId: vehicle_id ? Number(vehicle_id) : undefined,
             isPaid: is_paid === undefined ? undefined : is_paid === 'true',
+            page,
+            limit,
         });
         res.json({ success: true, data: violations });
     } catch (err) {

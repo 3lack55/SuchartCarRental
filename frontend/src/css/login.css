@@ -195,7 +195,6 @@ input:-webkit-autofill:focus {
 }
 .submit-btn:active:not(:disabled) { transform: translateY(0); filter: brightness(0.98); }
 .submit-btn:disabled {
-    background: var(--surface-strong, #9aa2a9);
     cursor: not-allowed;
     box-shadow: none;
     opacity: 0.9;

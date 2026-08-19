@@ -3,30 +3,44 @@ import { AppError } from '../../middleware/errorHandler.js';
 import { invalidateCache } from '../../config/cache.js';
 import { OVERVIEW_CACHE_KEY } from '../overview/overview.service.js';
 
-export async function listMaintenances({ search, vehicleId } = {}) {
-    let sql = `
-    SELECT maintenance_id, vehicle_id, plate_number, plate_province, model,
-        service_date, garage_name, garage_type, receipt_number,
-        mileage, next_service_mileage, total_items, total_cost
-    FROM view_maintenance_summary
-    WHERE 1 = 1
-  `;
+export async function listMaintenances({ search, vehicleId, page, limit } = {}) {
+    let where = 'WHERE 1 = 1';
     const params = [];
 
     if (vehicleId) {
-        sql += ' AND vehicle_id = ?';
+        where += ' AND vehicle_id = ?';
         params.push(vehicleId);
     }
 
     if (search) {
-        sql += ' AND (garage_name LIKE ? OR plate_number LIKE ?)';
+        where += ' AND (garage_name LIKE ? OR plate_number LIKE ?)';
         params.push(`%${search}%`, `%${search}%`);
     }
 
-    sql += ' ORDER BY service_date DESC, maintenance_id DESC';
+    const baseSql = `
+    SELECT maintenance_id, vehicle_id, plate_number, plate_province, model,
+        service_date, garage_name, garage_type, receipt_number,
+        mileage, next_service_mileage, total_items, total_cost
+    FROM view_maintenance_summary
+    ${where}
+    ORDER BY service_date DESC, maintenance_id DESC
+  `;
 
-    const [rows] = await pool.execute(sql, params);
-    return rows;
+    // ไม่ส่ง page/limit มา -> คืนทั้งหมดเหมือนพฤติกรรมเดิม (หน้าเว็บปัจจุบันแบ่งหน้าแบบ client-side)
+    // ส่งมา -> แบ่งหน้าฝั่ง server แทน สำหรับ dataset ที่โตขึ้นในอนาคต
+    if (page === undefined && limit === undefined) {
+        const [rows] = await pool.execute(baseSql, params);
+        return rows;
+    }
+
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM view_maintenance_summary ${where}`, params);
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(200, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const [rows] = await pool.query(`${baseSql} LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
+    return { maintenances: rows, total, page: safePage, limit: safeLimit };
 }
 
 export async function getMaintenanceById(maintenanceId) {

@@ -3,10 +3,12 @@ import { logActivity } from '../../utils/activityLog.js';
 
 export async function listDriversController(req, res, next) {
     try {
-        const { search, includeInactive } = req.query;
+        const { search, includeInactive, page, limit } = req.query;
         const drivers = await driversService.listDrivers({
             search,
             includeInactive: includeInactive === 'true',
+            page,
+            limit,
         });
         res.json({ success: true, data: drivers });
     } catch (err) {

@@ -3,28 +3,42 @@ import { invalidateCache } from "../../config/cache.js";
 import { AppError } from "../../middleware/errorHandler.js"
 import { OVERVIEW_CACHE_KEY } from "../overview/overview.service.js";
 
-export async function listDrivers({ search, includeInactive } = {}) {
-    let sql = `
-        SELECT d.driver_id, d.prefix, d.first_name, d.last_name, d.phone, d.hire_date, d.deleted,
-            (SELECT COUNT(*) FROM violations v WHERE v.driver_id = d.driver_id AND v.is_paid = 0) AS unpaid_violations_count
-        FROM drivers d
-        WHERE 1 = 1
-  `;
+export async function listDrivers({ search, includeInactive, page, limit } = {}) {
+    let where = 'WHERE 1 = 1';
     const params = [];
 
     if (!includeInactive) {
-        sql += ' AND d.deleted = 0';
+        where += ' AND d.deleted = 0';
     }
 
     if (search) {
-        sql += ' AND (CONCAT(d.prefix, d.first_name, " ", d.last_name) LIKE ? OR d.phone LIKE ?)';
+        where += ' AND (CONCAT(d.prefix, d.first_name, " ", d.last_name) LIKE ? OR d.phone LIKE ?)';
         params.push(`%${search}%`, `%${search}%`);
     }
 
-    sql += ' ORDER BY d.driver_id DESC';
+    const baseSql = `
+        SELECT d.driver_id, d.prefix, d.first_name, d.last_name, d.phone, d.hire_date, d.deleted,
+            (SELECT COUNT(*) FROM violations v WHERE v.driver_id = d.driver_id AND v.is_paid = 0) AS unpaid_violations_count
+        FROM drivers d
+        ${where}
+        ORDER BY d.driver_id DESC
+  `;
 
-    const [rows] = await pool.execute(sql, params);
-    return rows;
+    // ไม่ส่ง page/limit มา -> คืนทั้งหมดเหมือนพฤติกรรมเดิม (หน้าเว็บปัจจุบันแบ่งหน้าแบบ client-side)
+    // ส่งมา -> แบ่งหน้าฝั่ง server แทน สำหรับ dataset ที่โตขึ้นในอนาคต
+    if (page === undefined && limit === undefined) {
+        const [rows] = await pool.execute(baseSql, params);
+        return rows;
+    }
+
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM drivers d ${where}`, params);
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(200, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const [rows] = await pool.query(`${baseSql} LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
+    return { drivers: rows, total, page: safePage, limit: safeLimit };
 }
 
 export async function getDriverById(driverId) {

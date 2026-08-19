@@ -3,8 +3,20 @@ import { invalidateCache } from "../../config/cache.js";
 import { AppError } from "../../middleware/errorHandler.js"
 import { OVERVIEW_CACHE_KEY } from "../overview/overview.service.js";
 
-export async function listVehicles({ search, includeInactive } = {}) {
-    let sql = `
+export async function listVehicles({ search, includeInactive, page, limit } = {}) {
+    let where = 'WHERE 1 = 1';
+    const params = [];
+
+    if (!includeInactive) {
+        where += ' AND v.deleted = 0';
+    }
+
+    if (search) {
+        where += ' AND (v.plate_number LIKE ? OR v.brand_model LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const baseSql = `
     SELECT
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted,
         p.name_th AS plate_province,
@@ -22,24 +34,11 @@ export async function listVehicles({ search, includeInactive } = {}) {
         FROM view_current_documents
         GROUP BY vehicle_id
     ) doc_stats ON doc_stats.vehicle_id = v.vehicle_id
-    WHERE 1 = 1
+    ${where}
+    ORDER BY v.vehicle_id DESC
   `;
-    const params = [];
 
-    if (!includeInactive) {
-        sql += ' AND v.deleted = 0';
-    }
-
-    if (search) {
-        sql += ' AND (v.plate_number LIKE ? OR v.brand_model LIKE ?)';
-        params.push(`%${search}%`, `%${search}%`);
-    }
-
-    sql += ' ORDER BY v.vehicle_id DESC';
-
-    const [rows] = await pool.execute(sql, params);
-
-    return rows.map((r) => ({
+    const mapRow = (r) => ({
         vehicle_id: r.vehicle_id,
         brand_model: r.brand_model,
         plate_number: r.plate_number,
@@ -48,7 +47,23 @@ export async function listVehicles({ search, includeInactive } = {}) {
         deleted: r.deleted,
         driver: r.driver_id ? { driver_id: r.driver_id, name: `${r.prefix}${r.first_name} ${r.last_name}` } : null,
         documents_incomplete: Boolean(r.documents_incomplete),
-    }));
+    });
+
+    // ไม่ส่ง page/limit มา -> คืนทั้งหมดเหมือนพฤติกรรมเดิม (หน้าเว็บปัจจุบันแบ่งหน้าแบบ client-side)
+    // ส่งมา -> แบ่งหน้าฝั่ง server แทน สำหรับ dataset ที่โตขึ้นในอนาคต
+    if (page === undefined && limit === undefined) {
+        const [rows] = await pool.execute(baseSql, params);
+        return rows.map(mapRow);
+    }
+
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM vehicles v ${where}`, params);
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(200, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const [rows] = await pool.query(`${baseSql} LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
+    return { vehicles: rows.map(mapRow), total, page: safePage, limit: safeLimit };
 }
 
 export async function getVehicleById(vehicleId) {
