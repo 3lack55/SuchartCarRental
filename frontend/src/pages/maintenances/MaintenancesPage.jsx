@@ -8,6 +8,8 @@ import MaintenanceFormModal from '../../components/mainntenances/MaintenanceForm
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
+import Pagination from '../../components/globals/Pagination.jsx';
+import { usePagination } from '../../hooks/usePagination.js';
 
 function formatDate(value) {
     if (!value) return '-';
@@ -83,6 +85,7 @@ export default function MaintenancesPage() {
         return true;
     });
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
+    const { page, setPage, totalPages, pageItems: pagedMaintenances } = usePagination(maintenances);
 
     const totalItems = maintenances.reduce((sum, item) => sum + Number(item.total_items || 0), 0);
     const totalCost = maintenances.reduce((sum, item) => sum + Number(item.total_cost || 0), 0);
@@ -261,7 +264,7 @@ export default function MaintenancesPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && maintenances.map((m) => (
+                            {!isLoading && pagedMaintenances.map((m) => (
                                 <tr
                                     key={m.maintenance_id}
                                     onClick={() => setSelectedId(m.maintenance_id)}
@@ -284,6 +287,8 @@ export default function MaintenancesPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {selectedId && (

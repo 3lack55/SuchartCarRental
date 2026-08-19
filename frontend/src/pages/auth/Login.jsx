@@ -40,11 +40,6 @@ export default function Login() {
         try {
             const res = await loginUser({ username: form.username, password: form.password });
 
-            if (!res.success) {
-                console.log(res)
-                return setServerError(res.message || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
-            }
-
             const banned = res.data.user.role === "banned";
             const deleted = res.data.user.deleted;
 
@@ -57,8 +52,10 @@ export default function Login() {
             const redirectUrl = getRedirectUrl();
             clearRedirectUrl();
             navigate(redirectUrl || "/");
-        } catch {
-            setServerError("เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้งในภายหลัง");
+        } catch (err) {
+            // requestJson โยน error พร้อมข้อความจริงจาก backend อยู่แล้ว (เช่น "username หรือรหัสผ่านไม่ถูกต้อง",
+            // "ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่") ใช้ข้อความนั้นแทนข้อความทั่วไป ยกเว้นตอน fetch ล้มเหลวจริงๆ (ไม่มี response)
+            setServerError(err.message || "เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้งในภายหลัง");
         } finally {
             setLoading(false);
         }
@@ -160,26 +157,11 @@ export default function Login() {
                             {fieldErrors.password && <p role="alert" className="field-error">⚠ {fieldErrors.password}</p>}
                         </div>
 
-                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                className="w-4 h-4 rounded"
-                                checked={form.remember}
-                                onChange={handleChange('remember')}
-                                style={{ accentColor: 'var(--primary-color)', borderColor: 'var(--surface-border)' }}
-                            />
-                            <span style={{ fontSize: 13, color: 'var(--sub-text)' }}>จดจำการเข้าสู่ระบบไว้ 30 วัน</span>
-                        </label>
-
                         <button type="submit" className="w-full submit-btn" disabled={loading}>
                             {loading && <span className="spinner" />}
                             {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
                         </button>
                     </form>
-
-                    {/* <p className="text-[13px] text-center mt-8" style={{ color: 'var(--page-text, rgba(0,0,0,0.65))', opacity: 0.85 }}>
-                        ยังไม่มีบัญชี? <Link to="/register" className="footer-link">สมัครสมาชิก</Link>
-                    </p> */}
                 </div>
             </main>
 

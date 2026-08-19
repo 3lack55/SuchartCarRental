@@ -4,8 +4,10 @@ import DriverDetailModal from '../../components/driver/DriverDetailModal';
 import DriverFormModal from '../../components/driver/DriverFormModal';
 import Modal from '../../components/globals/Modal';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
+import Pagination from '../../components/globals/Pagination.jsx';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
+import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth';
 import { formatPhone } from '../../utils/phone.js';
 
@@ -30,6 +32,7 @@ export default function DriversPage() {
     const { data, isLoading, error } = useDrivers({ search: debouncedSearch, includeInactive: showInactive });
     const drivers = data?.data ?? [];
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
+    const { page, setPage, totalPages, pageItems: pagedDrivers } = usePagination(drivers);
 
     const unpaidDriversCount = drivers.filter((d) => Number(d.unpaid_violations_count) > 0).length;
     const hiredThisYearCount = drivers.filter((d) => d.hire_date && new Date(d.hire_date).getFullYear() === new Date().getFullYear()).length;
@@ -179,7 +182,7 @@ export default function DriversPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && drivers.map((d) => (
+                            {!isLoading && pagedDrivers.map((d) => (
                                 <tr
                                     key={d.driver_id}
                                     onClick={() => setSelectedDriverId(d.driver_id)}
@@ -228,6 +231,8 @@ export default function DriversPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {selectedDriverId && (

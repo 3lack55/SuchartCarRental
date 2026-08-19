@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 
-export default function ConfirmDialog({ title, message, confirmLabel = 'ยืนยัน', onConfirm, onCancel, loading }) {
+export default function ConfirmDialog({ title, message, confirmLabel = 'ยืนยัน', loadingLabel = 'กำลังลบ...', onConfirm, onCancel, loading }) {
   const titleId = useId();
   const panelRef = useModalA11y(onCancel);
 
@@ -37,7 +37,7 @@ export default function ConfirmDialog({ title, message, confirmLabel = 'ยื�
             className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: 'var(--status-danger)', color: '#ffffff' }}
           >
-            {loading ? 'กำลังลบ...' : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>

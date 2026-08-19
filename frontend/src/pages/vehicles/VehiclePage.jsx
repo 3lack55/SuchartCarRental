@@ -7,8 +7,10 @@ import Modal from '../../components/globals/Modal';
 import Select from '../../components/globals/Select.jsx';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
+import Pagination from '../../components/globals/Pagination.jsx';
 import VehicleDetailModal from '../../components/vehicle/VehicleDetailModal';
 import VehicleFormModal from '../../components/vehicle/VehicleFormModal';
+import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 
 export default function VehiclesPage() {
@@ -50,6 +52,7 @@ export default function VehiclesPage() {
     if (driverFilter === 'with') vehicles = vehicles.filter((v) => v.driver);
     if (driverFilter === 'without') vehicles = vehicles.filter((v) => !v.driver);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
+    const { page, setPage, totalPages, pageItems: pagedVehicles } = usePagination(vehicles);
 
     const withoutDriverCount = vehicles.filter((v) => !v.driver).length;
     const incompleteDocsCount = vehicles.filter((v) => v.documents_incomplete).length;
@@ -222,7 +225,7 @@ export default function VehiclesPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && vehicles.map((v) => (
+                            {!isLoading && pagedVehicles.map((v) => (
                                 <tr
                                     key={v.vehicle_id}
                                     onClick={() => setSelectedVehicleId(v.vehicle_id)}
@@ -266,6 +269,8 @@ export default function VehiclesPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {selectedVehicleId && (

@@ -6,9 +6,11 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
+import Pagination from '../../components/globals/Pagination.jsx';
 import DocumentDetailModal from '../../components/documents/DocumentDetailModal.jsx';
 import DocumentFormModal from '../../components/documents/DocumentFormModal.jsx';
 import { DOCUMENT_TYPE_META, documentStatusStyle } from '../../components/documents/documentMeta.js';
+import { usePagination } from '../../hooks/usePagination.js';
 
 function formatDate(value) {
     if (!value) return '-';
@@ -38,6 +40,7 @@ export default function DocumentsPage() {
     const { data, isLoading, error } = useDocuments({ search: debouncedSearch, documentType: documentType || undefined, status: status || undefined });
     const documents = data?.data ?? [];
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
+    const { page, setPage, totalPages, pageItems: pagedDocuments } = usePagination(documents);
 
     const expiredCount = documents.filter((d) => d.days_remaining < 0).length;
     const expiringCount = documents.filter((d) => d.days_remaining >= 0 && d.days_remaining <= 30).length;
@@ -189,7 +192,7 @@ export default function DocumentsPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && documents.map((d) => {
+                            {!isLoading && pagedDocuments.map((d) => {
                                 const rowStatus = documentStatusStyle(d.days_remaining);
                                 return (
                                     <tr
@@ -219,6 +222,8 @@ export default function DocumentsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {selected && (

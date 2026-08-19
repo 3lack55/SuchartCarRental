@@ -44,24 +44,6 @@ export async function login(username, password) {
   };
 }
 
-// สมัคร user ใหม่ — แนะนำให้ผูก requireRole('admin') ไว้ที่ route เสมอ
-// ไม่ควรเปิดให้สมัครเองแบบ public สำหรับระบบ internal ใช้งานแบบนี้
-export async function register({ username, password, role }) {
-  const [existing] = await pool.execute('SELECT user_id FROM users WHERE username = ?', [username]);
-  if (existing.length > 0) {
-    throw new AppError('username นี้ถูกใช้งานแล้ว', 409);
-  }
-
-  const password_hash = await hashPassword(password);
-
-  const [result] = await pool.execute(
-    'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-    [username, password_hash, role]
-  );
-
-  return { user_id: result.insertId, username, role };
-}
-
 export async function updatePassword(user_id, newPassword) {
   if (!user_id || !newPassword) {
     throw new AppError('user_id และ newPassword ต้องถูกส่งมา', 400);

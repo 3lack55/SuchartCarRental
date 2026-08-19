@@ -7,8 +7,10 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
+import Pagination from '../../components/globals/Pagination.jsx';
 import ViolationDetailModal from '../../components/violations/ViolationDetailModal.jsx';
 import ViolationFormModal from '../../components/violations/ViolationFormModal.jsx';
+import { usePagination } from '../../hooks/usePagination.js';
 
 function formatDateTime(value) {
     if (!value) return '-';
@@ -78,6 +80,7 @@ export default function ViolationsPage() {
         });
     }
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
+    const { page, setPage, totalPages, pageItems: pagedViolations } = usePagination(violations);
 
     const unpaid = violations.filter((v) => !v.is_paid);
     const unpaidTotal = unpaid.reduce((sum, v) => sum + Number(v.fine || 0), 0);
@@ -240,7 +243,7 @@ export default function ViolationsPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && violations.map((v) => (
+                            {!isLoading && pagedViolations.map((v) => (
                                 <tr
                                     key={v.violation_id}
                                     onClick={() => setSelectedId(v.violation_id)}
@@ -272,6 +275,8 @@ export default function ViolationsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {selectedId && (

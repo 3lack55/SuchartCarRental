@@ -8,13 +8,6 @@ export function loginUser(credentials) {
   });
 }
 
-export function registerUser(credentials) {
-  return requestJson(`${API_BASE_URL}/api/auth/register`, {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
-}
-
 export function updateUsername(userId, username, token) {
   return requestJson(`${API_BASE_URL}/api/auth/user/${userId}`, {
     method: "PUT",

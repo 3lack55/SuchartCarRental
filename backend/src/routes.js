@@ -7,6 +7,8 @@ import documentsRouter from './modules/documents/documents.routes.js';
 import lookupsRouter from "./modules/lookups/lookups.routes.js";
 import maintenanceRouter from "./modules/maintenances/maintenances.routes.js";
 import violationsRouter from "./modules/violations/violations.routes.js";
+import usersRouter from "./modules/users/users.routes.js";
+import logsRouter from "./modules/activity-logs/logs.routes.js";
 
 const appRouter = Router();
 
@@ -18,5 +20,7 @@ appRouter.use('/documents', documentsRouter);
 appRouter.use('/lookups', lookupsRouter);
 appRouter.use ('/maintenances', maintenanceRouter);
 appRouter.use('/violations', violationsRouter);
+appRouter.use('/users', usersRouter);
+appRouter.use('/logs', logsRouter);
 
 export default appRouter;

@@ -5,7 +5,7 @@ import Select from '../globals/Select.jsx';
 import DatePicker from '../globals/DatePicker.jsx';
 import TimePicker from '../globals/TimePicker.jsx';
 import { useCreateViolation, useUpdateViolation } from '../../services/violations/violationsQueries.js';
-import { useViolationReasons } from '../../services/lookups/lookupQueries.js';
+import { useViolationReasons, useCreateViolationReason } from '../../services/lookups/lookupQueries.js';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
 
@@ -28,6 +28,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
     const reasonsQuery = useViolationReasons();
     const driversQuery = useDrivers();
     const vehiclesQuery = useVehicles();
+    const createViolationReason = useCreateViolationReason();
 
     const reasons = reasonsQuery.data?.data ?? [];
     const drivers = driversQuery.data?.data ?? [];
@@ -68,6 +69,12 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
             vehicle_id: driverVehicles.length === 1 ? String(driverVehicles[0].vehicle_id) : '',
         }));
         setErrors((prev) => ({ ...prev, driver_id: undefined, vehicle_id: undefined }));
+    }
+
+    // เพิ่มสาเหตุใหม่เข้ารายการได้ทันทีจาก dropdown โดยไม่ต้องออกไปหน้าตั้งค่า แล้วเลือกให้อัตโนมัติ
+    async function handleCreateReason(name) {
+        const result = await createViolationReason.mutateAsync(name);
+        handleChange('reason_id', String(result.data.reason_id));
     }
 
     const driverVehicles = form.driver_id ? vehicles.filter((v) => v.driver?.driver_id === Number(form.driver_id)) : [];
@@ -156,6 +163,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                             id="violation-reason"
                             value={form.reason_id}
                             onChange={(value) => handleChange('reason_id', value)}
+                            onCreate={handleCreateReason}
                             placeholder="เลือกสาเหตุ"
                             error={Boolean(errors.reason_id)}
                             options={reasons.map((r) => ({ value: String(r.reason_id), label: r.reason_name }))}

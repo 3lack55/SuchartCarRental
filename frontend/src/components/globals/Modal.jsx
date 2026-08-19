@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 
-export default function Modal({ title, onClose, children, maxWidth = 'max-w-2lg', maxHeight = 'max-h-[85vh]' }) {
+export default function Modal({ title, onClose, children, maxWidth = 'max-w-xl', maxHeight = 'max-h-[85vh]' }) {
   const titleId = useId();
   const panelRef = useModalA11y(onClose);
 
