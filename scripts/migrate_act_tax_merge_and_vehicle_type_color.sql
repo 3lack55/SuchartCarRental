@@ -8,6 +8,11 @@
 -- Guard ด้านล่าง: ถ้ามี vehicle_acts/vehicle_taxes แถวไหนจับคู่กันไม่ได้ (ตาม vehicle_id+last_paid_date+expire_date)
 -- สคริปต์จะ abort ทันทีด้วย error ก่อนถึงขั้นตอน INSERT/DROP TABLE เพื่อไม่ให้ข้อมูลที่จับคู่ไม่ได้หายไปเงียบๆ
 
+-- ยกเว้นเฉพาะ tax_id ที่รู้แล้วว่าไม่มี act คู่กันจริง (พ.ร.บ. ยังไม่ได้บันทึกเข้าระบบ) และตกลงกันแล้วว่า
+-- จะข้ามไปก่อน ไปกรอก พ.ร.บ. ใหม่ผ่านหน้าเว็บทีหลัง — เพิ่ม/ลบ id ในลิสต์นี้ได้ตามที่ตรวจสอบจริงกับ preflight_check
+-- แถวอื่นที่ไม่อยู่ในลิสต์นี้ยังต้องจับคู่กันได้ครบเหมือนเดิม guard จะยัง abort ถ้าไม่ครบ
+SET @known_unmatched_tax_ids = '7,8';
+
 DELIMITER $$
 CREATE PROCEDURE `_assert_act_tax_pairable`()
 BEGIN
@@ -18,7 +23,9 @@ BEGIN
             WHERE t.vehicle_id = a.vehicle_id AND t.last_paid_date = a.last_paid_date AND t.expire_date = a.expire_date
         ))
         +
-        (SELECT COUNT(*) FROM vehicle_taxes t WHERE NOT EXISTS (
+        (SELECT COUNT(*) FROM vehicle_taxes t
+         WHERE FIND_IN_SET(t.tax_id, @known_unmatched_tax_ids) = 0
+         AND NOT EXISTS (
             SELECT 1 FROM vehicle_acts a
             WHERE a.vehicle_id = t.vehicle_id AND a.last_paid_date = t.last_paid_date AND a.expire_date = t.expire_date
         ))
@@ -68,6 +75,8 @@ CREATE TABLE `vehicle_act_tax` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- จับคู่ act+tax เดิมของรถคันเดียวกันที่มีวันที่ตรงกัน (คือรอบต่ออายุเดียวกัน) มารวมเป็นแถวเดียว
+-- tax_id ใน @known_unmatched_tax_ids (ตอนนี้คือ 7, 8) จะไม่ถูกดึงมาด้วยเพราะไม่มี act คู่กัน (ตามที่ยืนยันแล้วว่ายอมรับได้
+-- จะไปกรอก พ.ร.บ. ใหม่ผ่านหน้าเว็บทีหลัง) ข้อมูลค่าธรรมเนียมของ tax_id เหล่านี้จะหายไปพร้อมกับ DROP TABLE vehicle_taxes ด้านล่าง
 INSERT INTO `vehicle_act_tax`
   (`vehicle_id`, `insurance_company`, `last_paid_date`, `expire_date`, `premium_amount`, `fee_amount`, `created_at`, `updated_at`)
 SELECT a.`vehicle_id`, a.`insurance_company`, a.`last_paid_date`, a.`expire_date`, a.`premium_amount`, t.`fee_amount`, a.`created_at`, a.`updated_at`
