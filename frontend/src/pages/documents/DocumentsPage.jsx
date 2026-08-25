@@ -39,7 +39,7 @@ export default function DocumentsPage() {
     const { user } = useAuth();
 
     const { data, isLoading, error } = useDocuments({ search: debouncedSearch, documentType: documentType || undefined, status: status || undefined });
-    const documents = data?.data ?? [];
+    const documents = useMemo(() => data?.data ?? [], [data]);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
     const { page, setPage, totalPages, pageItems: pagedDocuments } = usePagination(documents);
     const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(documents), [documents]);
