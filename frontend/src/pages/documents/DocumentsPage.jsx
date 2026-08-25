@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useDocuments } from '../../services/documents/documentsQueries.js';
@@ -11,6 +11,7 @@ import DocumentDetailModal from '../../components/documents/DocumentDetailModal.
 import DocumentFormModal from '../../components/documents/DocumentFormModal.jsx';
 import { DOCUMENT_TYPE_META, documentStatusStyle } from '../../components/documents/documentMeta.js';
 import { usePagination } from '../../hooks/usePagination.js';
+import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
 
 function formatDate(value) {
     if (!value) return '-';
@@ -41,6 +42,7 @@ export default function DocumentsPage() {
     const documents = data?.data ?? [];
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
     const { page, setPage, totalPages, pageItems: pagedDocuments } = usePagination(documents);
+    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(documents), [documents]);
 
     const expiredCount = documents.filter((d) => d.days_remaining < 0).length;
     const expiringCount = documents.filter((d) => d.days_remaining >= 0 && d.days_remaining <= 30).length;
@@ -205,7 +207,7 @@ export default function DocumentsPage() {
                                         style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                     >
                                         <td className="px-4 py-3">
-                                            <PlateBadge plateNumber={d.plate_number} plateProvince={d.plate_province} />
+                                            <PlateBadge plateNumber={d.plate_number} plateProvince={d.plate_province} duplicate={duplicatePlateNumbers.has(d.plate_number)} />
                                         </td>
                                         <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{DOCUMENT_TYPE_META[d.document_type]?.label}</td>
                                         <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{d.provider || '-'}</td>

@@ -5,8 +5,8 @@ import { OVERVIEW_CACHE_KEY } from "../overview/overview.service.js";
 
 // map ประเภทเอกสาร -> ตาราง/คอลัมน์จริงในฐานข้อมูล ใช้เป็น whitelist กันเอา document_type ที่ validate แล้วไปต่อ SQL ตรงๆ
 const DOCUMENT_TABLES = {
-    act_tax: { table: 'vehicle_act_tax', idColumn: 'act_tax_id', hasProvider: true, amountColumns: ['premium_amount', 'fee_amount'] },
-    insurance: { table: 'vehicle_insurances', idColumn: 'insurance_id', hasProvider: true, amountColumns: [] },
+    act_tax: { table: 'vehicle_act_tax', idColumn: 'act_tax_id' },
+    insurance: { table: 'vehicle_insurances', idColumn: 'insurance_id' },
 };
 
 function getConfig(documentType) {
@@ -51,20 +51,12 @@ export async function listCurrentDocuments({ search, documentType, status } = {}
     return rows;
 }
 
-function amountSelectClause(config, alias = 'd') {
-    return config.amountColumns.map((col) => `${alias}.${col} AS ${col}`);
-}
-
-// ดึงจากตารางจริงตรงๆ เพื่อเอาฟิลด์ยอดเงิน (premium_amount/fee_amount) มาด้วย ซึ่ง view ไม่มี
 export async function getDocumentById(documentType, documentId) {
     const config = getConfig(documentType);
 
-    const providerSelect = config.hasProvider ? 'd.insurance_company AS provider' : 'NULL AS provider';
-    const amountSelects = amountSelectClause(config);
-
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelects.join(', ')}${amountSelects.length ? ',' : ''}
+            d.insurance_company AS provider, d.last_paid_date, d.expire_date,
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -85,12 +77,9 @@ export async function getDocumentById(documentType, documentId) {
 export async function listDocumentHistory(documentType, vehicleId) {
     const config = getConfig(documentType);
 
-    const providerSelect = config.hasProvider ? 'd.insurance_company AS provider' : 'NULL AS provider';
-    const amountSelects = amountSelectClause(config);
-
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelects.join(', ')}${amountSelects.length ? ',' : ''}
+            d.insurance_company AS provider, d.last_paid_date, d.expire_date,
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -115,23 +104,9 @@ export async function createDocument(data) {
     const config = getConfig(data.document_type);
     await assertVehicleExists(data.vehicle_id);
 
-    const columns = ['vehicle_id', 'last_paid_date', 'expire_date'];
-    const values = [data.vehicle_id, data.last_paid_date, data.expire_date];
-
-    if (config.hasProvider) {
-        columns.push('insurance_company');
-        values.push(data.provider);
-    }
-
-    for (const col of config.amountColumns) {
-        columns.push(col);
-        values.push(data[col]);
-    }
-
-    const placeholders = columns.map(() => '?').join(', ');
     const [result] = await pool.execute(
-        `INSERT INTO ${config.table} (${columns.join(', ')}) VALUES (${placeholders})`,
-        values
+        `INSERT INTO ${config.table} (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)`,
+        [data.vehicle_id, data.provider, data.last_paid_date, data.expire_date]
     );
 
     invalidateCache(OVERVIEW_CACHE_KEY);
@@ -146,10 +121,7 @@ export async function updateDocument(documentType, documentId, data) {
     const fieldMap = {};
     if (data.last_paid_date) fieldMap.last_paid_date = data.last_paid_date;
     if (data.expire_date) fieldMap.expire_date = data.expire_date;
-    if (config.hasProvider && data.provider) fieldMap.insurance_company = data.provider;
-    for (const col of config.amountColumns) {
-        if (data[col] !== undefined) fieldMap[col] = data[col];
-    }
+    if (data.provider) fieldMap.insurance_company = data.provider;
 
     const fields = Object.keys(fieldMap);
     if (fields.length === 0) {

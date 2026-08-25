@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useMaintenances } from '../../services/maintenances/maintenancesQueries.js';
@@ -10,6 +10,7 @@ import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import Pagination from '../../components/globals/Pagination.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
+import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
 
 function formatDate(value) {
     if (!value) return '-';
@@ -86,6 +87,7 @@ export default function MaintenancesPage() {
     });
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
     const { page, setPage, totalPages, pageItems: pagedMaintenances } = usePagination(maintenances);
+    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(maintenances), [maintenances]);
 
     const totalItems = maintenances.reduce((sum, item) => sum + Number(item.total_items || 0), 0);
     const totalCost = maintenances.reduce((sum, item) => sum + Number(item.total_cost || 0), 0);
@@ -276,7 +278,7 @@ export default function MaintenancesPage() {
                                 >
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(m.service_date)}</td>
                                     <td className="px-4 py-3">
-                                        <PlateBadge plateNumber={m.plate_number} plateProvince={m.plate_province} />
+                                        <PlateBadge plateNumber={m.plate_number} plateProvince={m.plate_province} duplicate={duplicatePlateNumbers.has(m.plate_number)} />
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.model}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.garage_name}</td>

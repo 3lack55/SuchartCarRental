@@ -159,8 +159,8 @@ export async function createVehicle(data) {
     // เอกสารแนบ (พรบ.+ภาษี/ประกัน) เป็นข้อมูลเสริม บันทึกก็ต่อเมื่อผู้ใช้กรอกมา
     if (data.act_tax) {
       await conn.execute(
-        'INSERT INTO vehicle_act_tax (vehicle_id, insurance_company, last_paid_date, expire_date, premium_amount, fee_amount) VALUES (?, ?, ?, ?, ?, ?)',
-        [vehicleId, data.act_tax.insurance_company, data.act_tax.last_paid_date, data.act_tax.expire_date, data.act_tax.premium_amount, data.act_tax.fee_amount]
+        'INSERT INTO vehicle_act_tax (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)',
+        [vehicleId, data.act_tax.insurance_company, data.act_tax.last_paid_date, data.act_tax.expire_date]
       );
     }
 

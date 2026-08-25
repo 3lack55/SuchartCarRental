@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { useVehicles } from '../../services/vehicles/vehiclesQueries.js';
@@ -13,6 +13,7 @@ import VehicleFormModal from '../../components/vehicle/VehicleFormModal';
 import VehicleTypeBadge from '../../components/vehicle/VehicleTypeBadge.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth.js';
+import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
 
 export default function VehiclesPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -54,6 +55,7 @@ export default function VehiclesPage() {
     if (driverFilter === 'without') vehicles = vehicles.filter((v) => !v.driver);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
     const { page, setPage, totalPages, pageItems: pagedVehicles } = usePagination(vehicles);
+    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(vehicles), [vehicles]);
 
     const withoutDriverCount = vehicles.filter((v) => !v.driver).length;
     const incompleteDocsCount = vehicles.filter((v) => v.documents_incomplete).length;
@@ -238,7 +240,7 @@ export default function VehiclesPage() {
                                 >
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                            <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} duplicate={duplicatePlateNumbers.has(v.plate_number)} />
                                             {v.documents_incomplete && (
                                                 <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
                                                     <InfoTooltip text="เอกสารรถขาดหรือหมดอายุ" label="เอกสารรถขาดหรือหมดอายุ">

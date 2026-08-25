@@ -20,14 +20,12 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
     const vehiclesQuery = useVehicles();
     const vehicles = vehiclesQuery.data?.data ?? [];
 
-    const initialMeta = DOCUMENT_TYPE_META[source?.document_type];
     const [form, setForm] = useState({
         vehicle_id: source?.vehicle_id ?? '',
         document_type: source?.document_type ?? '',
         provider: isEdit ? (document?.provider ?? '') : '',
         last_paid_date: isEdit && document?.last_paid_date ? document.last_paid_date.slice(0, 10) : '',
         expire_date: isEdit && document?.expire_date ? document.expire_date.slice(0, 10) : '',
-        ...Object.fromEntries((initialMeta?.amounts ?? []).map((a) => [a.key, isEdit ? (document?.[a.key] ?? '') : ''])),
     });
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState(null);
@@ -53,9 +51,6 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
         if (!form.last_paid_date) nextErrors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
         if (!form.expire_date) nextErrors.expire_date = 'กรุณาเลือกวันหมดอายุ';
         else if (form.last_paid_date && form.expire_date <= form.last_paid_date) nextErrors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
-        meta?.amounts.forEach((a) => {
-            if (!String(form[a.key]).trim()) nextErrors[a.key] = `กรุณากรอก${a.label}`;
-        });
         return nextErrors;
     }
 
@@ -73,7 +68,6 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                 expire_date: form.expire_date,
             };
             if (meta?.hasProvider) payload.provider = form.provider;
-            meta?.amounts.forEach((a) => { payload[a.key] = Number(form[a.key]); });
 
             let saved;
             if (isEdit) {
@@ -192,23 +186,6 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         {errors.expire_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.expire_date}</p>}
                     </div>
                 </div>
-
-                {meta?.amounts.map((a) => (
-                    <div key={a.key}>
-                        <label htmlFor={`document-${a.key}`} className="mb-1.5 block text-xs font-medium" style={labelStyle}>{a.label}</label>
-                        <input
-                            id={`document-${a.key}`}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={form[a.key]}
-                            onChange={(e) => handleChange(a.key, e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={{ ...inputStyle, borderColor: errors[a.key] ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                        />
-                        {errors[a.key] && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors[a.key]}</p>}
-                    </div>
-                ))}
 
                 {formError && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError}</p>}
 

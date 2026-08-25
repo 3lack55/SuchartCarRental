@@ -29,7 +29,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   });
 
   // เอกสารแนบตอนเพิ่มรถใหม่: กรอกได้ก็ต่อเมื่อมีข้อมูลจริง (ไม่บังคับ)
-  const [actTax, setActTax] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', premium_amount: '', fee_amount: '' });
+  const [actTax, setActTax] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
   const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
 
   const [error, setError] = useState(null);
@@ -58,16 +58,13 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   }
 
   // เช็คเฉพาะการ์ดเอกสารที่ติ๊กเปิดไว้ (enabled) เท่านั้น การ์ดที่ปิดอยู่ไม่ต้องกรอกอะไร
-  function validateDocSection(state, { showCompany, amountFields = [] }) {
+  function validateDocSection(state) {
     if (!state.enabled) return {};
     const errors = {};
-    if (showCompany && !state.insurance_company.trim()) errors.insurance_company = 'กรุณากรอกบริษัทประกัน';
+    if (!state.insurance_company.trim()) errors.insurance_company = 'กรุณากรอกบริษัทประกัน';
     if (!state.last_paid_date) errors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
     if (!state.expire_date) errors.expire_date = 'กรุณาเลือกวันหมดอายุ';
     else if (state.last_paid_date && state.expire_date <= state.last_paid_date) errors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
-    amountFields.forEach((amountField) => {
-      if (!String(state[amountField.key]).trim()) errors[amountField.key] = `กรุณากรอก${amountField.label}`;
-    });
     return errors;
   }
 
@@ -81,8 +78,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
     let hasDocErrors = false;
     if (!isEdit) {
       const nextDocErrors = {
-        actTax: validateDocSection(actTax, { showCompany: true, amountFields: [{ key: 'premium_amount', label: 'เบี้ยประกัน พ.ร.บ.' }, { key: 'fee_amount', label: 'ค่าธรรมเนียมภาษี' }] }),
-        insurance: validateDocSection(insurance, { showCompany: true }),
+        actTax: validateDocSection(actTax),
+        insurance: validateDocSection(insurance),
       };
       setDocErrors(nextDocErrors);
       hasDocErrors = Object.values(nextDocErrors).some((e) => Object.keys(e).length > 0);
@@ -105,8 +102,6 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             insurance_company: actTax.insurance_company,
             last_paid_date: actTax.last_paid_date,
             expire_date: actTax.expire_date,
-            premium_amount: Number(actTax.premium_amount),
-            fee_amount: Number(actTax.fee_amount),
           };
         }
         if (insurance.enabled) {
@@ -209,11 +204,6 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 state={actTax}
                 errors={docErrors.actTax}
                 onChange={(field, value) => handleDocChange('actTax', setActTax, field, value)}
-                showCompany
-                amountFields={[
-                  { key: 'premium_amount', label: 'เบี้ยประกัน พ.ร.บ. (บาท)' },
-                  { key: 'fee_amount', label: 'ค่าธรรมเนียมภาษี (บาท)' },
-                ]}
               />
               <DocumentSection
                 idPrefix="insurance"
@@ -221,7 +211,6 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 state={insurance}
                 errors={docErrors.insurance}
                 onChange={(field, value) => handleDocChange('insurance', setInsurance, field, value)}
-                showCompany
               />
             </div>
           )}
@@ -257,7 +246,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 
 // การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
-function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCompany = false, amountFields = [] }) {
+function DocumentSection({ idPrefix, title, state, errors = {}, onChange }) {
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
       <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -272,19 +261,17 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
 
       {state.enabled && (
         <div className="mt-3 space-y-2">
-          {showCompany && (
-            <div>
-              <label htmlFor={`${idPrefix}-company`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
-              <input
-                id={`${idPrefix}-company`}
-                value={state.insurance_company}
-                onChange={(e) => onChange('insurance_company', e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={{ ...inputStyle, borderColor: errors.insurance_company ? 'var(--status-danger)' : 'var(--surface-border)' }}
-              />
-              {errors.insurance_company && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.insurance_company}</p>}
-            </div>
-          )}
+          <div>
+            <label htmlFor={`${idPrefix}-company`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
+            <input
+              id={`${idPrefix}-company`}
+              value={state.insurance_company}
+              onChange={(e) => onChange('insurance_company', e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+              style={{ ...inputStyle, borderColor: errors.insurance_company ? 'var(--status-danger)' : 'var(--surface-border)' }}
+            />
+            {errors.insurance_company && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.insurance_company}</p>}
+          </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1">
@@ -309,23 +296,6 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
               {errors.expire_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.expire_date}</p>}
             </div>
           </div>
-
-          {amountFields.map((amountField) => (
-            <div key={amountField.key}>
-              <label htmlFor={`${idPrefix}-${amountField.key}`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
-              <input
-                id={`${idPrefix}-${amountField.key}`}
-                type="number"
-                min="0"
-                step="0.01"
-                value={state[amountField.key]}
-                onChange={(e) => onChange(amountField.key, e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={{ ...inputStyle, borderColor: errors[amountField.key] ? 'var(--status-danger)' : 'var(--surface-border)' }}
-              />
-              {errors[amountField.key] && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors[amountField.key]}</p>}
-            </div>
-          ))}
         </div>
       )}
     </div>

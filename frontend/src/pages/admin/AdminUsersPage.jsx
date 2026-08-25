@@ -132,10 +132,10 @@ export default function AdminUsersPage() {
                                             className="max-w-48"
                                         />
                                     </td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDateTime(u.last_login)}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}> {formatDateTime(u.last_login)}</td>
                                     <td className="px-4 py-3">
                                         <span
-                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate"
                                             style={
                                                 u.is_active
                                                     ? { backgroundColor: 'var(--status-success-soft)', color: 'var(--status-success)' }

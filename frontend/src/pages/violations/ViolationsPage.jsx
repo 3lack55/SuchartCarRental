@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useViolations } from '../../services/violations/violationsQueries.js';
@@ -11,6 +11,7 @@ import Pagination from '../../components/globals/Pagination.jsx';
 import ViolationDetailModal from '../../components/violations/ViolationDetailModal.jsx';
 import ViolationFormModal from '../../components/violations/ViolationFormModal.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
+import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
 
 function formatDateTime(value) {
     if (!value) return '-';
@@ -81,6 +82,7 @@ export default function ViolationsPage() {
     }
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
     const { page, setPage, totalPages, pageItems: pagedViolations } = usePagination(violations);
+    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(violations), [violations]);
 
     const unpaid = violations.filter((v) => !v.is_paid);
     const unpaidTotal = unpaid.reduce((sum, v) => sum + Number(v.fine || 0), 0);
@@ -256,7 +258,7 @@ export default function ViolationsPage() {
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDateTime(v.incident_datetime)}</td>
                                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--page-text)' }}>{v.driver_name}</td>
                                     <td className="px-4 py-3">
-                                        <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} />
+                                        <PlateBadge plateNumber={v.plate_number} plateProvince={v.plate_province} duplicate={duplicatePlateNumbers.has(v.plate_number)} />
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.reason_name}</td>
                                     <td className="px-4 py-3 text-right font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(v.fine).toLocaleString()}</td>
