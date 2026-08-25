@@ -3,16 +3,17 @@ services:
     image: mysql:8.0
     container_name: carrental_mysql
     restart: unless-stopped
+    command: --default-time-zone=+07:00
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-062004}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-car_company}
     ports:
-      - "3307:3306"
+      - "${TAILSCALE_IP}:3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-062004}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,7 +21,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: carrental_backend
     restart: unless-stopped
     env_file:
@@ -29,38 +30,38 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-062004}
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME:-car_company}
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     depends_on:
       mysql:
         condition: service_healthy
-    # --legacy-watch: Docker Desktop on Windows doesn't propagate filesystem change
-    # events into bind-mounted containers, so nodemon's default watcher never fires — poll instead.
-    command: npx nodemon --legacy-watch server.js
+    # ไม่ publish พอร์ตออก host — ให้ frontend (nginx) เป็นตัวเดียวที่คุยกับ backend ผ่าน internal docker network เท่านั้น
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      args:
+        VITE_API_HOST: ${VITE_API_HOST}
+        VITE_API_PORT: ${VITE_API_PORT}
+        VITE_API_PROTOCOL: ${VITE_API_PROTOCOL}
     container_name: carrental_frontend
     restart: unless-stopped
-    env_file:
-      - ./frontend/.env
-    environment:
-      DOCKER: "true"
     ports:
-      - "5174:5174"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "${TAILSCALE_IP}:8080:80"
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0
+
+  # Cloudflare Quick Tunnel — เปิดช่องทางเข้าเว็บจากอินเทอร์เน็ตโดยไม่ต้องอยู่ใน tailnet
+  # ไม่ต้อง publish port ใดๆ เพราะต่อออกไปหา Cloudflare edge เอง (outbound only)
+  # URL จะสุ่มใหม่ทุกครั้งที่ container restart — เช็คได้จาก `docker logs carrental_cloudflared`
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: carrental_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://frontend:80
+    depends_on:
+      - frontend
 
 volumes:
   mysql_data:

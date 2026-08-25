@@ -1,21 +1,27 @@
-CREATE DATABASE  IF NOT EXISTS `car_company` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `car_company`;
--- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.46, for Linux (x86_64)
 --
--- Host: 127.0.0.1    Database: car_company
+-- Host: localhost    Database: car_company
 -- ------------------------------------------------------
--- Server version	9.1.0
+-- Server version	8.0.46
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Current Database: `car_company`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `car_company` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `car_company`;
 
 --
 -- Table structure for table `activity_logs`
@@ -27,19 +33,29 @@ DROP TABLE IF EXISTS `activity_logs`;
 CREATE TABLE `activity_logs` (
   `log_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `entity_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entity_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `entity_id` int DEFAULT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`log_id`),
   KEY `idx_activity_logs_created` (`created_at`),
   KEY `idx_activity_logs_user` (`user_id`),
   CONSTRAINT `fk_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `activity_logs`
+--
+
+LOCK TABLES `activity_logs` WRITE;
+/*!40000 ALTER TABLE `activity_logs` DISABLE KEYS */;
+INSERT INTO `activity_logs` VALUES (1,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:19:22'),(2,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:20:43'),(3,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 12:21:21'),(4,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:21:35'),(5,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:21:40'),(6,1,'admin','user.create','user',5,'เพิ่มผู้ใช้งานใหม่ \"bobo\" (สิทธิ์ admin)','::ffff:172.19.0.1','2026-08-19 12:22:34'),(7,5,'bobo','auth.login_success','user',5,'เข้าสู่ระบบสำเร็จ \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:28:07'),(8,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:28:28'),(9,1,'admin','user.password_reset','user',4,'รีเซ็ตรหัสผ่านผู้ใช้งาน \"staff2\"','::ffff:172.19.0.1','2026-08-19 12:37:37'),(10,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff2\")','::ffff:172.19.0.1','2026-08-19 12:37:50'),(11,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff1\")','::ffff:172.19.0.1','2026-08-19 12:37:56'),(12,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"ิิิิิbobo\")','::ffff:172.19.0.1','2026-08-19 12:38:18'),(13,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"ิิิิิbobo\")','::ffff:172.19.0.1','2026-08-19 12:38:24'),(14,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:38:43'),(15,1,'admin','user.password_reset','user',5,'รีเซ็ตรหัสผ่านผู้ใช้งาน \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:40:12'),(16,5,'bobo','auth.login_success','user',5,'เข้าสู่ระบบสำเร็จ \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:40:45'),(17,5,'bobo','driver.update','driver',1,'แก้ไขข้อมูลคนขับ \"นายสมชาย ใจดี\"','::ffff:172.19.0.1','2026-08-19 12:56:40'),(18,5,'bobo','driver.delete','driver',6,'ลบคนขับ driver_id=6','::ffff:172.19.0.1','2026-08-19 12:56:49'),(19,5,'bobo','vehicle.delete','vehicle',1,'ลบรถยนต์ vehicle_id=1','::ffff:172.19.0.1','2026-08-19 12:56:55'),(20,5,'bobo','vehicle.restore','vehicle',1,'กู้คืนรถยนต์ vehicle_id=1','::ffff:172.19.0.1','2026-08-19 12:57:11'),(38,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff1\")','::ffff:172.19.0.1','2026-08-19 13:10:55'),(47,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 13:30:44'),(48,5,'bobo','vehicle.create','vehicle',10,'เพิ่มรถยนต์ทะเบียน \"4 ฉช 8765\"','::ffff:172.19.0.1','2026-08-19 13:31:45'),(49,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 13:35:58'),(50,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 13:36:16'),(51,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 13:39:30'),(52,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:11:56'),(53,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:34'),(54,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:35'),(55,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:35'),(56,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:36'),(57,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-25 13:56:37'),(58,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 13:56:45'),(59,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 14:33:23'),(60,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 14:34:20'),(61,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','::ffff:172.19.0.1','2026-08-25 14:36:25'),(62,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 15:52:31');
+/*!40000 ALTER TABLE `activity_logs` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `drivers`
@@ -50,10 +66,10 @@ DROP TABLE IF EXISTS `drivers`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `drivers` (
   `driver_id` int NOT NULL AUTO_INCREMENT,
-  `prefix` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `first_name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `prefix` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `first_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `hire_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted` tinyint NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -61,7 +77,7 @@ CREATE TABLE `drivers` (
   PRIMARY KEY (`driver_id`),
   UNIQUE KEY `phone` (`phone`) /*!80000 INVISIBLE */,
   UNIQUE KEY `drivername` (`first_name`,`last_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -70,7 +86,7 @@ CREATE TABLE `drivers` (
 
 LOCK TABLES `drivers` WRITE;
 /*!40000 ALTER TABLE `drivers` DISABLE KEYS */;
-INSERT INTO `drivers` VALUES (1,'นาย','สมชาย','ใจร้าย','0891234567','2022-01-15 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:15:43'),(2,'นาย','วิชัย','รักงาน','0812345678','2022-03-01 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:41:19'),(3,'นาง','สุนีย์','ขยันดี','0898765432','2023-05-19 17:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:37:19'),(4,'นาย','ประยุทธ','มั่นคง','0865554321','2021-11-09 17:00:00',0,'2026-08-10 14:56:22','2026-08-17 12:22:42'),(5,'นาย','อนุชา','พากเพียร','0876543210','2024-01-31 17:00:00',1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'นาย','ชนแหลก','แหกประกัน','0621378901','2026-08-01 00:00:00',0,'2026-08-14 16:17:12','2026-08-17 12:22:42'),(8,'นาย','สมหมาย','ใจกล้า','0839578888','2026-08-18 00:00:00',0,'2026-08-17 17:57:03','2026-08-17 17:57:03');
+INSERT INTO `drivers` VALUES (1,'นาย','สมชาย','ใจดี','0891234567','2022-01-15 00:00:00',0,'2026-08-10 14:56:22','2026-08-19 12:56:40'),(2,'นาย','วิชัย','รักงาน','0812345678','2022-03-01 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:41:19'),(3,'นาง','สุนีย์','ขยันดี','0898765432','2023-05-19 17:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:37:19'),(4,'นาย','ประยุทธ','มั่นคง','0865554321','2021-11-09 17:00:00',0,'2026-08-10 14:56:22','2026-08-17 12:22:42'),(5,'นาย','อนุชา','พากเพียร','0876543210','2024-01-31 17:00:00',1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'นาย','ชนแหลก','แหกประกัน','0621378901','2026-08-01 00:00:00',1,'2026-08-14 16:17:12','2026-08-19 12:56:49'),(8,'นาย','สมหมาย','ใจกล้า','0839578888','2026-08-18 00:00:00',0,'2026-08-17 17:57:03','2026-08-17 17:57:03');
 /*!40000 ALTER TABLE `drivers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -87,7 +103,7 @@ CREATE TABLE `maintenance_details` (
   `service_item_id` int NOT NULL,
   `quantity` decimal(8,2) NOT NULL DEFAULT '1.00',
   `unit_price` decimal(10,2) NOT NULL,
-  `remark` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`detail_id`),
@@ -95,7 +111,7 @@ CREATE TABLE `maintenance_details` (
   KEY `maintenance_id` (`maintenance_id`),
   CONSTRAINT `maintenance_details_ibfk_1` FOREIGN KEY (`service_item_id`) REFERENCES `service_items` (`service_item_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `maintenance_details_ibfk_2` FOREIGN KEY (`maintenance_id`) REFERENCES `maintenances` (`maintenance_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,9 +135,9 @@ CREATE TABLE `maintenances` (
   `maintenance_id` int NOT NULL AUTO_INCREMENT,
   `vehicle_id` int NOT NULL,
   `service_date` date NOT NULL,
-  `garage_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `garage_type` enum('center','shop') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `receipt_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `garage_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `garage_type` enum('center','shop') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receipt_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `mileage` int NOT NULL,
   `next_service_mileage` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -130,7 +146,7 @@ CREATE TABLE `maintenances` (
   KEY `vehicle_id` (`vehicle_id`),
   KEY `idx_maintenance_service_date` (`service_date`),
   CONSTRAINT `maintenances_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -152,7 +168,7 @@ DROP TABLE IF EXISTS `provinces`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `provinces` (
   `province_id` int NOT NULL AUTO_INCREMENT,
-  `name_th` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_th` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`province_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -176,7 +192,7 @@ DROP TABLE IF EXISTS `service_category`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `service_category` (
   `service_category_id` int NOT NULL AUTO_INCREMENT,
-  `service_category_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_category_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `service_type_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -205,7 +221,7 @@ DROP TABLE IF EXISTS `service_items`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `service_items` (
   `service_item_id` int NOT NULL AUTO_INCREMENT,
-  `service_item_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_item_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `service_category_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -234,7 +250,7 @@ DROP TABLE IF EXISTS `service_type`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `service_type` (
   `service_type_id` int NOT NULL AUTO_INCREMENT,
-  `service_type_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_type_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`service_type_id`)
@@ -260,16 +276,16 @@ DROP TABLE IF EXISTS `users`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('admin','manager','staff') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'staff',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','manager','staff') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'staff',
   `is_active` tinyint NOT NULL DEFAULT '1',
   `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -278,42 +294,43 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','$2b$12$/Y5CJrRFIae04dWCX1A3vuXQN3VwIlmQVaTFQjPsVAjx5XW8nH59O','admin',1,'2026-08-17 18:09:24','2026-08-10 14:56:22','2026-08-17 18:09:24'),(2,'manager','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','manager',1,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'staff1','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','staff',1,'2026-08-13 11:31:35','2026-08-10 14:56:22','2026-08-13 11:31:35'),(4,'staff2','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','staff',0,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `users` VALUES (1,'admin','$2b$12$/Y5CJrRFIae04dWCX1A3vuXQN3VwIlmQVaTFQjPsVAjx5XW8nH59O','admin',1,'2026-08-25 15:52:31','2026-08-10 14:56:22','2026-08-25 15:52:31'),(2,'manager','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','manager',1,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'staff1','$2b$12$F97WmnT2zt97YIf2B4AAKux85u7Ca3PoLFuilY0jkpgf6kghMSH7m','staff',1,'2026-08-25 13:56:37','2026-08-10 14:56:22','2026-08-25 13:56:37'),(4,'staff2','$2b$12$RHHaWUMEC2nxW2yAMbUv1uzgWERDR8BxUbJ8OyWntpKjrWI10alrC','staff',0,NULL,'2026-08-10 14:56:22','2026-08-19 12:37:37'),(5,'bobo','$2b$12$NCrWqsRMVc48MSuu2rPPieBEZK3tMjtWJUI3jO60ybFSbyxg6.DlO','admin',1,'2026-08-19 12:40:45','2026-08-19 12:22:34','2026-08-19 12:40:45');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
--- Table structure for table `vehicle_acts`
+-- Table structure for table `vehicle_act_tax`
 --
 
-DROP TABLE IF EXISTS `vehicle_acts`;
+DROP TABLE IF EXISTS `vehicle_act_tax`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `vehicle_acts` (
-  `act_id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `vehicle_act_tax` (
+  `act_tax_id` int NOT NULL AUTO_INCREMENT,
   `vehicle_id` int NOT NULL,
-  `insurance_company` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
   `premium_amount` decimal(8,2) NOT NULL,
+  `fee_amount` decimal(8,2) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`act_id`),
+  PRIMARY KEY (`act_tax_id`),
   KEY `vehicle_id` (`vehicle_id`),
-  KEY `idx_act_expire` (`expire_date`),
-  CONSTRAINT `vehicle_acts_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_act_dates` CHECK ((`expire_date` > `last_paid_date`))
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `idx_act_tax_expire` (`expire_date`),
+  CONSTRAINT `vehicle_act_tax_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_act_tax_dates` CHECK ((`expire_date` > `last_paid_date`))
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `vehicle_acts`
+-- Dumping data for table `vehicle_act_tax`
 --
 
-LOCK TABLES `vehicle_acts` WRITE;
-/*!40000 ALTER TABLE `vehicle_acts` DISABLE KEYS */;
-INSERT INTO `vehicle_acts` VALUES (1,1,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-01','2026-08-01',645.21,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',1182.35,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',645.21,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-05','2026-08-15',967.28,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-06-10','2026-06-10',1546.51,'2026-08-10 14:56:22','2026-08-10 14:56:22');
-/*!40000 ALTER TABLE `vehicle_acts` ENABLE KEYS */;
+LOCK TABLES `vehicle_act_tax` WRITE;
+/*!40000 ALTER TABLE `vehicle_act_tax` DISABLE KEYS */;
+INSERT INTO `vehicle_act_tax` VALUES (1,1,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-01','2026-08-01',645.21,1200.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',1182.35,2100.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',645.21,800.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-05','2026-08-15',967.28,1500.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-06-10','2026-06-10',1546.51,3200.00,'2026-08-10 14:56:22','2026-08-10 14:56:22');
+/*!40000 ALTER TABLE `vehicle_act_tax` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -326,7 +343,7 @@ DROP TABLE IF EXISTS `vehicle_insurances`;
 CREATE TABLE `vehicle_insurances` (
   `insurance_id` int NOT NULL AUTO_INCREMENT,
   `vehicle_id` int NOT NULL,
-  `insurance_company` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -336,7 +353,7 @@ CREATE TABLE `vehicle_insurances` (
   KEY `idx_insurance_expire` (`expire_date`),
   CONSTRAINT `vehicle_insurances_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_insurance_dates` CHECK ((`expire_date` > `last_paid_date`))
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -350,39 +367,6 @@ INSERT INTO `vehicle_insurances` VALUES (1,1,'บริษัท วิริย
 UNLOCK TABLES;
 
 --
--- Table structure for table `vehicle_taxes`
---
-
-DROP TABLE IF EXISTS `vehicle_taxes`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `vehicle_taxes` (
-  `tax_id` int NOT NULL AUTO_INCREMENT,
-  `vehicle_id` int NOT NULL,
-  `last_paid_date` date NOT NULL,
-  `expire_date` date NOT NULL,
-  `fee_amount` decimal(8,2) NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`tax_id`),
-  KEY `vehicle_id` (`vehicle_id`),
-  KEY `idx_tax_expire` (`expire_date`),
-  CONSTRAINT `vehicle_taxes_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_tax_dates` CHECK ((`expire_date` > `last_paid_date`))
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `vehicle_taxes`
---
-
-LOCK TABLES `vehicle_taxes` WRITE;
-/*!40000 ALTER TABLE `vehicle_taxes` DISABLE KEYS */;
-INSERT INTO `vehicle_taxes` VALUES (1,1,'2025-08-01','2026-08-01',1200.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'2025-09-15','2026-09-15',2100.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'2025-07-20','2026-08-20',800.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'2025-08-05','2026-08-15',1500.00,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'2025-06-10','2026-06-10',3200.00,'2026-08-10 14:56:22','2026-08-10 14:56:22');
-/*!40000 ALTER TABLE `vehicle_taxes` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `vehicle_type`
 --
 
@@ -391,7 +375,8 @@ DROP TABLE IF EXISTS `vehicle_type`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `vehicle_type` (
   `type_id` int NOT NULL AUTO_INCREMENT,
-  `type_name` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `color` varchar(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`type_id`)
@@ -404,7 +389,7 @@ CREATE TABLE `vehicle_type` (
 
 LOCK TABLES `vehicle_type` WRITE;
 /*!40000 ALTER TABLE `vehicle_type` DISABLE KEYS */;
-INSERT INTO `vehicle_type` VALUES (1,'รถกระบะ','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,'รถตู้','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'รถเก๋ง','2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,'รถบรรทุก 6 ล้อ','2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `vehicle_type` VALUES (1,'รถกระบะ','#f97316','2026-08-10 14:56:22','2026-08-25 14:35:18'),(2,'รถตู้','#3b82f6','2026-08-10 14:56:22','2026-08-25 14:35:18'),(3,'รถเก๋ง','#10b981','2026-08-10 14:56:22','2026-08-25 14:35:18'),(4,'รถ SUV','#a855f7','2026-08-10 14:56:22','2026-08-25 15:37:10');
 /*!40000 ALTER TABLE `vehicle_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -417,8 +402,8 @@ DROP TABLE IF EXISTS `vehicles`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `vehicles` (
   `vehicle_id` int NOT NULL AUTO_INCREMENT,
-  `brand_model` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `plate_number` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `brand_model` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `plate_number` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `plate_province_id` int NOT NULL,
   `driver_id` int DEFAULT NULL,
   `type_id` int DEFAULT NULL,
@@ -433,7 +418,7 @@ CREATE TABLE `vehicles` (
   CONSTRAINT `vehicles_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `vehicles_ibfk_2` FOREIGN KEY (`plate_province_id`) REFERENCES `provinces` (`province_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `vehicles_ibfk_3` FOREIGN KEY (`type_id`) REFERENCES `vehicle_type` (`type_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -442,7 +427,7 @@ CREATE TABLE `vehicles` (
 
 LOCK TABLES `vehicles` WRITE;
 /*!40000 ALTER TABLE `vehicles` DISABLE KEYS */;
-INSERT INTO `vehicles` VALUES (1,'Toyota Hilux Revo 2022','1 กข 1234',1,1,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(2,'Toyota Commuter 2021','2 ขค 5678',1,2,2,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(3,'Honda City 2023','กท 9956',9,3,3,0,'2026-08-10 14:56:22','2026-08-15 14:37:37'),(4,'Isuzu D-Max 2020','3 งจ 4321',14,4,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(5,'Hino 6 ล้อ 2019','4 ฉช 8765',21,NULL,4,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(6,'Hyundai H-1','1 กจ 5627',21,6,2,0,'2026-08-15 14:39:43','2026-08-15 14:40:34'),(7,'Toyota Commuter ','1 หญ',1,6,2,0,'2026-08-15 14:41:24','2026-08-15 15:06:06'),(8,'React Query Test Car (edited)','ทดสอบ1826',2,NULL,NULL,1,'2026-08-16 17:14:21','2026-08-16 17:14:23');
+INSERT INTO `vehicles` VALUES (1,'Toyota Hilux Revo 2022','1 กข 1234',1,1,1,0,'2026-08-10 14:56:22','2026-08-19 12:57:11'),(2,'Toyota Commuter 2021','2 ขค 5678',1,2,2,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(3,'Honda City 2023','กท 9956',9,3,3,0,'2026-08-10 14:56:22','2026-08-15 14:37:37'),(4,'Isuzu D-Max 2020','3 งจ 4321',14,4,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(5,'Hino 6 ล้อ 2019','4 ฉช 8765',21,NULL,4,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(6,'Hyundai H-1','1 กจ 5627',21,NULL,2,0,'2026-08-15 14:39:43','2026-08-19 12:56:49'),(7,'Toyota Commuter ','1 หญ',1,NULL,2,0,'2026-08-15 14:41:24','2026-08-19 12:56:49'),(8,'React Query Test Car (edited)','ทดสอบ1826',2,NULL,NULL,1,'2026-08-16 17:14:21','2026-08-16 17:14:23'),(10,'Hino 6 ล้อ 2019','4 ฉช 8765',1,NULL,4,0,'2026-08-19 13:31:45','2026-08-19 13:31:45');
 /*!40000 ALTER TABLE `vehicles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -479,10 +464,8 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `total_drivers`,
  1 AS `vehicles_without_driver`,
  1 AS `vehicles_without_insurance`,
- 1 AS `tax_expiring_30d`,
- 1 AS `tax_expired`,
- 1 AS `act_expiring_30d`,
- 1 AS `act_expired`,
+ 1 AS `act_tax_expiring_30d`,
+ 1 AS `act_tax_expired`,
  1 AS `insurance_expiring_30d`,
  1 AS `insurance_expired`,
  1 AS `documents_expiring_30d_total`,
@@ -612,7 +595,7 @@ CREATE TABLE `violations` (
   CONSTRAINT `violations_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_2` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_3` FOREIGN KEY (`reason_id`) REFERENCES `violations_reasons` (`reason_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -634,7 +617,7 @@ DROP TABLE IF EXISTS `violations_reasons`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `violations_reasons` (
   `reason_id` int NOT NULL AUTO_INCREMENT,
-  `reason_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reason_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`reason_id`)
@@ -647,17 +630,15 @@ CREATE TABLE `violations_reasons` (
 
 LOCK TABLES `violations_reasons` WRITE;
 /*!40000 ALTER TABLE `violations_reasons` DISABLE KEYS */;
-INSERT INTO `violations_reasons` VALUES (1,'ขับรถเร็วเกินกำหนด','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,'ฝ่าฝืนสัญญาณไฟจราจร','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'จอดรถในที่ห้ามจอด','2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,'ไม่คาดเข็มขัดนิรภัย','2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,'ใช้โทรศัพท์ขณะขับรถ','2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'ฝ่าฝืนเขตจำกัดความเร็ว (เขตโรงเรียน/ชุมชน)','2026-08-19 00:00:00','2026-08-19 00:00:00'),(7,'จอดรถซ้อนคัน/กีดขวางการจราจร','2026-08-19 00:00:00','2026-08-19 00:00:00'),(8,'ขับรถบนทางเท้า','2026-08-19 00:00:00','2026-08-19 00:00:00'),(9,'เมาแล้วขับ','2026-08-19 00:00:00','2026-08-19 00:00:00'),(10,'ขับรถขณะง่วงนอน/สภาพร่างกายไม่พร้อม','2026-08-19 00:00:00','2026-08-19 00:00:00'),(11,'ขับรถย้อนศร/สวนเลน','2026-08-19 00:00:00','2026-08-19 00:00:00'),(12,'แซงในที่คับขัน/เส้นทึบ','2026-08-19 00:00:00','2026-08-19 00:00:00'),(13,'เปลี่ยนช่องทางกะทันหันไม่ปลอดภัย','2026-08-19 00:00:00','2026-08-19 00:00:00'),(14,'ไม่ให้สัญญาณไฟเลี้ยว','2026-08-19 00:00:00','2026-08-19 00:00:00'),(15,'ไม่หยุดให้คนข้ามทางม้าลาย','2026-08-19 00:00:00','2026-08-19 00:00:00'),(16,'ขับรถโดยประมาทเป็นเหตุให้ทรัพย์สินผู้อื่นเสียหาย','2026-08-19 00:00:00','2026-08-19 00:00:00'),(17,'ขับรถโดยประมาทเป็นเหตุให้ผู้อื่นได้รับบาดเจ็บ/เสียชีวิต','2026-08-19 00:00:00','2026-08-19 00:00:00'),(18,'ไม่มีใบขับขี่/ใบขับขี่หมดอายุ','2026-08-19 00:00:00','2026-08-19 00:00:00'),(19,'ไม่พกเอกสารประจำรถ (พรบ./ทะเบียน)','2026-08-19 00:00:00','2026-08-19 00:00:00'),(20,'ป้ายทะเบียนไม่ชัดเจน/ไม่ติดป้ายทะเบียน','2026-08-19 00:00:00','2026-08-19 00:00:00'),(21,'บรรทุกน้ำหนักเกินกำหนด','2026-08-19 00:00:00','2026-08-19 00:00:00'),(22,'ฝ่าฝืนเครื่องหมาย/ป้ายจราจร','2026-08-19 00:00:00','2026-08-19 00:00:00'),(23,'หลบเลี่ยงด่านตรวจ','2026-08-19 00:00:00','2026-08-19 00:00:00');
+INSERT INTO `violations_reasons` VALUES (1,'ขับรถเร็วเกินกำหนด','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,'ฝ่าฝืนสัญญาณไฟจราจร','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'จอดรถในที่ห้ามจอด','2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,'ไม่คาดเข็มขัดนิรภัย','2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,'ใช้โทรศัพท์ขณะขับรถ','2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'ฝ่าฝืนเขตจำกัดความเร็ว (เขตโรงเรียน/ชุมชน)','2026-08-19 11:09:31','2026-08-19 11:09:31'),(7,'จอดรถซ้อนคัน/กีดขวางการจราจร','2026-08-19 11:09:31','2026-08-19 11:09:31'),(8,'ขับรถบนทางเท้า','2026-08-19 11:09:31','2026-08-19 11:09:31'),(9,'เมาแล้วขับ','2026-08-19 11:09:31','2026-08-19 11:09:31'),(10,'ขับรถขณะง่วงนอน/สภาพร่างกายไม่พร้อม','2026-08-19 11:09:31','2026-08-19 11:09:31'),(11,'ขับรถย้อนศร/สวนเลน','2026-08-19 11:09:31','2026-08-19 11:09:31'),(12,'แซงในที่คับขัน/เส้นทึบ','2026-08-19 11:09:31','2026-08-19 11:09:31'),(13,'เปลี่ยนช่องทางกะทันหันไม่ปลอดภัย','2026-08-19 11:09:31','2026-08-19 11:09:31'),(14,'ไม่ให้สัญญาณไฟเลี้ยว','2026-08-19 11:09:31','2026-08-19 11:09:31'),(15,'ไม่หยุดให้คนข้ามทางม้าลาย','2026-08-19 11:09:31','2026-08-19 11:09:31'),(16,'ขับรถโดยประมาทเป็นเหตุให้ทรัพย์สินผู้อื่นเสียหาย','2026-08-19 11:09:31','2026-08-19 11:09:31'),(17,'ขับรถโดยประมาทเป็นเหตุให้ผู้อื่นได้รับบาดเจ็บ/เสียชีวิต','2026-08-19 11:09:31','2026-08-19 11:09:31'),(18,'ไม่มีใบขับขี่/ใบขับขี่หมดอายุ','2026-08-19 11:09:31','2026-08-19 11:09:31'),(19,'ไม่พกเอกสารประจำรถ (พรบ./ทะเบียน)','2026-08-19 11:09:31','2026-08-19 11:09:31'),(20,'ป้ายทะเบียนไม่ชัดเจน/ไม่ติดป้ายทะเบียน','2026-08-19 11:09:31','2026-08-19 11:09:31'),(21,'บรรทุกน้ำหนักเกินกำหนด','2026-08-19 11:09:31','2026-08-19 11:09:31'),(22,'ฝ่าฝืนเครื่องหมาย/ป้ายจราจร','2026-08-19 11:09:31','2026-08-19 11:09:31'),(23,'หลบเลี่ยงด่านตรวจ','2026-08-19 11:09:31','2026-08-19 11:09:31');
 /*!40000 ALTER TABLE `violations_reasons` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
--- Dumping events for database 'car_company'
+-- Current Database: `car_company`
 --
 
---
--- Dumping routines for database 'car_company'
---
+USE `car_company`;
 
 --
 -- Final view structure for view `view_current_documents`
@@ -690,7 +671,7 @@ UNLOCK TABLES;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_dashboard_overview` AS select (select count(0) from `vehicles` where (`vehicles`.`deleted` = 0)) AS `total_vehicles`,(select count(0) from `drivers` where (`drivers`.`deleted` = 0)) AS `total_drivers`,(select count(0) from `vehicles` where ((`vehicles`.`deleted` = 0) and (`vehicles`.`driver_id` is null))) AS `vehicles_without_driver`,(select count(0) from `vehicles` `v` where ((`v`.`deleted` = 0) and exists(select 1 from `vehicle_insurances` `vi` where (`vi`.`vehicle_id` = `v`.`vehicle_id`)) is false)) AS `vehicles_without_insurance`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'tax') and (`view_current_documents`.`days_remaining` between 0 and 30))) AS `tax_expiring_30d`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'tax') and (`view_current_documents`.`days_remaining` < 0))) AS `tax_expired`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'act') and (`view_current_documents`.`days_remaining` between 0 and 30))) AS `act_expiring_30d`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'act') and (`view_current_documents`.`days_remaining` < 0))) AS `act_expired`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'insurance') and (`view_current_documents`.`days_remaining` between 0 and 30))) AS `insurance_expiring_30d`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'insurance') and (`view_current_documents`.`days_remaining` < 0))) AS `insurance_expired`,(select count(0) from `view_current_documents` where (`view_current_documents`.`days_remaining` between 0 and 30)) AS `documents_expiring_30d_total`,(select count(0) from `view_current_documents` where (`view_current_documents`.`days_remaining` < 0)) AS `documents_expired_total`,(select count(0) from `violations` where (`violations`.`is_paid` = 0)) AS `unpaid_violations_count`,(select coalesce(sum(`violations`.`fine`),0) from `violations` where (`violations`.`is_paid` = 0)) AS `unpaid_violations_total_fine`,(select count(0) from `violations` where ((year(`violations`.`incident_datetime`) = year(curdate())) and (month(`violations`.`incident_datetime`) = month(curdate())))) AS `violations_this_month`,(select count(0) from `maintenances` where ((year(`maintenances`.`service_date`) = year(curdate())) and (month(`maintenances`.`service_date`) = month(curdate())))) AS `maintenances_this_month`,(select coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) from (`maintenances` `m` join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) where ((year(`m`.`service_date`) = year(curdate())) and (month(`m`.`service_date`) = month(curdate())))) AS `maintenance_cost_this_month` */;
+/*!50001 VIEW `view_dashboard_overview` AS select (select count(0) from `vehicles` where (`vehicles`.`deleted` = 0)) AS `total_vehicles`,(select count(0) from `drivers` where (`drivers`.`deleted` = 0)) AS `total_drivers`,(select count(0) from `vehicles` where ((`vehicles`.`deleted` = 0) and (`vehicles`.`driver_id` is null))) AS `vehicles_without_driver`,(select count(0) from `vehicles` `v` where ((`v`.`deleted` = 0) and exists(select 1 from `vehicle_insurances` `vi` where (`vi`.`vehicle_id` = `v`.`vehicle_id`)) is false)) AS `vehicles_without_insurance`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'act_tax') and (`view_current_documents`.`days_remaining` between 0 and 30))) AS `act_tax_expiring_30d`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'act_tax') and (`view_current_documents`.`days_remaining` < 0))) AS `act_tax_expired`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'insurance') and (`view_current_documents`.`days_remaining` between 0 and 30))) AS `insurance_expiring_30d`,(select count(0) from `view_current_documents` where ((`view_current_documents`.`document_type` = 'insurance') and (`view_current_documents`.`days_remaining` < 0))) AS `insurance_expired`,(select count(0) from `view_current_documents` where (`view_current_documents`.`days_remaining` between 0 and 30)) AS `documents_expiring_30d_total`,(select count(0) from `view_current_documents` where (`view_current_documents`.`days_remaining` < 0)) AS `documents_expired_total`,(select count(0) from `violations` where (`violations`.`is_paid` = 0)) AS `unpaid_violations_count`,(select coalesce(sum(`violations`.`fine`),0) from `violations` where (`violations`.`is_paid` = 0)) AS `unpaid_violations_total_fine`,(select count(0) from `violations` where ((year(`violations`.`incident_datetime`) = year(curdate())) and (month(`violations`.`incident_datetime`) = month(curdate())))) AS `violations_this_month`,(select count(0) from `maintenances` where ((year(`maintenances`.`service_date`) = year(curdate())) and (month(`maintenances`.`service_date`) = month(curdate())))) AS `maintenances_this_month`,(select coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) from (`maintenances` `m` join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) where ((year(`m`.`service_date`) = year(curdate())) and (month(`m`.`service_date`) = month(curdate())))) AS `maintenance_cost_this_month` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -708,7 +689,7 @@ UNLOCK TABLES;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_document_expiry` AS select ('tax' collate utf8mb4_unicode_ci) AS `document_type`,`t`.`tax_id` AS `document_id`,`t`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,NULL AS `provider`,`t`.`last_paid_date` AS `last_paid_date`,`t`.`expire_date` AS `expire_date`,(to_days(`t`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_taxes` `t` join `vehicles` `v` on((`v`.`vehicle_id` = `t`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) union all select ('act' collate utf8mb4_unicode_ci) AS `document_type`,`a`.`act_id` AS `document_id`,`a`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`a`.`insurance_company` AS `provider`,`a`.`last_paid_date` AS `last_paid_date`,`a`.`expire_date` AS `expire_date`,(to_days(`a`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_acts` `a` join `vehicles` `v` on((`v`.`vehicle_id` = `a`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) union all select ('insurance' collate utf8mb4_unicode_ci) AS `document_type`,`i`.`insurance_id` AS `document_id`,`i`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`i`.`insurance_company` AS `provider`,`i`.`last_paid_date` AS `last_paid_date`,`i`.`expire_date` AS `expire_date`,(to_days(`i`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_insurances` `i` join `vehicles` `v` on((`v`.`vehicle_id` = `i`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) */;
+/*!50001 VIEW `view_document_expiry` AS select ('act_tax' collate utf8mb4_unicode_ci) AS `document_type`,`at`.`act_tax_id` AS `document_id`,`at`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`insurance_company` AS `provider`,`at`.`last_paid_date` AS `last_paid_date`,`at`.`expire_date` AS `expire_date`,(to_days(`at`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_act_tax` `at` join `vehicles` `v` on((`v`.`vehicle_id` = `at`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) union all select ('insurance' collate utf8mb4_unicode_ci) AS `document_type`,`i`.`insurance_id` AS `document_id`,`i`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`i`.`insurance_company` AS `provider`,`i`.`last_paid_date` AS `last_paid_date`,`i`.`expire_date` AS `expire_date`,(to_days(`i`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_insurances` `i` join `vehicles` `v` on((`v`.`vehicle_id` = `i`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -776,4 +757,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-18  9:59:47
+-- Dump completed on 2026-08-25 15:56:28

@@ -257,18 +257,11 @@ export default function Overview() {
 
         return [
             {
-                title: "ภาษีรถ",
-                icon: "vehicle",
-                docType: "tax",
-                expiring: safeNumber(overview.tax_expiring_30d),
-                expired: safeNumber(overview.tax_expired),
-            },
-            {
-                title: "พ.ร.บ.",
+                title: "พ.ร.บ. และภาษี",
                 icon: "document",
-                docType: "act",
-                expiring: safeNumber(overview.act_expiring_30d),
-                expired: safeNumber(overview.act_expired),
+                docType: "act_tax",
+                expiring: safeNumber(overview.act_tax_expiring_30d),
+                expired: safeNumber(overview.act_tax_expired),
             },
             {
                 title: "ประกันภัย",
@@ -368,51 +361,28 @@ export default function Overview() {
                     ))}
                 </section>
 
-                <section className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div className="rounded-2xl border p-6 shadow-sm" style={surfaceStyle}>
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <h2 className="text-lg font-semibold" style={{ color: "var(--page-text)" }}>สถานะเอกสาร</h2>
-                                <p className="mt-1 text-sm" style={mutedTextStyle}>เอกสารที่ใกล้หมดอายุและหมดอายุแล้ว</p>
-                            </div>
+                <section className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    {documentCards.map((item) => (
+                        <DocumentCard
+                            key={item.title}
+                            title={item.title}
+                            icon={item.icon}
+                            expiring={item.expiring}
+                            expired={item.expired}
+                            onNavigateExpiring={() => navigate(`/reports?type=${item.docType}&status=expiring`)}
+                            onNavigateExpired={() => navigate(`/reports?type=${item.docType}&status=expired`)}
+                        />
+                    ))}
 
-                            <div
-                                className="rounded-xl px-3 py-2 text-sm font-medium"
-                                style={{
-                                    backgroundColor: "var(--primary-color-soft)",
-                                    color: 'var(--on-primary)',
-                                    border: "1px solid rgba(var(--primary-color-rgb), 0.22)",
-                                }}
-                            >
-                                {documentsTotal} รายการ
-                            </div>
-                        </div>
-
-                        <div className="mt-5">
-                            <StatusRow
-                                label="ใกล้หมดอายุภายใน 30 วัน"
-                                value={safeNumber(overview.documents_expiring_30d_total)}
-                                variant="warning"
-                                onNavigate={() => navigate("/reports?status=expiring")}
-                            />
-                            <StatusRow
-                                label="หมดอายุแล้ว"
-                                value={safeNumber(overview.documents_expired_total)}
-                                variant="danger"
-                                onNavigate={() => navigate("/reports?status=expired")}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="rounded-2xl border p-6 shadow-sm" style={surfaceStyle}>
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <h2 className="text-lg font-semibold" style={{ color: "var(--page-text)" }}>ค่าปรับ</h2>
-                                <p className="mt-1 text-sm" style={mutedTextStyle}>สถานะค่าปรับของรถในระบบ</p>
-                            </div>
-
+                    <div className="rounded-2xl border p-5 shadow-sm" style={surfaceStyle}>
+                        <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--status-danger-soft)", color: "var(--status-danger)" }}>
                                 <StatIcon type="fine" />
+                            </div>
+
+                            <div>
+                                <h3 className="font-medium" style={{ color: "var(--page-text)" }}>ค่าปรับ</h3>
+                                <p className="text-xs" style={{ color: "var(--page-text)", opacity: 0.75 }}>สถานะค่าปรับของรถในระบบ</p>
                             </div>
                         </div>
 
@@ -456,27 +426,6 @@ export default function Overview() {
                                 </p>
                             </div>
                         </div>
-                    </div>
-                </section>
-
-                <section className="mt-6">
-                    <div className="mb-4">
-                        <h2 className="text-lg font-semibold" style={{ color: "var(--page-text)" }}>สถานะเอกสารตามประเภท</h2>
-                        <p className="mt-1 text-sm" style={mutedTextStyle}>ตรวจสอบเอกสารสำคัญของรถแต่ละประเภท</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        {documentCards.map((item) => (
-                            <DocumentCard
-                                key={item.title}
-                                title={item.title}
-                                icon={item.icon}
-                                expiring={item.expiring}
-                                expired={item.expired}
-                                onNavigateExpiring={() => navigate(`/reports?type=${item.docType}&status=expiring`)}
-                                onNavigateExpired={() => navigate(`/reports?type=${item.docType}&status=expired`)}
-                            />
-                        ))}
                     </div>
                 </section>
 

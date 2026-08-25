@@ -64,7 +64,7 @@ export function useCreateVehicleType() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name) => createVehicleType(user?.token, name),
+    mutationFn: ({ name, color }) => createVehicleType(user?.token, name, color),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] }),
   });
 }
@@ -74,7 +74,7 @@ export function useUpdateVehicleType() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, name }) => updateVehicleType(user?.token, id, name),
+    mutationFn: ({ id, name, color }) => updateVehicleType(user?.token, id, name, color),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] }),
   });
 }

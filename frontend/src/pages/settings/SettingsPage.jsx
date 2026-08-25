@@ -3,14 +3,12 @@ import { useAuth } from '../../context/auth/useAuth';
 import {
     useVehicleTypes,
     useViolationReasons,
-    useCreateVehicleType,
-    useUpdateVehicleType,
-    useDeleteVehicleType,
     useCreateViolationReason,
     useUpdateViolationReason,
     useDeleteViolationReason,
 } from '../../services/lookups/lookupQueries.js';
 import SimpleLookupPanel from '../../components/settings/SimpleLookupPanel.jsx';
+import VehicleTypePanel from '../../components/settings/VehicleTypePanel.jsx';
 import ServiceCatalogPanel from '../../components/settings/ServiceCatalogPanel.jsx';
 
 const TABS = [
@@ -65,22 +63,12 @@ export default function SettingsPage() {
 
                 <div className="p-5">
                     {activeTab === 'vehicle-types' && (
-                        <SimpleLookupPanel
+                        <VehicleTypePanel
                             items={vehicleTypes.data?.data ?? []}
-                            idKey="type_id"
-                            nameKey="type_name"
-                            maxLength={30}
-                            addPlaceholder="เพิ่มประเภทรถใหม่ (เช่น รถเก๋ง, รถตู้)"
-                            emptyText="ยังไม่มีประเภทรถในระบบ"
                             isLoading={vehicleTypes.isLoading}
                             error={vehicleTypes.error?.message}
                             canManage={canManage}
                             canDelete={canDelete}
-                            useCreate={useCreateVehicleType}
-                            useUpdate={useUpdateVehicleType}
-                            useDelete={useDeleteVehicleType}
-                            deleteConfirmTitle="ลบประเภทรถ"
-                            deleteConfirmMessageFor={(item) => `ยืนยันการลบ "${item.type_name}"? รถที่ใช้ประเภทนี้อยู่จะไม่ถูกลบ แต่จะไม่มีประเภทรถกำกับอีก`}
                         />
                     )}
 

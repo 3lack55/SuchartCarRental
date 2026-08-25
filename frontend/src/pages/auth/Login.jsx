@@ -69,13 +69,12 @@ export default function Login() {
                 <div className="flex items-center gap-3 ">
                     <div>
                         <Logo primary={true}></Logo>
-                        <div style={{ fontSize: 14, color: 'var(--on-primary-soft)', marginTop: 2 }}>ระบบจัดการรถและเอกสาร</div>
+                        <div style={{ fontSize: 14, color: 'var(--on-primary-soft)', marginTop: 2 }}>ระบบบันทึกงานซ่อมบำรุงรถยนต์</div>
                     </div>
                 </div>
 
                 <div style={{ maxWidth: 420 }}>
-
-                    <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }} className="tracking-wide">ระบบจัดการรถและเอกสาร</h2>
+                    <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }} className="tracking-wide">ระบบบันทึกงานซ่อมบำรุงรถยนต์</h2>
                     <p style={{ fontSize: 14.5, color: 'var(--on-primary-soft)', lineHeight: 1.4 }}>ติดตามวันต่อ พ.ร.บ. ใบเสร็จ ใบสั่ง และคนขับของคุณ พร้อมแจ้งเตือนก่อนเอกสารหมดอายุ ไม่ต้องพลาดวันสำคัญอีกต่อไป</p>
                 </div>
 
@@ -100,12 +99,12 @@ export default function Login() {
                             <div
                                 className={`px-4 auth-input auth-input-inline ${fieldErrors.username ? 'error' : ''}`}
                                 style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                border: `1px solid ${focusedField === 'username' ? 'var(--primary-color)' : 'var(--surface-border, #E3D5BE)'}`,
-                                borderRadius: 10,
-                                boxShadow: focusedField === 'username' ? '0 0 0 3px var(--primary-color-soft, transparent)' : 'none',
-                                transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
-                            }}>
+                                    display: 'flex', alignItems: 'center', gap: 10,
+                                    border: `1px solid ${focusedField === 'username' ? 'var(--primary-color)' : 'var(--surface-border, #E3D5BE)'}`,
+                                    borderRadius: 10,
+                                    boxShadow: focusedField === 'username' ? '0 0 0 3px var(--primary-color-soft, transparent)' : 'none',
+                                    transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                                }}>
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: focusedField === 'username' ? 'var(--primary-color)' : 'var(--sub-text)', transition: 'color 0.18s ease' }}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c1-3.6 4-5.5 7-5.5s6 1.9 7 5.5" /></svg>
                                 <input
                                     id="username"

@@ -1,7 +1,7 @@
 import * as documentsService from './documents.service.js';
 import { logActivity } from '../../utils/activityLog.js';
 
-const DOCUMENT_TYPE_LABELS = { tax: 'ภาษี', act: 'พรบ', insurance: 'ประกันภัย' };
+const DOCUMENT_TYPE_LABELS = { act_tax: 'พรบ.และภาษี', insurance: 'ประกันภัย' };
 
 export async function listDocumentsController(req, res, next) {
     try {

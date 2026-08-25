@@ -27,19 +27,19 @@ export function getViolationReasons() {
 
 // ---------- ประเภทรถ ----------
 
-export function createVehicleType(token, name) {
+export function createVehicleType(token, name, color) {
   return requestJson(`${API_BASE_URL}/api/lookups/vehicle-types`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    body: { name },
+    body: { name, color },
   });
 }
 
-export function updateVehicleType(token, id, name) {
+export function updateVehicleType(token, id, name, color) {
   return requestJson(`${API_BASE_URL}/api/lookups/vehicle-types/${id}`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
-    body: { name },
+    body: { name, color },
   });
 }
 

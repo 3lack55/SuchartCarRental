@@ -17,7 +17,7 @@ export async function getOrSetCache(key, ttlSeconds, fetchFn) {
   return fresh;
 }
 
-// helper: ใช้ตอนข้อมูลถูกแก้ไข (เช่น เพิ่ม/แก้ vehicle_taxes) ต้องล้าง cache ที่เกี่ยวข้องทิ้ง
+// helper: ใช้ตอนข้อมูลถูกแก้ไข (เช่น เพิ่ม/แก้เอกสารรถ) ต้องล้าง cache ที่เกี่ยวข้องทิ้ง
 export function invalidateCache(key) {
   cache.del(key);
 }

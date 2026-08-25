@@ -1,7 +1,13 @@
 export const DOCUMENT_TYPE_META = {
-    tax: { label: 'ภาษีรถยนต์', hasProvider: false, hasAmount: true, amountLabel: 'ค่าธรรมเนียม (บาท)' },
-    act: { label: 'พ.ร.บ. (ประกันภาคบังคับ)', hasProvider: true, hasAmount: true, amountLabel: 'เบี้ยประกัน (บาท)' },
-    insurance: { label: 'ประกันภาคสมัครใจ', hasProvider: true, hasAmount: false, amountLabel: null },
+    act_tax: {
+        label: 'พ.ร.บ. และภาษีรถยนต์',
+        hasProvider: true,
+        amounts: [
+            { key: 'premium_amount', label: 'เบี้ยประกัน พ.ร.บ. (บาท)' },
+            { key: 'fee_amount', label: 'ค่าธรรมเนียมภาษี (บาท)' },
+        ],
+    },
+    insurance: { label: 'ประกันภาคสมัครใจ', hasProvider: true, amounts: [] },
 };
 
 // สีตามความเร่งด่วน: หมดแล้ว = แดง, ใกล้หมด (<=30วัน) = เหลือง, ปกติ = เขียว

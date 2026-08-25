@@ -77,12 +77,12 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                             <p style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</p>
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(document.expire_date)}</p>
                         </div>
-                        {meta?.hasAmount && (
-                            <div>
-                                <p style={{ color: 'var(--sub-text)' }}>{meta.amountLabel}</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(document.amount).toLocaleString()}</p>
+                        {meta?.amounts.map((a) => (
+                            <div key={a.key}>
+                                <p style={{ color: 'var(--sub-text)' }}>{a.label}</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(document[a.key]).toLocaleString()}</p>
                             </div>
-                        )}
+                        ))}
                     </div>
 
                     <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>

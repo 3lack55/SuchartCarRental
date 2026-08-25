@@ -20,9 +20,9 @@ export async function listVehicles({ search, includeInactive, page, limit } = {}
     SELECT
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted,
         p.name_th AS plate_province,
-        t.type_name,
+        t.type_name, t.color AS type_color,
         d.driver_id, d.prefix, d.first_name, d.last_name,
-        (COALESCE(doc_stats.doc_count, 0) < 3 OR COALESCE(doc_stats.expired_count, 0) > 0) AS documents_incomplete
+        (COALESCE(doc_stats.doc_count, 0) < 2 OR COALESCE(doc_stats.expired_count, 0) > 0) AS documents_incomplete
     FROM vehicles v
     JOIN provinces p ON p.province_id = v.plate_province_id
     LEFT JOIN vehicle_type t ON t.type_id = v.type_id
@@ -44,6 +44,7 @@ export async function listVehicles({ search, includeInactive, page, limit } = {}
         plate_number: r.plate_number,
         plate_province: r.plate_province,
         type_name: r.type_name,
+        type_color: r.type_color,
         deleted: r.deleted,
         driver: r.driver_id ? { driver_id: r.driver_id, name: `${r.prefix}${r.first_name} ${r.last_name}` } : null,
         documents_incomplete: Boolean(r.documents_incomplete),
@@ -71,7 +72,7 @@ export async function getVehicleById(vehicleId) {
     `SELECT
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted, v.created_at, v.updated_at,
         p.province_id AS plate_province_id, p.name_th AS plate_province,
-        t.type_id, t.type_name,
+        t.type_id, t.type_name, t.color AS type_color,
         d.driver_id, d.prefix, d.first_name, d.last_name, d.phone AS driver_phone
      FROM vehicles v
      JOIN provinces p ON p.province_id = v.plate_province_id
@@ -117,7 +118,7 @@ export async function getVehicleById(vehicleId) {
     deleted: row.deleted,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    type: row.type_id ? { type_id: row.type_id, type_name: row.type_name } : null,
+    type: row.type_id ? { type_id: row.type_id, type_name: row.type_name, color: row.type_color } : null,
     driver: row.driver_id
       ? { driver_id: row.driver_id, name: `${row.prefix}${row.first_name} ${row.last_name}`, phone: row.driver_phone }
       : null,
@@ -155,18 +156,11 @@ export async function createVehicle(data) {
     );
     const vehicleId = result.insertId;
 
-    // เอกสารแนบ (พรบ./ภาษี/ประกัน) เป็นข้อมูลเสริม บันทึกก็ต่อเมื่อผู้ใช้กรอกมา
-    if (data.act) {
+    // เอกสารแนบ (พรบ.+ภาษี/ประกัน) เป็นข้อมูลเสริม บันทึกก็ต่อเมื่อผู้ใช้กรอกมา
+    if (data.act_tax) {
       await conn.execute(
-        'INSERT INTO vehicle_acts (vehicle_id, insurance_company, last_paid_date, expire_date, premium_amount) VALUES (?, ?, ?, ?, ?)',
-        [vehicleId, data.act.insurance_company, data.act.last_paid_date, data.act.expire_date, data.act.premium_amount]
-      );
-    }
-
-    if (data.tax) {
-      await conn.execute(
-        'INSERT INTO vehicle_taxes (vehicle_id, last_paid_date, expire_date, fee_amount) VALUES (?, ?, ?, ?)',
-        [vehicleId, data.tax.last_paid_date, data.tax.expire_date, data.tax.fee_amount]
+        'INSERT INTO vehicle_act_tax (vehicle_id, insurance_company, last_paid_date, expire_date, premium_amount, fee_amount) VALUES (?, ?, ?, ?, ?, ?)',
+        [vehicleId, data.act_tax.insurance_company, data.act_tax.last_paid_date, data.act_tax.expire_date, data.act_tax.premium_amount, data.act_tax.fee_amount]
       );
     }
 
@@ -209,7 +203,7 @@ export async function updateVehicle(vehicleId, data) {
   return getVehicleById(vehicleId);
 }
 
-// soft delete เท่านั้น เพราะ vehicle_taxes/vehicle_acts/vehicle_insurances/maintenances/violations
+// soft delete เท่านั้น เพราะ vehicle_act_tax/vehicle_insurances/maintenances/violations
 // อ้างอิง vehicle_id แบบ ON DELETE RESTRICT ทั้งหมด ต้องเก็บประวัติไว้เสมอ
 export async function softDeleteVehicle(vehicleId) {
   await getVehicleById(vehicleId);

@@ -62,7 +62,7 @@ export async function getViolationReasonsController(req, res, next) {
 
 export async function createVehicleTypeController(req, res, next) {
     try {
-        const result = await createVehicleType(req.body.name);
+        const result = await createVehicleType(req.body.name, req.body.color);
         await logActivity(req, { action: 'lookup.vehicle_type.create', entity_type: 'vehicle_type', entity_id: result.type_id, description: `เพิ่มประเภทรถ "${result.type_name}"` });
         res.status(201).json({ success: true, data: result });
     } catch (err) {
@@ -72,7 +72,7 @@ export async function createVehicleTypeController(req, res, next) {
 
 export async function updateVehicleTypeController(req, res, next) {
     try {
-        const result = await updateVehicleType(req.params.id, req.body.name);
+        const result = await updateVehicleType(req.params.id, req.body.name, req.body.color);
         await logActivity(req, { action: 'lookup.vehicle_type.update', entity_type: 'vehicle_type', entity_id: result.type_id, description: `แก้ไขประเภทรถเป็น "${result.type_name}"` });
         res.json({ success: true, data: result });
     } catch (err) {

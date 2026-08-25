@@ -6,10 +6,10 @@ import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import DocumentFormModal from '../documents/DocumentFormModal.jsx';
 import { DOCUMENT_TYPE_META } from '../documents/documentMeta.js';
 import { formatPhone } from '../../utils/phone.js';
+import VehicleTypeBadge from './VehicleTypeBadge.jsx';
 
 const DOCUMENT_LABELS = {
-  tax: 'ภาษี',
-  act: 'พรบ.',
+  act_tax: 'พรบ. และภาษี',
   insurance: 'ประกันภาคสมัครใจ',
 };
 
@@ -123,8 +123,14 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                     {vehicle.deleted ? 'ปลดระวาง' : 'ใช้งานอยู่'}
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
-                  {vehicle.brand_model || 'ไม่ระบุรุ่น'}{vehicle.type ? ` · ${vehicle.type.type_name}` : ''}
+                <p className="mt-0.5 flex items-center gap-1.5 text-sm" style={{ color: 'var(--sub-text)' }}>
+                  {vehicle.brand_model || 'ไม่ระบุรุ่น'}
+                  {vehicle.type && (
+                    <>
+                      ·
+                      <VehicleTypeBadge typeName={vehicle.type.type_name} color={vehicle.type.color} />
+                    </>
+                  )}
                 </p>
               </div>
               <button

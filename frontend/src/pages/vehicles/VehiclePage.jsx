@@ -10,6 +10,7 @@ import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import Pagination from '../../components/globals/Pagination.jsx';
 import VehicleDetailModal from '../../components/vehicle/VehicleDetailModal';
 import VehicleFormModal from '../../components/vehicle/VehicleFormModal';
+import VehicleTypeBadge from '../../components/vehicle/VehicleTypeBadge.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 
@@ -59,7 +60,7 @@ export default function VehiclesPage() {
 
     const stats = [
         { label: 'ทั้งหมด', value: vehicles.length, tone: 'primary', description: 'จำนวนรถที่แสดงอยู่ในขณะนี้' },
-        { label: 'เอกสารไม่สมบูรณ์', value: incompleteDocsCount, tone: 'danger', description: 'จำนวนรถที่ขาดเอกสาร (พ.ร.บ./ภาษี/ประกัน) หรือมีเอกสารหมดอายุ' },
+        { label: 'เอกสารไม่สมบูรณ์', value: incompleteDocsCount, tone: 'danger', description: 'จำนวนรถที่ขาดเอกสาร (พ.ร.บ./ภาษี หรือ ประกัน) หรือมีเอกสารหมดอายุ' },
         { label: 'ไม่มีคนขับประจำ', value: withoutDriverCount, tone: 'warning', description: 'จำนวนรถที่ยังไม่มีคนขับประจำ' },
     ];
 
@@ -248,7 +249,7 @@ export default function VehiclesPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.type_name || '-'}</td>
+                                    <td className="px-4 py-3"><VehicleTypeBadge typeName={v.type_name} color={v.type_color} /></td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>
                                         {v.driver ? v.driver.name : <span style={{ color: 'var(--icon-muted)' }}>ไม่มีคนขับประจำ</span>}
                                     </td>

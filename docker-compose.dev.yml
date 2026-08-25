@@ -3,16 +3,17 @@ services:
     image: mysql:8.0
     container_name: carrental_mysql
     restart: unless-stopped
+    command: --default-time-zone=+07:00
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-062004}
       MYSQL_DATABASE: ${DB_NAME:-car_company}
     ports:
-      - "127.0.0.1:3307:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-062004}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,7 +21,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: carrental_backend
     restart: unless-stopped
     env_file:
@@ -29,27 +30,38 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD:-062004}
       DB_NAME: ${DB_NAME:-car_company}
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
     depends_on:
       mysql:
         condition: service_healthy
-    # ไม่ publish พอร์ตออก host — ให้ frontend (nginx) เป็นตัวเดียวที่คุยกับ backend ผ่าน internal docker network เท่านั้น
+    # --legacy-watch: Docker Desktop on Windows doesn't propagate filesystem change
+    # events into bind-mounted containers, so nodemon's default watcher never fires — poll instead.
+    command: npx nodemon --legacy-watch server.js
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_HOST: ${VITE_API_HOST}
-        VITE_API_PORT: ${VITE_API_PORT}
-        VITE_API_PROTOCOL: ${VITE_API_PROTOCOL}
+      dockerfile: Dockerfile.dev
     container_name: carrental_frontend
     restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    environment:
+      DOCKER: "true"
     ports:
-      - "127.0.0.1:8080:80"
+      - "5174:5174"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
+    command: npm run dev -- --host 0.0.0.0
 
 volumes:
   mysql_data:

@@ -23,7 +23,7 @@ export async function getProvinceLookup() {
 
 export async function getVehicleTypeLookup() {
     return getOrSetCache(VEHICLE_TYPE_CACHE_KEY, VEHICLE_TYPE_CACHE_TTL, async () => {
-        const [rows] = await pool.execute('SELECT type_id, type_name FROM vehicle_type ORDER BY type_name');
+        const [rows] = await pool.execute('SELECT type_id, type_name, color FROM vehicle_type ORDER BY type_name');
         return rows;
     });
 }
@@ -101,21 +101,21 @@ async function deleteRowOrThrow(sql, params, notFoundMessage, conflictMessage) {
 
 // ---------- ประเภทรถ (vehicle_type) ----------
 
-export async function createVehicleType(name) {
+export async function createVehicleType(name, color) {
     await assertNameUnique('vehicle_type', 'type_id', 'type_name', name, null, 'ประเภทรถนี้มีอยู่ในระบบแล้ว');
-    const [result] = await pool.execute('INSERT INTO vehicle_type (type_name) VALUES (?)', [name]);
+    const [result] = await pool.execute('INSERT INTO vehicle_type (type_name, color) VALUES (?, ?)', [name, color || null]);
     invalidateCache(VEHICLE_TYPE_CACHE_KEY);
-    return { type_id: result.insertId, type_name: name };
+    return { type_id: result.insertId, type_name: name, color: color || null };
 }
 
-export async function updateVehicleType(typeId, name) {
+export async function updateVehicleType(typeId, name, color) {
     await assertNameUnique('vehicle_type', 'type_id', 'type_name', name, typeId, 'ประเภทรถนี้มีอยู่ในระบบแล้ว');
-    const [result] = await pool.execute('UPDATE vehicle_type SET type_name = ? WHERE type_id = ?', [name, typeId]);
+    const [result] = await pool.execute('UPDATE vehicle_type SET type_name = ?, color = ? WHERE type_id = ?', [name, color || null, typeId]);
     if (result.affectedRows === 0) {
         throw new AppError('ไม่พบประเภทรถนี้', 404);
     }
     invalidateCache(VEHICLE_TYPE_CACHE_KEY);
-    return { type_id: Number(typeId), type_name: name };
+    return { type_id: Number(typeId), type_name: name, color: color || null };
 }
 
 // รถที่อ้างอิงประเภทนี้อยู่จะถูกตั้งค่า type_id เป็น NULL อัตโนมัติ (ON DELETE SET NULL) จึงลบได้เสมอ

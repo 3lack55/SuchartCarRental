@@ -29,13 +29,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   });
 
   // เอกสารแนบตอนเพิ่มรถใหม่: กรอกได้ก็ต่อเมื่อมีข้อมูลจริง (ไม่บังคับ)
-  const [act, setAct] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', premium_amount: '' });
-  const [tax, setTax] = useState({ enabled: false, last_paid_date: '', expire_date: '', fee_amount: '' });
+  const [actTax, setActTax] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', premium_amount: '', fee_amount: '' });
   const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
 
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [docErrors, setDocErrors] = useState({ act: {}, tax: {}, insurance: {} });
+  const [docErrors, setDocErrors] = useState({ actTax: {}, insurance: {} });
 
   const createVehicle = useCreateVehicle();
   const updateVehicle = useUpdateVehicle();
@@ -59,14 +58,16 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   }
 
   // เช็คเฉพาะการ์ดเอกสารที่ติ๊กเปิดไว้ (enabled) เท่านั้น การ์ดที่ปิดอยู่ไม่ต้องกรอกอะไร
-  function validateDocSection(state, { showCompany, amountField }) {
+  function validateDocSection(state, { showCompany, amountFields = [] }) {
     if (!state.enabled) return {};
     const errors = {};
     if (showCompany && !state.insurance_company.trim()) errors.insurance_company = 'กรุณากรอกบริษัทประกัน';
     if (!state.last_paid_date) errors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
     if (!state.expire_date) errors.expire_date = 'กรุณาเลือกวันหมดอายุ';
     else if (state.last_paid_date && state.expire_date <= state.last_paid_date) errors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
-    if (amountField && !String(state[amountField.key]).trim()) errors[amountField.key] = `กรุณากรอก${amountField.label}`;
+    amountFields.forEach((amountField) => {
+      if (!String(state[amountField.key]).trim()) errors[amountField.key] = `กรุณากรอก${amountField.label}`;
+    });
     return errors;
   }
 
@@ -80,9 +81,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
     let hasDocErrors = false;
     if (!isEdit) {
       const nextDocErrors = {
-        act: validateDocSection(act, { showCompany: true, amountField: { key: 'premium_amount', label: 'เบี้ยประกัน' } }),
-        tax: validateDocSection(tax, { showCompany: false, amountField: { key: 'fee_amount', label: 'ค่าธรรมเนียม' } }),
-        insurance: validateDocSection(insurance, { showCompany: true, amountField: null }),
+        actTax: validateDocSection(actTax, { showCompany: true, amountFields: [{ key: 'premium_amount', label: 'เบี้ยประกัน พ.ร.บ.' }, { key: 'fee_amount', label: 'ค่าธรรมเนียมภาษี' }] }),
+        insurance: validateDocSection(insurance, { showCompany: true }),
       };
       setDocErrors(nextDocErrors);
       hasDocErrors = Object.values(nextDocErrors).some((e) => Object.keys(e).length > 0);
@@ -100,19 +100,13 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
       };
 
       if (!isEdit) {
-        if (act.enabled) {
-          payload.act = {
-            insurance_company: act.insurance_company,
-            last_paid_date: act.last_paid_date,
-            expire_date: act.expire_date,
-            premium_amount: Number(act.premium_amount),
-          };
-        }
-        if (tax.enabled) {
-          payload.tax = {
-            last_paid_date: tax.last_paid_date,
-            expire_date: tax.expire_date,
-            fee_amount: Number(tax.fee_amount),
+        if (actTax.enabled) {
+          payload.act_tax = {
+            insurance_company: actTax.insurance_company,
+            last_paid_date: actTax.last_paid_date,
+            expire_date: actTax.expire_date,
+            premium_amount: Number(actTax.premium_amount),
+            fee_amount: Number(actTax.fee_amount),
           };
         }
         if (insurance.enabled) {
@@ -210,21 +204,16 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
               <p className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เอกสารรถ (กรอกได้ถ้ามีข้อมูล)</p>
 
               <DocumentSection
-                idPrefix="act"
-                title="พรบ. (ประกันภาคบังคับ)"
-                state={act}
-                errors={docErrors.act}
-                onChange={(field, value) => handleDocChange('act', setAct, field, value)}
+                idPrefix="act-tax"
+                title="พ.ร.บ. และภาษีรถยนต์"
+                state={actTax}
+                errors={docErrors.actTax}
+                onChange={(field, value) => handleDocChange('actTax', setActTax, field, value)}
                 showCompany
-                amountField={{ key: 'premium_amount', label: 'เบี้ยประกัน (บาท)' }}
-              />
-              <DocumentSection
-                idPrefix="tax"
-                title="ภาษีรถยนต์"
-                state={tax}
-                errors={docErrors.tax}
-                onChange={(field, value) => handleDocChange('tax', setTax, field, value)}
-                amountField={{ key: 'fee_amount', label: 'ค่าธรรมเนียม (บาท)' }}
+                amountFields={[
+                  { key: 'premium_amount', label: 'เบี้ยประกัน พ.ร.บ. (บาท)' },
+                  { key: 'fee_amount', label: 'ค่าธรรมเนียมภาษี (บาท)' },
+                ]}
               />
               <DocumentSection
                 idPrefix="insurance"
@@ -268,7 +257,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 
 // การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
-function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCompany = false, amountField }) {
+function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCompany = false, amountFields = [] }) {
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
       <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -321,11 +310,11 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
             </div>
           </div>
 
-          {amountField && (
-            <div>
-              <label htmlFor={`${idPrefix}-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
+          {amountFields.map((amountField) => (
+            <div key={amountField.key}>
+              <label htmlFor={`${idPrefix}-${amountField.key}`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>{amountField.label}</label>
               <input
-                id={`${idPrefix}-amount`}
+                id={`${idPrefix}-${amountField.key}`}
                 type="number"
                 min="0"
                 step="0.01"
@@ -336,7 +325,7 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
               />
               {errors[amountField.key] && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors[amountField.key]}</p>}
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

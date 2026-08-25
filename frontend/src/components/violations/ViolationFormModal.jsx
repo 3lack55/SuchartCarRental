@@ -60,28 +60,10 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
         setErrors((prev) => (prev[errorKey] ? { ...prev, [errorKey]: undefined } : prev));
     }
 
-    // เลือกคนขับแล้วเติมรถที่คนขับดูแลอยู่ให้อัตโนมัติ: มีคันเดียวก็เลือกให้เลย มีหลายคันก็ปล่อยให้เลือกเอง
-    function handleDriverChange(value) {
-        const driverVehicles = vehicles.filter((v) => v.driver?.driver_id === Number(value));
-        setForm((prev) => ({
-            ...prev,
-            driver_id: value,
-            vehicle_id: driverVehicles.length === 1 ? String(driverVehicles[0].vehicle_id) : '',
-        }));
-        setErrors((prev) => ({ ...prev, driver_id: undefined, vehicle_id: undefined }));
-    }
-
     // เพิ่มสาเหตุใหม่เข้ารายการได้ทันทีจาก dropdown โดยไม่ต้องออกไปหน้าตั้งค่า แล้วเลือกให้อัตโนมัติ
     async function handleCreateReason(name) {
         const result = await createViolationReason.mutateAsync(name);
         handleChange('reason_id', String(result.data.reason_id));
-    }
-
-    const driverVehicles = form.driver_id ? vehicles.filter((v) => v.driver?.driver_id === Number(form.driver_id)) : [];
-    let vehicleOptions = driverVehicles.length > 0 ? driverVehicles : vehicles;
-    if (form.vehicle_id && !vehicleOptions.some((v) => String(v.vehicle_id) === String(form.vehicle_id))) {
-        const currentVehicle = vehicles.find((v) => String(v.vehicle_id) === String(form.vehicle_id));
-        if (currentVehicle) vehicleOptions = [...vehicleOptions, currentVehicle];
     }
 
     function validate() {
@@ -133,7 +115,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                         <Select
                             id="violation-driver"
                             value={form.driver_id}
-                            onChange={handleDriverChange}
+                            onChange={(value) => handleChange('driver_id', value)}
                             placeholder="เลือกคนขับ"
                             error={Boolean(errors.driver_id)}
                             options={drivers.map((d) => ({ value: String(d.driver_id), label: `${d.prefix}${d.first_name} ${d.last_name}` }))}
@@ -142,17 +124,14 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                     </div>
 
                     <div>
-                        <label htmlFor="violation-vehicle" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                            รถ
-                            <InfoTooltip text="เลือกคนขับก่อน ระบบจะเติมรถที่คนขับคนนั้นดูแลให้อัตโนมัติ ถ้าดูแลหลายคันจะให้เลือกเอง" />
-                        </label>
+                        <label htmlFor="violation-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
                         <Select
                             id="violation-vehicle"
                             value={form.vehicle_id}
                             onChange={(value) => handleChange('vehicle_id', value)}
                             placeholder="เลือกรถ"
                             error={Boolean(errors.vehicle_id)}
-                            options={vehicleOptions.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
+                            options={vehicles.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
                         />
                         {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
                     </div>

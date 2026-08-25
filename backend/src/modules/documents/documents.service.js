@@ -5,9 +5,8 @@ import { OVERVIEW_CACHE_KEY } from "../overview/overview.service.js";
 
 // map ประเภทเอกสาร -> ตาราง/คอลัมน์จริงในฐานข้อมูล ใช้เป็น whitelist กันเอา document_type ที่ validate แล้วไปต่อ SQL ตรงๆ
 const DOCUMENT_TABLES = {
-    tax: { table: 'vehicle_taxes', idColumn: 'tax_id', hasProvider: false, amountColumn: 'fee_amount' },
-    act: { table: 'vehicle_acts', idColumn: 'act_id', hasProvider: true, amountColumn: 'premium_amount' },
-    insurance: { table: 'vehicle_insurances', idColumn: 'insurance_id', hasProvider: true, amountColumn: null },
+    act_tax: { table: 'vehicle_act_tax', idColumn: 'act_tax_id', hasProvider: true, amountColumns: ['premium_amount', 'fee_amount'] },
+    insurance: { table: 'vehicle_insurances', idColumn: 'insurance_id', hasProvider: true, amountColumns: [] },
 };
 
 function getConfig(documentType) {
@@ -52,16 +51,20 @@ export async function listCurrentDocuments({ search, documentType, status } = {}
     return rows;
 }
 
-// ดึงจากตารางจริงตรงๆ เพื่อเอาฟิลด์ amount (fee_amount/premium_amount) มาด้วย ซึ่ง view ไม่มี
+function amountSelectClause(config, alias = 'd') {
+    return config.amountColumns.map((col) => `${alias}.${col} AS ${col}`);
+}
+
+// ดึงจากตารางจริงตรงๆ เพื่อเอาฟิลด์ยอดเงิน (premium_amount/fee_amount) มาด้วย ซึ่ง view ไม่มี
 export async function getDocumentById(documentType, documentId) {
     const config = getConfig(documentType);
 
     const providerSelect = config.hasProvider ? 'd.insurance_company AS provider' : 'NULL AS provider';
-    const amountSelect = config.amountColumn ? `d.${config.amountColumn} AS amount` : 'NULL AS amount';
+    const amountSelects = amountSelectClause(config);
 
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelect},
+            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelects.join(', ')}${amountSelects.length ? ',' : ''}
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -83,11 +86,11 @@ export async function listDocumentHistory(documentType, vehicleId) {
     const config = getConfig(documentType);
 
     const providerSelect = config.hasProvider ? 'd.insurance_company AS provider' : 'NULL AS provider';
-    const amountSelect = config.amountColumn ? `d.${config.amountColumn} AS amount` : 'NULL AS amount';
+    const amountSelects = amountSelectClause(config);
 
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelect},
+            ${providerSelect}, d.last_paid_date, d.expire_date, ${amountSelects.join(', ')}${amountSelects.length ? ',' : ''}
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -120,9 +123,9 @@ export async function createDocument(data) {
         values.push(data.provider);
     }
 
-    if (config.amountColumn) {
-        columns.push(config.amountColumn);
-        values.push(data.amount);
+    for (const col of config.amountColumns) {
+        columns.push(col);
+        values.push(data[col]);
     }
 
     const placeholders = columns.map(() => '?').join(', ');
@@ -144,7 +147,9 @@ export async function updateDocument(documentType, documentId, data) {
     if (data.last_paid_date) fieldMap.last_paid_date = data.last_paid_date;
     if (data.expire_date) fieldMap.expire_date = data.expire_date;
     if (config.hasProvider && data.provider) fieldMap.insurance_company = data.provider;
-    if (config.amountColumn && data.amount !== undefined) fieldMap[config.amountColumn] = data.amount;
+    for (const col of config.amountColumns) {
+        if (data[col] !== undefined) fieldMap[col] = data[col];
+    }
 
     const fields = Object.keys(fieldMap);
     if (fields.length === 0) {
@@ -160,7 +165,7 @@ export async function updateDocument(documentType, documentId, data) {
     return getDocumentById(documentType, documentId);
 }
 
-// hard delete ได้ตรงๆ เพราะตาราง vehicle_taxes/vehicle_acts/vehicle_insurances ไม่มี column deleted
+// hard delete ได้ตรงๆ เพราะตาราง vehicle_act_tax/vehicle_insurances ไม่มี column deleted
 export async function deleteDocument(documentType, documentId) {
     const config = getConfig(documentType);
     await getDocumentById(documentType, documentId);
