@@ -52,6 +52,21 @@ services:
     depends_on:
       - backend
 
+  # จัดการฐานข้อมูลผ่านเว็บ — bind กับ Tailscale IP เท่านั้นเหมือน service อื่น (ไม่ผ่าน cloudflared tunnel
+  # เพราะเป็นเครื่องมือแก้ไขฐานข้อมูลโดยตรง ไม่ควรเปิดให้เข้าถึงจากอินเทอร์เน็ตสาธารณะ)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: carrental_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "${TAILSCALE_IP}:8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   # Cloudflare Quick Tunnel — เปิดช่องทางเข้าเว็บจากอินเทอร์เน็ตโดยไม่ต้องอยู่ใน tailnet
   # ไม่ต้อง publish port ใดๆ เพราะต่อออกไปหา Cloudflare edge เอง (outbound only)
   # URL จะสุ่มใหม่ทุกครั้งที่ container restart — เช็คได้จาก `docker logs carrental_cloudflared`
