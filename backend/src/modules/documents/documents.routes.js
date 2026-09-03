@@ -4,6 +4,7 @@ import { requireRole, authenticate } from '../../middleware/auth.js';
 import { createDocumentSchema, updateDocumentSchema } from './documents.schema.js';
 import {
     listDocumentsController,
+    getDocumentSummaryController,
     getDocumentController,
     getDocumentHistoryController,
     createDocumentController,
@@ -14,6 +15,7 @@ import {
 const documentsRouter = Router();
 
 documentsRouter.get('/', authenticate, listDocumentsController);
+documentsRouter.get('/summary', authenticate, getDocumentSummaryController);
 documentsRouter.get('/:type/history/:vehicleId', authenticate, getDocumentHistoryController);
 documentsRouter.get('/:type/:id', authenticate, getDocumentController);
 documentsRouter.post('/', authenticate, requireRole('admin', 'manager', 'staff'), validate(createDocumentSchema), createDocumentController);

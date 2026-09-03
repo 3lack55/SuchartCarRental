@@ -6,6 +6,7 @@ import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import DocumentFormModal from '../documents/DocumentFormModal.jsx';
 import { DOCUMENT_TYPE_META } from '../documents/documentMeta.js';
 import { formatPhone } from '../../utils/phone.js';
+import { durationSinceYearMonth } from '../../utils/duration.js';
 import VehicleTypeBadge from './VehicleTypeBadge.jsx';
 
 const DOCUMENT_LABELS = {
@@ -25,7 +26,7 @@ function documentStatusStyle(daysRemaining) {
   return { label: `เหลือ ${daysRemaining} วัน`, className: 'bg-emerald-50 text-emerald-700' };
 }
 
-export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDeleted }) {
+export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDeleted, onRestored }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   // ประเภทเอกสารที่กำลังเพิ่มอยู่ (จากปุ่ม "+ เพิ่ม" ของเอกสารที่ยังขาด) หรือ null ถ้าไม่ได้เปิดฟอร์ม
   const [addDocType, setAddDocType] = useState(null);
@@ -64,6 +65,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
 
     try {
       await restoreVehicle.mutateAsync(vehicleId);
+      onRestored?.();
     } catch {
       // error is surfaced via restoreVehicle.error
     }
@@ -132,6 +134,11 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
                     </>
                   )}
                 </p>
+                {vehicle.purchase_year && (
+                  <p className="mt-0.5 text-sm" style={{ color: 'var(--sub-text)' }}>
+                    ปีที่ซื้อ {vehicle.purchase_year}{vehicle.purchase_month ? `/${vehicle.purchase_month}` : ''} · อายุการใช้งาน {durationSinceYearMonth(vehicle.purchase_year, vehicle.purchase_month)}
+                  </p>
+                )}
               </div>
               <button
                 onClick={onClose}

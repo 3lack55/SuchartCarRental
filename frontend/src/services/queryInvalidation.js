@@ -8,6 +8,7 @@ export function invalidateFleetQueries(queryClient) {
     queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     queryClient.invalidateQueries({ queryKey: ['vehicle'] });
     queryClient.invalidateQueries({ queryKey: ['documents'] });
+    queryClient.invalidateQueries({ queryKey: ['document-summary'] });
     queryClient.invalidateQueries({ queryKey: ['document'] });
     queryClient.invalidateQueries({ queryKey: ['document-history'] });
     queryClient.invalidateQueries({ queryKey: ['maintenances'] });

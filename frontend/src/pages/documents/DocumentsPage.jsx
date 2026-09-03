@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/useAuth.js';
-import { useDocuments } from '../../services/documents/documentsQueries.js';
+import { useDocumentSummary } from '../../services/documents/documentsQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import Pagination from '../../components/globals/Pagination.jsx';
+import Modal from '../../components/globals/Modal.jsx';
 import DocumentDetailModal from '../../components/documents/DocumentDetailModal.jsx';
 import DocumentFormModal from '../../components/documents/DocumentFormModal.jsx';
 import { DOCUMENT_TYPE_META, documentStatusStyle } from '../../components/documents/documentMeta.js';
@@ -20,33 +21,55 @@ function formatDate(value) {
 
 const DOCUMENT_STATUS_OPTIONS = ['expired', 'expiring', 'valid'];
 
+function subDocMatchesStatus(sub, status) {
+    if (!sub) return false;
+    if (status === 'expired') return sub.days_remaining < 0;
+    if (status === 'expiring') return sub.days_remaining >= 0 && sub.days_remaining <= 30;
+    if (status === 'valid') return sub.days_remaining > 30;
+    return true;
+}
+
 export default function DocumentsPage() {
     const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
-    // มาจากหน้าภาพรวมพร้อมตัวกรอง เช่น ?type=insurance&status=expired
-    const [documentType, setDocumentType] = useState(() => {
-        const value = searchParams.get('type');
-        return value && DOCUMENT_TYPE_META[value] ? value : '';
-    });
     const [status, setStatus] = useState(() => {
         const value = searchParams.get('status');
         return DOCUMENT_STATUS_OPTIONS.includes(value) ? value : '';
     });
+    // มาจากทางลัดหน้าภาพรวม เช่น "พรบ.และภาษี ใกล้หมดอายุ" (?type=act_tax&status=expiring) — ตารางรวมเป็นแถวเดียวต่อรถแล้ว
+    // จึงไม่มี dropdown ให้เลือกประเภทเอกสารเหมือนเดิม แต่ยังต้องกรองประเภทนั้นๆ โดยเฉพาะได้ (ไม่ใช่กรองรวมทั้ง 2 ประเภท)
+    // เคลียร์ได้ผ่าน chip ที่โชว์ใกล้ช่องค้นหาเมื่อมีตัวกรองนี้ทำงานอยู่
+    const [documentType, setDocumentType] = useState(() => {
+        const value = searchParams.get('type');
+        return value && DOCUMENT_TYPE_META[value] ? value : '';
+    });
     const [selected, setSelected] = useState(null); // { documentType, documentId }
-    const [formModal, setFormModal] = useState(null); // { mode: 'create' | 'renew' | 'edit', renewFrom?, document? }
+    const [formModal, setFormModal] = useState(null); // { mode: 'create' | 'renew' | 'add' | 'edit', renewFrom?, document? }
+    const [successMessage, setSuccessMessage] = useState('');
 
     const { user } = useAuth();
 
-    const { data, isLoading, error } = useDocuments({ search: debouncedSearch, documentType: documentType || undefined, status: status || undefined });
-    const documents = useMemo(() => data?.data ?? [], [data]);
+    const { data, isLoading, error } = useDocumentSummary({ search: debouncedSearch });
+    const allRows = useMemo(() => data?.data ?? [], [data]);
+    const rows = useMemo(() => {
+        let result = allRows;
+        if (documentType) {
+            result = result.filter((r) => (status ? subDocMatchesStatus(r[documentType], status) : r[documentType]));
+        } else if (status) {
+            result = result.filter((r) => subDocMatchesStatus(r.act_tax, status) || subDocMatchesStatus(r.insurance, status));
+        }
+        return result;
+    }, [allRows, status, documentType]);
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
-    const { page, setPage, totalPages, pageItems: pagedDocuments } = usePagination(documents);
-    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(documents), [documents]);
+    const { page, setPage, totalPages, pageItems: pagedRows } = usePagination(rows);
+    const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(rows), [rows]);
 
-    const expiredCount = documents.filter((d) => d.days_remaining < 0).length;
-    const expiringCount = documents.filter((d) => d.days_remaining >= 0 && d.days_remaining <= 30).length;
-    const validCount = documents.filter((d) => d.days_remaining > 30).length;
+    // นับจากเอกสารแต่ละประเภทที่มีอยู่จริง (ไม่ใช่นับจำนวนรถ) ให้ตรงกับความหมายเดิมของสถิติ
+    const visibleSubDocs = useMemo(() => rows.flatMap((r) => [r.act_tax, r.insurance]).filter(Boolean), [rows]);
+    const expiredCount = visibleSubDocs.filter((d) => d.days_remaining < 0).length;
+    const expiringCount = visibleSubDocs.filter((d) => d.days_remaining >= 0 && d.days_remaining <= 30).length;
+    const validCount = visibleSubDocs.filter((d) => d.days_remaining > 30).length;
 
     const stats = [
         { label: 'หมดอายุแล้ว', value: expiredCount, tone: 'danger', description: 'เอกสารที่หมดอายุไปแล้วและยังไม่ต่ออายุ' },
@@ -61,9 +84,87 @@ export default function DocumentsPage() {
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
 
-    function handleSaved() {
+    function handleSaved(message = 'บันทึกข้อมูลเอกสารเรียบร้อย') {
+        setSuccessMessage(message);
         setFormModal(null);
         setSelected(null);
+    }
+
+    function handleDeleted() {
+        setSuccessMessage('ลบเอกสารเรียบร้อย');
+        setSelected(null);
+    }
+
+    function closeSuccessModal() {
+        setSuccessMessage('');
+    }
+
+    function openDocumentType(row, documentType) {
+        const sub = row[documentType];
+        if (sub) {
+            setSelected({ documentType, documentId: sub.document_id });
+        } else {
+            setFormModal({
+                mode: 'add',
+                renewFrom: {
+                    vehicle_id: row.vehicle_id,
+                    plate_number: row.plate_number,
+                    plate_province: row.plate_province,
+                    document_type: documentType,
+                },
+            });
+        }
+    }
+
+    function renderTypeCells(row, documentType) {
+        const sub = row[documentType];
+        const label = DOCUMENT_TYPE_META[documentType].label;
+        const cellStyle = { cursor: 'pointer' };
+        const handleClick = () => openDocumentType(row, documentType);
+        const handleKeyDown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } };
+        const ariaLabel = sub
+            ? `ดูรายละเอียด${label} ทะเบียน ${row.plate_number}`
+            : `เพิ่ม${label} ทะเบียน ${row.plate_number}`;
+
+        return (
+            <>
+                <td
+                    className="px-4 py-3 transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
+                    style={{ ...cellStyle, color: 'var(--sub-text)' }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={ariaLabel}
+                    onClick={handleClick}
+                    onKeyDown={handleKeyDown}
+                >
+                    {sub ? formatDate(sub.expire_date) : '-'}
+                </td>
+                <td
+                    className="px-4 py-3 transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
+                    style={cellStyle}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={ariaLabel}
+                    onClick={handleClick}
+                    onKeyDown={handleKeyDown}
+                >
+                    {sub ? (
+                        (() => {
+                            const rowStatus = documentStatusStyle(sub.days_remaining);
+                            return (
+                                <div className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate" style={{ backgroundColor: rowStatus.bg, color: rowStatus.color }}>
+                                    {rowStatus.label}
+                                </div>
+                            );
+                        })()
+                    ) : (
+                        <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
+                            ยังไม่มีข้อมูล · เพิ่ม
+                        </div>
+                    )}
+                </td>
+            </>
+        );
     }
 
     return (
@@ -138,14 +239,17 @@ export default function DocumentsPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <Select
-                            id="document-type-filter"
-                            ariaLabel="กรองตามประเภทเอกสาร"
-                            className="w-44"
-                            value={documentType}
-                            onChange={setDocumentType}
-                            options={[{ value: '', label: 'ทุกประเภทเอกสาร' }, ...Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => ({ value: type, label: m.label }))]}
-                        />
+                        {documentType && (
+                            <button
+                                type="button"
+                                onClick={() => setDocumentType('')}
+                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}
+                            >
+                                ประเภท: {DOCUMENT_TYPE_META[documentType].label}
+                                <span aria-hidden="true">✕</span>
+                            </button>
+                        )}
                         <Select
                             id="document-status-filter"
                             ariaLabel="กรองตามสถานะเอกสาร"
@@ -159,7 +263,7 @@ export default function DocumentsPage() {
                                 { value: 'valid', label: 'ปกติ' },
                             ]}
                         />
-                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{documents.length} รายการ</div>
+                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{rows.length} คัน</div>
                     </div>
                 </div>
 
@@ -169,58 +273,43 @@ export default function DocumentsPage() {
                     <table className="w-full min-w-180 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ประเภทเอกสาร</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ผู้ให้บริการ</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ชำระล่าสุด</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
+                                <th rowSpan={2} className="px-4 py-3 text-left align-middle font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</th>
+                                <th colSpan={2} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.act_tax.label}</th>
+                                <th colSpan={2} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.insurance.label}</th>
+                            </tr>
+                            <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
+                                <th className="border-l px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>วันหมดอายุ</th>
+                                <th className="px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
+                                <th className="border-l px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>วันหมดอายุ</th>
+                                <th className="px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={6} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={5} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
                             )}
 
-                            {!isLoading && documents.length === 0 && (
+                            {!isLoading && rows.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลเอกสาร
                                     </td>
                                 </tr>
                             )}
 
-                            {!isLoading && pagedDocuments.map((d) => {
-                                const rowStatus = documentStatusStyle(d.days_remaining);
-                                return (
-                                    <tr
-                                        key={`${d.document_type}-${d.document_id}`}
-                                        onClick={() => setSelected({ documentType: d.document_type, documentId: d.document_id })}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected({ documentType: d.document_type, documentId: d.document_id }); } }}
-                                        tabIndex={0}
-                                        aria-label={`ดูรายละเอียด${DOCUMENT_TYPE_META[d.document_type]?.label ?? 'เอกสาร'} ทะเบียน ${d.plate_number}`}
-                                        className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
-                                        style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
-                                    >
-                                        <td className="px-4 py-3">
-                                            <PlateBadge plateNumber={d.plate_number} plateProvince={d.plate_province} duplicate={duplicatePlateNumbers.has(d.plate_number)} />
-                                        </td>
-                                        <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{DOCUMENT_TYPE_META[d.document_type]?.label}</td>
-                                        <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{d.provider || '-'}</td>
-                                        <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.last_paid_date)}</td>
-                                        <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.expire_date)}</td>
-                                        <td className="px-4 py-3 ">
-                                            <div className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate w-full h-full justify-center" style={{ backgroundColor: rowStatus.bg, color: rowStatus.color }}>
-                                                {rowStatus.label}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {!isLoading && pagedRows.map((row) => (
+                                <tr key={row.vehicle_id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                                    <td className="px-4 py-3 ">
+                                        <PlateBadge plateNumber={row.plate_number} plateProvince={row.plate_province} duplicate={duplicatePlateNumbers.has(row.plate_number)} />
+                                    </td>
+                                    {renderTypeCells(row, 'act_tax')}
+                                    {renderTypeCells(row, 'insurance')}
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
@@ -235,7 +324,7 @@ export default function DocumentsPage() {
                     onClose={() => setSelected(null)}
                     onRenew={(document) => setFormModal({ mode: 'renew', renewFrom: document })}
                     onEdit={(document) => setFormModal({ mode: 'edit', document })}
-                    onDeleted={handleSaved}
+                    onDeleted={handleDeleted}
                 />
             )}
 
@@ -245,8 +334,26 @@ export default function DocumentsPage() {
                     document={formModal.document}
                     renewFrom={formModal.renewFrom}
                     onClose={() => setFormModal(null)}
-                    onSaved={handleSaved}
+                    onSaved={(_saved, message) => handleSaved(message)}
                 />
+            )}
+
+            {successMessage && (
+                <Modal title="สำเร็จ" onClose={closeSuccessModal} maxWidth="max-w-md">
+                    <div className="p-5">
+                        <p className="text-sm" style={{ color: 'var(--page-text)' }}>{successMessage}</p>
+                        <div className="mt-5 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={closeSuccessModal}
+                                className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
+                                style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
+                            >
+                                รับทราบ
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             )}
         </div>
     );

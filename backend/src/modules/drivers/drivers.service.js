@@ -73,23 +73,60 @@ export async function getDriverById(driverId) {
     return { ...driver, vehicles, violations, unpaid_violations };
 }
 
+// เช็คแยก 2 รอบ: active (deleted=0) แจ้ง 409 ปกติเหมือนเดิม, soft-deleted (deleted=1) แจ้ง 409 พร้อม data
+// ให้ frontend เสนอ "กู้คืน" แทน เพราะ unique key ของ DB ไม่ได้ตัด soft-deleted row ออก ต้องกู้คืนก่อนถึงจะสร้างใหม่ด้วยค่าเดิมได้
 async function assertNameNotTaken(firstName, lastName, excludeDriverId) {
-    const sql = excludeDriverId
-        ? 'SELECT driver_id FROM drivers WHERE first_name = ? AND last_name = ? AND driver_id != ?'
-        : 'SELECT driver_id FROM drivers WHERE first_name = ? AND last_name = ?';
     const params = excludeDriverId ? [firstName, lastName, excludeDriverId] : [firstName, lastName];
+    const excludeClause = excludeDriverId ? ' AND driver_id != ?' : '';
 
-    const [existing] = await pool.execute(sql, params);
-    if (existing.length > 0) {
+    const [existingActive] = await pool.execute(
+        `SELECT driver_id FROM drivers WHERE first_name = ? AND last_name = ?${excludeClause} AND deleted = 0`,
+        params
+    );
+    if (existingActive.length > 0) {
         throw new AppError('มีคนขับชื่อ-นามสกุลนี้อยู่ในระบบแล้ว', 409);
+    }
+
+    const [existingDeleted] = await pool.execute(
+        `SELECT driver_id FROM drivers WHERE first_name = ? AND last_name = ?${excludeClause} AND deleted = 1`,
+        params
+    );
+    if (existingDeleted.length > 0) {
+        throw new AppError(
+            'มีคนขับชื่อ-นามสกุลนี้เคยถูกลบไปแล้ว ต้องการกู้คืนหรือไม่?',
+            409,
+            { conflict: 'soft-deleted', entity: 'driver', id: existingDeleted[0].driver_id }
+        );
+    }
+}
+
+async function assertPhoneNotTaken(phone, excludeDriverId) {
+    const params = excludeDriverId ? [phone, excludeDriverId] : [phone];
+    const excludeClause = excludeDriverId ? ' AND driver_id != ?' : '';
+
+    const [existingActive] = await pool.execute(
+        `SELECT driver_id FROM drivers WHERE phone = ?${excludeClause} AND deleted = 0`,
+        params
+    );
+    if (existingActive.length > 0) {
+        throw new AppError('เบอร์โทรนี้มีอยู่ในระบบแล้ว', 409);
+    }
+
+    const [existingDeleted] = await pool.execute(
+        `SELECT driver_id FROM drivers WHERE phone = ?${excludeClause} AND deleted = 1`,
+        params
+    );
+    if (existingDeleted.length > 0) {
+        throw new AppError(
+            'เบอร์โทรนี้เคยถูกลบไปแล้ว ต้องการกู้คืนหรือไม่?',
+            409,
+            { conflict: 'soft-deleted', entity: 'driver', id: existingDeleted[0].driver_id }
+        );
     }
 }
 
 export async function createDriver(data) {
-    const [existing] = await pool.execute('SELECT driver_id FROM drivers WHERE phone = ?', [data.phone]);
-    if (existing.length > 0) {
-        throw new AppError('เบอร์โทรนี้มีอยู่ในระบบแล้ว', 409);
-    }
+    await assertPhoneNotTaken(data.phone);
     await assertNameNotTaken(data.first_name, data.last_name);
 
     const [result] = await pool.execute(
@@ -105,13 +142,7 @@ export async function updateDriver(driverId, data) {
     const current = await getDriverById(driverId); // ตรวจว่ามีอยู่จริงก่อน ไม่งั้น throw 404 ให้เอง
 
     if (data.phone) {
-        const [existing] = await pool.execute(
-            'SELECT driver_id FROM drivers WHERE phone = ? AND driver_id != ?',
-            [data.phone, driverId]
-        );
-        if (existing.length > 0) {
-            throw new AppError('เบอร์โทรนี้มีอยู่ในระบบแล้ว', 409);
-        }
+        await assertPhoneNotTaken(data.phone, driverId);
     }
 
     if (data.first_name || data.last_name) {

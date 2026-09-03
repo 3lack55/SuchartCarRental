@@ -4,7 +4,7 @@ import Joi from 'joi';
 export const createDocumentSchema = Joi.object({
     vehicle_id: Joi.number().integer().required(),
     document_type: Joi.string().valid('act_tax', 'insurance').required(),
-    provider: Joi.string().max(100).required(),
+    provider: Joi.string().max(100).allow(null, ''),
     last_paid_date: Joi.date().iso().required(),
     expire_date: Joi.date().iso().greater(Joi.ref('last_paid_date')).required().messages({
         'date.greater': 'วันหมดอายุต้องอยู่หลังวันที่ชำระล่าสุด',

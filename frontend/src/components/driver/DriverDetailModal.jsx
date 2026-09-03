@@ -6,6 +6,7 @@ import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import PlateBadge from '../globals/PlateBadge.jsx';
 import { formatPhone } from '../../utils/phone.js';
+import { durationSince } from '../../utils/duration.js';
 
 function initials(firstName, lastName) {
     return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
@@ -23,7 +24,7 @@ function formatDateTime(value) {
     });
 }
 
-export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted }) {
+export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted, onRestored }) {
     const [showConfirm, setShowConfirm] = useState(false);
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -58,6 +59,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
 
         try {
             await restoreDriver.mutateAsync(driverId);
+            onRestored?.();
         } catch {
             // error is surfaced via restoreDriver.error
         }
@@ -134,6 +136,10 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                                 <div>
                                     <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>
                                     <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
+                                </div>
+                                <div>
+                                    <p style={{ color: 'var(--sub-text)' }}>ระยะเวลาทำงาน</p>
+                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{durationSince(driver.hire_date) ?? '-'}</p>
                                 </div>
                             </div>
 
@@ -238,7 +244,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
             {showConfirm && (
                 <ConfirmDialog
                     title="ลบข้อมูลคนขับ"
-                    message={`ยืนยันการลบ ${driver?.prefix}${driver?.first_name} ${driver?.last_name} ออกจากระบบ? ข้อมูลจะถูกซ่อนแต่ยังเก็บประวัติไว้ ไม่สามารถกู้คืนเองผ่านหน้าเว็บได้`}
+                    message={`ยืนยันการลบ ${driver?.prefix}${driver?.first_name} ${driver?.last_name} ออกจากระบบ? ข้อมูลจะถูกซ่อนแต่ยังเก็บประวัติไว้`}
                     confirmLabel="ลบ"
                     loading={deleting}
                     onConfirm={handleDelete}

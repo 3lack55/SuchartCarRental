@@ -92,6 +92,38 @@ export async function listDocumentHistory(documentType, vehicleId) {
     return rows.map((row) => ({ document_type: documentType, ...row }));
 }
 
+// สรุปเอกสารแบบ 1 แถวต่อรถ (พรบ.และภาษี + ประกันภาคสมัครใจ) ใช้ view_document_summary ที่ pivot view_current_documents ไว้แล้ว
+export async function getDocumentSummary({ search } = {}) {
+    let sql = `
+        SELECT vehicle_id, plate_number, plate_province,
+            act_tax_document_id, act_tax_expire_date, act_tax_days_remaining,
+            insurance_document_id, insurance_expire_date, insurance_days_remaining
+        FROM view_document_summary
+        WHERE 1 = 1
+    `;
+    const params = [];
+
+    if (search) {
+        sql += ' AND plate_number LIKE ?';
+        params.push(`%${search}%`);
+    }
+
+    sql += ' ORDER BY plate_number ASC';
+
+    const [rows] = await pool.execute(sql, params);
+    return rows.map((r) => ({
+        vehicle_id: r.vehicle_id,
+        plate_number: r.plate_number,
+        plate_province: r.plate_province,
+        act_tax: r.act_tax_document_id
+            ? { document_id: r.act_tax_document_id, expire_date: r.act_tax_expire_date, days_remaining: r.act_tax_days_remaining }
+            : null,
+        insurance: r.insurance_document_id
+            ? { document_id: r.insurance_document_id, expire_date: r.insurance_expire_date, days_remaining: r.insurance_days_remaining }
+            : null,
+    }));
+}
+
 async function assertVehicleExists(vehicleId) {
     const [rows] = await pool.execute('SELECT vehicle_id FROM vehicles WHERE vehicle_id = ? AND deleted = 0', [vehicleId]);
     if (rows.length === 0) {
@@ -106,7 +138,7 @@ export async function createDocument(data) {
 
     const [result] = await pool.execute(
         `INSERT INTO ${config.table} (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)`,
-        [data.vehicle_id, data.provider, data.last_paid_date, data.expire_date]
+        [data.vehicle_id, data.provider || null, data.last_paid_date, data.expire_date]
     );
 
     invalidateCache(OVERVIEW_CACHE_KEY);

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from '../../components/globals/Modal';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import DatePicker from '../../components/globals/DatePicker.jsx';
-import { useCreateDriver, useUpdateDriver } from '../../services/drivers/driversQueries.js';
+import { useCreateDriver, useUpdateDriver, useDriver, useRestoreDriver } from '../../services/drivers/driversQueries.js';
 import { formatPhone } from '../../utils/phone.js';
 
 const PREFIX_OPTIONS = ['นาย', 'นาง', 'นางสาว'];
@@ -30,23 +30,49 @@ function fieldFromServerMessage(message) {
     return null;
 }
 
-// driver: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา (undefined) = โหมดเพิ่มใหม่
-export default function DriverFormModal({ driver, onClose, onSaved }) {
-    const isEdit = Boolean(driver);
-
-    const [form, setForm] = useState({
+function buildFormState(driver) {
+    return {
         prefix: driver?.prefix ?? PREFIX_OPTIONS[0],
         first_name: driver?.first_name ?? '',
         last_name: driver?.last_name ?? '',
         phone: driver?.phone ?? '',
         hire_date: driver?.hire_date ? driver.hire_date.slice(0, 10) : '',
-    });
+    };
+}
+
+// driver: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา (undefined) = โหมดเพิ่มใหม่
+export default function DriverFormModal({ driver, onClose, onSaved }) {
+    // แยกเป็น state ของตัวเอง (ไม่ใช้ prop ตรงๆ) เพราะถ้าเจอข้อมูลเดิมที่ถูกลบไปแล้ว (conflict) แล้วผู้ใช้กด
+    // "ดูและแก้ไขข้อมูล" ฟอร์มนี้ต้องสลับไปเป็นโหมดแก้ไขของคนขับคนนั้นได้เอง (พร้อมข้อมูลเดิมที่ดึงมา)
+    const [editingDriver, setEditingDriver] = useState(driver ?? null);
+    const isEdit = Boolean(editingDriver);
+    // true เมื่อกำลังแก้ไขคนขับที่ยัง "พ้นสภาพ" (soft-deleted) อยู่ — ต้องกู้คืนด้วยถึงจะใช้งานได้จริง
+    const isRestoringEdit = isEdit && Boolean(editingDriver.deleted);
+
+    const [form, setForm] = useState(() => buildFormState(editingDriver));
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState(null);
+    const [conflictDriverId, setConflictDriverId] = useState(null); // driver_id ของข้อมูลเดิมที่ถูกลบไปแล้ว ถ้าเจอ (โชว์ modal แจ้งก่อน)
+    const [viewingConflict, setViewingConflict] = useState(false); // true หลังกด "ดูและแก้ไขข้อมูล" ในตอนที่ยังโหลดข้อมูลเดิมอยู่
 
     const createDriver = useCreateDriver();
     const updateDriver = useUpdateDriver();
-    const submitting = createDriver.isPending || updateDriver.isPending;
+    const restoreDriver = useRestoreDriver();
+    const conflictQuery = useDriver(conflictDriverId);
+    const submitting = createDriver.isPending || updateDriver.isPending || restoreDriver.isPending;
+
+    // พอโหลดข้อมูลคนขับที่ถูกลบไปแล้วเสร็จ (หลังกด "ดูและแก้ไขข้อมูล") ให้สลับฟอร์มไปโหมดแก้ไขด้วยข้อมูลนั้นทันที
+    useEffect(() => {
+        if (viewingConflict && conflictQuery.data?.data) {
+            const fullDriver = conflictQuery.data.data;
+            setEditingDriver(fullDriver);
+            setForm(buildFormState(fullDriver));
+            setErrors({});
+            setFormError(null);
+            setConflictDriverId(null);
+            setViewingConflict(false);
+        }
+    }, [viewingConflict, conflictQuery.data]);
 
     function handleChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -68,12 +94,21 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
 
         try {
             const payload = { ...form, hire_date: form.hire_date || null };
-            const saved = isEdit
-                ? await updateDriver.mutateAsync({ id: driver.driver_id, data: payload })
-                : await createDriver.mutateAsync(payload);
+            let saved;
+            if (isEdit) {
+                // แก้ไขข้อมูลคนขับที่ยังพ้นสภาพอยู่ = กู้คืนให้กลับมาใช้งานได้พร้อมกันไปเลย ไม่ต้องกดกู้คืนแยก
+                if (isRestoringEdit) await restoreDriver.mutateAsync(editingDriver.driver_id);
+                saved = await updateDriver.mutateAsync({ id: editingDriver.driver_id, data: payload });
+            } else {
+                saved = await createDriver.mutateAsync(payload);
+            }
             const successMessage = isEdit ? 'แก้ไขข้อมูลคนขับเรียบร้อย' : 'เพิ่มคนขับเรียบร้อย';
             onSaved?.(saved, successMessage);
         } catch (err) {
+            if (err.data?.conflict === 'soft-deleted' && err.data.entity === 'driver') {
+                setConflictDriverId(err.data.id);
+                return;
+            }
             const field = fieldFromServerMessage(err.message);
             if (field) {
                 setErrors((prev) => ({ ...prev, [field]: err.message }));
@@ -173,10 +208,56 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                         className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                     >
-                        {submitting ? 'กำลังบันทึก...' : 'บันทึก'}
+                        {submitting ? 'กำลังบันทึก...' : isRestoringEdit ? 'บันทึกและกู้คืน' : 'บันทึก'}
                     </button>
                 </div>
             </form>
+
+            {conflictDriverId && !viewingConflict && (
+                <div
+                    className="fixed inset-0 z-60 flex items-center justify-center p-4"
+                    style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}
+                    onClick={(e) => { if (e.target === e.currentTarget) setConflictDriverId(null); }}
+                >
+                    <div
+                        role="alertdialog"
+                        aria-modal="true"
+                        className="w-full max-w-sm rounded-2xl border p-5 shadow-xl"
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }}
+                    >
+                        <p className="font-semibold" style={{ color: 'var(--page-text)' }}>พบข้อมูลที่เคยถูกลบ</p>
+                        <p className="mt-1.5 text-sm" style={{ color: 'var(--sub-text)' }}>
+                            เคยมีข้อมูลคนขับที่ตรงกับเบอร์โทร หรือ ชื่อ-นามสกุลนี้อยู่ในระบบแล้ว แต่ถูกลบไปก่อนหน้านี้ ต้องการดูและแก้ไขข้อมูลเดิมหรือไม่?
+                        </p>
+                        <div className="mt-5 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setConflictDriverId(null)}
+                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
+                            >
+                                ยกเลิก
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewingConflict(true)}
+                                className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+                                style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
+                            >
+                                ดูและแก้ไขข้อมูล
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {viewingConflict && conflictQuery.isLoading && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center" style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}>
+                    <div className="rounded-2xl border px-6 py-4 text-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', color: 'var(--sub-text)' }}>
+                        กำลังโหลดข้อมูลเดิม...
+                    </div>
+                </div>
+            )}
         </Modal>
     );
 }

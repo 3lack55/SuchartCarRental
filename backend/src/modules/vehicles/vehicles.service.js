@@ -19,6 +19,7 @@ export async function listVehicles({ search, includeInactive, page, limit } = {}
     const baseSql = `
     SELECT
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted,
+        v.purchase_year, v.purchase_month,
         p.name_th AS plate_province,
         t.type_name, t.color AS type_color,
         d.driver_id, d.prefix, d.first_name, d.last_name,
@@ -45,6 +46,8 @@ export async function listVehicles({ search, includeInactive, page, limit } = {}
         plate_province: r.plate_province,
         type_name: r.type_name,
         type_color: r.type_color,
+        purchase_year: r.purchase_year,
+        purchase_month: r.purchase_month,
         deleted: r.deleted,
         driver: r.driver_id ? { driver_id: r.driver_id, name: `${r.prefix}${r.first_name} ${r.last_name}` } : null,
         documents_incomplete: Boolean(r.documents_incomplete),
@@ -71,6 +74,7 @@ export async function getVehicleById(vehicleId) {
   const [rows] = await pool.execute(
     `SELECT
         v.vehicle_id, v.brand_model, v.plate_number, v.deleted, v.created_at, v.updated_at,
+        v.purchase_year, v.purchase_month,
         p.province_id AS plate_province_id, p.name_th AS plate_province,
         t.type_id, t.type_name, t.color AS type_color,
         d.driver_id, d.prefix, d.first_name, d.last_name, d.phone AS driver_phone
@@ -87,12 +91,20 @@ export async function getVehicleById(vehicleId) {
     throw new AppError('ไม่พบข้อมูลรถคันนี้', 404);
   }
  
-  // สถานะเอกสารล่าสุดของคันนี้ (ใช้ view_current_documents ที่กรองเอาแค่ record ล่าสุดต่อประเภทให้แล้ว)
+  // สถานะเอกสารล่าสุดของคันนี้ ดึงตรงจากตารางจริง (ไม่ผ่าน view_current_documents เพราะ view นั้นกรอง
+  // v.deleted = 0 ทิ้งไปด้วย ทำให้รถที่ถูกลบ (soft delete) แล้วจะเห็นเอกสารว่างเปล่าเสมอ ทั้งที่ข้อมูลยังอยู่จริง
+  // เช่น ตอนเปิดดูรถที่ปลดระวางแล้ว หรือตอนเจอทะเบียนซ้ำกับรถที่ถูกลบแล้วกดดูข้อมูลเดิม
   const [documents] = await pool.execute(
-    `SELECT document_type, provider, last_paid_date, expire_date, days_remaining
-     FROM view_current_documents
-     WHERE vehicle_id = ?`,
-    [vehicleId]
+    `SELECT * FROM (
+        (SELECT 'act_tax' AS document_type, insurance_company AS provider, last_paid_date, expire_date,
+            (TO_DAYS(expire_date) - TO_DAYS(CURDATE())) AS days_remaining
+         FROM vehicle_act_tax WHERE vehicle_id = ? ORDER BY expire_date DESC LIMIT 1)
+        UNION ALL
+        (SELECT 'insurance' AS document_type, insurance_company AS provider, last_paid_date, expire_date,
+            (TO_DAYS(expire_date) - TO_DAYS(CURDATE())) AS days_remaining
+         FROM vehicle_insurances WHERE vehicle_id = ? ORDER BY expire_date DESC LIMIT 1)
+     ) AS docs`,
+    [vehicleId, vehicleId]
   );
  
   const [maintenances] = await pool.execute(
@@ -115,6 +127,8 @@ export async function getVehicleById(vehicleId) {
     plate_number: row.plate_number,
     plate_province_id: row.plate_province_id,
     plate_province: row.plate_province,
+    purchase_year: row.purchase_year,
+    purchase_month: row.purchase_month,
     deleted: row.deleted,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -128,18 +142,32 @@ export async function getVehicleById(vehicleId) {
   };
 }
  
+// เช็คแยก 2 รอบ: active (deleted=0) แจ้ง 409 ปกติเหมือนเดิม, soft-deleted (deleted=1) แจ้ง 409 พร้อม data
+// ให้ frontend เสนอ "กู้คืน" แทน เพราะ unique key ของ DB ไม่ได้ตัด soft-deleted row ออก ต้องกู้คืนก่อนถึงจะสร้างใหม่ด้วยค่าเดิมได้
+// เทียบทะเบียนแบบไม่สนช่องว่าง (REPLACE ตัดช่องว่างออกทั้งสองฝั่งก่อนเทียบ) เพราะผู้ใช้พิมพ์ "ทดสอบ888" กับ
+// "ทดสอบ 888" ควรถือว่าเป็นทะเบียนเดียวกัน ไม่ใช่คนละคัน
 async function assertPlateNotDuplicate(plateNumber, plateProvinceId, excludeVehicleId = null) {
-  let sql = 'SELECT vehicle_id FROM vehicles WHERE plate_number = ? AND plate_province_id = ?';
-  const params = [plateNumber, plateProvinceId];
- 
-  if (excludeVehicleId) {
-    sql += ' AND vehicle_id != ?';
-    params.push(excludeVehicleId);
-  }
- 
-  const [existing] = await pool.execute(sql, params);
-  if (existing.length > 0) {
+  const params = excludeVehicleId ? [plateNumber, plateProvinceId, excludeVehicleId] : [plateNumber, plateProvinceId];
+  const excludeClause = excludeVehicleId ? ' AND vehicle_id != ?' : '';
+
+  const [existingActive] = await pool.execute(
+    `SELECT vehicle_id FROM vehicles WHERE REPLACE(plate_number, ' ', '') = REPLACE(?, ' ', '') AND plate_province_id = ?${excludeClause} AND deleted = 0`,
+    params
+  );
+  if (existingActive.length > 0) {
     throw new AppError('ทะเบียนรถนี้มีอยู่ในระบบแล้ว (จังหวัดเดียวกัน)', 409);
+  }
+
+  const [existingDeleted] = await pool.execute(
+    `SELECT vehicle_id FROM vehicles WHERE REPLACE(plate_number, ' ', '') = REPLACE(?, ' ', '') AND plate_province_id = ?${excludeClause} AND deleted = 1`,
+    params
+  );
+  if (existingDeleted.length > 0) {
+    throw new AppError(
+      'ทะเบียนรถนี้เคยถูกลบไปแล้ว ต้องการกู้คืนหรือไม่?',
+      409,
+      { conflict: 'soft-deleted', entity: 'vehicle', id: existingDeleted[0].vehicle_id }
+    );
   }
 }
  
@@ -151,8 +179,8 @@ export async function createVehicle(data) {
     await conn.beginTransaction();
 
     const [result] = await conn.execute(
-      'INSERT INTO vehicles (brand_model, plate_number, plate_province_id, driver_id, type_id) VALUES (?, ?, ?, ?, ?)',
-      [data.brand_model || null, data.plate_number, data.plate_province_id, data.driver_id || null, data.type_id || null]
+      'INSERT INTO vehicles (brand_model, plate_number, plate_province_id, driver_id, type_id, purchase_year, purchase_month) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [data.brand_model || null, data.plate_number, data.plate_province_id, data.driver_id || null, data.type_id || null, data.purchase_year ?? null, data.purchase_month ?? null]
     );
     const vehicleId = result.insertId;
 

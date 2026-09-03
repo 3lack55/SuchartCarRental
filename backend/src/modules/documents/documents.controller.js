@@ -17,6 +17,15 @@ export async function listDocumentsController(req, res, next) {
     }
 }
 
+export async function getDocumentSummaryController(req, res, next) {
+    try {
+        const summary = await documentsService.getDocumentSummary({ search: req.query.search });
+        res.json({ success: true, data: summary });
+    } catch (err) {
+        next(err);
+    }
+}
+
 export async function getDocumentController(req, res, next) {
     try {
         const document = await documentsService.getDocumentById(req.params.type, req.params.id);

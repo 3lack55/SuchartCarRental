@@ -308,7 +308,7 @@ DROP TABLE IF EXISTS `vehicle_act_tax`;
 CREATE TABLE `vehicle_act_tax` (
   `act_tax_id` int NOT NULL AUTO_INCREMENT,
   `vehicle_id` int NOT NULL,
-  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -341,7 +341,7 @@ DROP TABLE IF EXISTS `vehicle_insurances`;
 CREATE TABLE `vehicle_insurances` (
   `insurance_id` int NOT NULL AUTO_INCREMENT,
   `vehicle_id` int NOT NULL,
-  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -405,6 +405,8 @@ CREATE TABLE `vehicles` (
   `plate_province_id` int NOT NULL,
   `driver_id` int DEFAULT NULL,
   `type_id` int DEFAULT NULL,
+  `purchase_year` smallint DEFAULT NULL,
+  `purchase_month` tinyint DEFAULT NULL,
   `deleted` tinyint NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -415,7 +417,9 @@ CREATE TABLE `vehicles` (
   KEY `type_id` (`type_id`),
   CONSTRAINT `vehicles_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `vehicles_ibfk_2` FOREIGN KEY (`plate_province_id`) REFERENCES `provinces` (`province_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `vehicles_ibfk_3` FOREIGN KEY (`type_id`) REFERENCES `vehicle_type` (`type_id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `vehicles_ibfk_3` FOREIGN KEY (`type_id`) REFERENCES `vehicle_type` (`type_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `chk_purchase_year` CHECK ((`purchase_year` is null) or (`purchase_year` between 1980 and 2100)),
+  CONSTRAINT `chk_purchase_month` CHECK ((`purchase_month` is null) or (`purchase_month` between 1 and 12))
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -447,6 +451,26 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `last_paid_date`,
  1 AS `expire_date`,
  1 AS `days_remaining`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary view structure for view `view_document_summary`
+--
+
+DROP TABLE IF EXISTS `view_document_summary`;
+/*!50001 DROP VIEW IF EXISTS `view_document_summary`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `view_document_summary` AS SELECT
+ 1 AS `vehicle_id`,
+ 1 AS `plate_number`,
+ 1 AS `plate_province`,
+ 1 AS `act_tax_document_id`,
+ 1 AS `act_tax_expire_date`,
+ 1 AS `act_tax_days_remaining`,
+ 1 AS `insurance_document_id`,
+ 1 AS `insurance_expire_date`,
+ 1 AS `insurance_days_remaining`*/;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -652,6 +676,24 @@ USE `car_company`;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `view_current_documents` AS select `ranked`.`document_type` AS `document_type`,`ranked`.`document_id` AS `document_id`,`ranked`.`vehicle_id` AS `vehicle_id`,`ranked`.`plate_number` AS `plate_number`,`ranked`.`plate_province` AS `plate_province`,`ranked`.`provider` AS `provider`,`ranked`.`last_paid_date` AS `last_paid_date`,`ranked`.`expire_date` AS `expire_date`,`ranked`.`days_remaining` AS `days_remaining` from (select `vde`.`document_type` AS `document_type`,`vde`.`document_id` AS `document_id`,`vde`.`vehicle_id` AS `vehicle_id`,`vde`.`plate_number` AS `plate_number`,`vde`.`plate_province` AS `plate_province`,`vde`.`provider` AS `provider`,`vde`.`last_paid_date` AS `last_paid_date`,`vde`.`expire_date` AS `expire_date`,`vde`.`days_remaining` AS `days_remaining`,row_number() OVER (PARTITION BY `vde`.`document_type`,`vde`.`vehicle_id` ORDER BY `vde`.`expire_date` desc )  AS `rn` from `view_document_expiry` `vde`) `ranked` where (`ranked`.`rn` = 1) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `view_document_summary`
+--
+
+/*!50001 DROP VIEW IF EXISTS `view_document_summary`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `view_document_summary` AS select `v`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`document_id` AS `act_tax_document_id`,`at`.`expire_date` AS `act_tax_expire_date`,`at`.`days_remaining` AS `act_tax_days_remaining`,`ins`.`document_id` AS `insurance_document_id`,`ins`.`expire_date` AS `insurance_expire_date`,`ins`.`days_remaining` AS `insurance_days_remaining` from ((`vehicles` `v` join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `view_current_documents` `at` on(((`at`.`vehicle_id` = `v`.`vehicle_id`) and (`at`.`document_type` = 'act_tax'))) left join `view_current_documents` `ins` on(((`ins`.`vehicle_id` = `v`.`vehicle_id`) and (`ins`.`document_type` = 'insurance')))) where (`v`.`deleted` = 0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

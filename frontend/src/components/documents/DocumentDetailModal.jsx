@@ -63,10 +63,10 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 border-b p-5 text-sm sm:grid-cols-2" style={{ borderColor: 'var(--surface-border)' }}>
-                        {meta?.hasProvider && (
+                        {document.provider && (
                             <div className="col-span-2">
                                 <p style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{document.provider || '-'}</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{document.provider}</p>
                             </div>
                         )}
                         <div>
@@ -108,7 +108,7 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                                     >
                                         <div>
                                             <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)' }}>{formatDate(h.last_paid_date)} – {formatDate(h.expire_date)}</p>
-                                            {meta?.hasProvider && <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider || '-'}</p>}
+                                            {h.provider && <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider}</p>}
                                         </div>
                                         {h.document_id === document.document_id && (
                                             <span className="text-xs font-medium" style={{ color: 'var(--on-primary)', opacity: 0.5 }}>ปัจจุบัน</span>

@@ -14,6 +14,7 @@ import VehicleTypeBadge from '../../components/vehicle/VehicleTypeBadge.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
+import { durationSinceYearMonth } from '../../utils/duration.js';
 
 export default function VehiclesPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -206,6 +207,8 @@ export default function VehiclesPage() {
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รุ่นรถ</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ปีที่ซื้อ</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>อายุรถ</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ประเภท</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>คนขับ</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
@@ -214,7 +217,7 @@ export default function VehiclesPage() {
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={5} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -222,7 +225,7 @@ export default function VehiclesPage() {
 
                             {!isLoading && vehicles.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลรถ
                                     </td>
                                 </tr>
@@ -251,6 +254,8 @@ export default function VehiclesPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
+                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.purchase_year ? `${v.purchase_year}${v.purchase_month ? `/${v.purchase_month}` : ''}` : '-'}</td>
+                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{durationSinceYearMonth(v.purchase_year, v.purchase_month) ?? '-'}</td>
                                     <td className="px-4 py-3"><VehicleTypeBadge typeName={v.type_name} color={v.type_color} /></td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>
                                         {v.driver ? v.driver.name : <span style={{ color: 'var(--icon-muted)' }}>ไม่มีคนขับประจำ</span>}

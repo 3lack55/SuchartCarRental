@@ -10,6 +10,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import { usePagination } from '../../hooks/usePagination.js';
 import { useAuth } from '../../context/auth/useAuth';
 import { formatPhone } from '../../utils/phone.js';
+import { durationSince } from '../../utils/duration.js';
 
 function initials(firstName, lastName) {
     return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
@@ -162,13 +163,14 @@ export default function DriversPage() {
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ชื่อ-นามสกุล</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>เบอร์โทร</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ระยะเวลาทำงาน</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={4} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={5} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -176,7 +178,7 @@ export default function DriversPage() {
 
                             {!isLoading && drivers.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลคนขับ
                                     </td>
                                 </tr>
@@ -214,6 +216,7 @@ export default function DriversPage() {
                                     </td>
                                     <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
                                     <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
+                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{durationSince(d.hire_date) ?? '-'}</td>
                                     <td className="px-4 py-3">
                                         <span
                                             className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"

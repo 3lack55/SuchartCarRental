@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     getDocuments,
+    getDocumentSummary,
     getDocumentById,
     getDocumentHistory,
     createDocument,
@@ -13,6 +14,7 @@ import { invalidateFleetQueries } from '../queryInvalidation.js';
 export const documentKeys = {
     all: ['documents'],
     list: (token, params) => ['documents', token, params],
+    summary: (token, params) => ['document-summary', token, params],
     detail: (token, type, id) => ['document', token, type, id],
     history: (token, type, vehicleId) => ['document-history', token, type, vehicleId],
 };
@@ -23,6 +25,16 @@ export function useDocuments({ search, documentType, status } = {}) {
     return useQuery({
         queryKey: documentKeys.list(user?.token, { search, documentType, status }),
         queryFn: () => getDocuments(user.token, { search, documentType, status }),
+        enabled: Boolean(user?.token),
+    });
+}
+
+export function useDocumentSummary({ search } = {}) {
+    const { user } = useAuth();
+
+    return useQuery({
+        queryKey: documentKeys.summary(user?.token, { search }),
+        queryFn: () => getDocumentSummary(user.token, { search }),
         enabled: Boolean(user?.token),
     });
 }

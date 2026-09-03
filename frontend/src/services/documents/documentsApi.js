@@ -13,6 +13,16 @@ export function getDocuments(token, { search, documentType, status } = {}) {
     });
 }
 
+export function getDocumentSummary(token, { search } = {}) {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    const qs = params.toString();
+    return requestJson(`${API_BASE_URL}/api/documents/summary${qs ? `?${qs}` : ''}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
 export function getDocumentById(token, documentType, documentId) {
     return requestJson(`${API_BASE_URL}/api/documents/${documentType}/${documentId}`, {
         method: "GET",

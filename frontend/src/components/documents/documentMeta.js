@@ -1,6 +1,6 @@
 export const DOCUMENT_TYPE_META = {
-    act_tax: { label: 'พ.ร.บ. และภาษีรถยนต์', hasProvider: true },
-    insurance: { label: 'ประกันภาคสมัครใจ', hasProvider: true },
+    act_tax: { label: 'พ.ร.บ. และภาษีรถยนต์' },
+    insurance: { label: 'ประกันภาคสมัครใจ' },
 };
 
 // สีตามความเร่งด่วน: หมดแล้ว = แดง, ใกล้หมด (<=30วัน) = เหลือง, ปกติ = เขียว

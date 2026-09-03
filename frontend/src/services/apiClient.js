@@ -30,7 +30,10 @@ export async function requestJson(path, options = {}) {
     : null;
 
   if (!response.ok || data?.success === false) {
-    throw new Error(data?.message || `Request failed with status ${response.status}`);
+    const err = new Error(data?.message || `Request failed with status ${response.status}`);
+    // data เสริม (เช่น { conflict: 'soft-deleted', entity, id }) ให้ผู้เรียกใช้ตัดสินใจต่อได้ นอกเหนือจาก message เฉยๆ
+    err.data = data?.data;
+    throw err;
   }
 
   return data;

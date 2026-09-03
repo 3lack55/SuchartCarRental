@@ -47,7 +47,6 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
             if (!form.vehicle_id) nextErrors.vehicle_id = 'กรุณาเลือกรถ';
             if (!form.document_type) nextErrors.document_type = 'กรุณาเลือกประเภทเอกสาร';
         }
-        if (meta?.hasProvider && !form.provider.trim()) nextErrors.provider = 'กรุณากรอกบริษัทประกัน';
         if (!form.last_paid_date) nextErrors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
         if (!form.expire_date) nextErrors.expire_date = 'กรุณาเลือกวันหมดอายุ';
         else if (form.last_paid_date && form.expire_date <= form.last_paid_date) nextErrors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
@@ -64,10 +63,10 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
 
         try {
             const payload = {
+                provider: form.provider.trim() || null,
                 last_paid_date: form.last_paid_date,
                 expire_date: form.expire_date,
             };
-            if (meta?.hasProvider) payload.provider = form.provider;
 
             let saved;
             if (isEdit) {
@@ -146,19 +145,18 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                     {errors.document_type && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.document_type}</p>}
                 </div>
 
-                {meta?.hasProvider && (
-                    <div>
-                        <label htmlFor="document-provider" className="mb-1.5 block text-xs font-medium" style={labelStyle}>บริษัทประกัน</label>
-                        <input
-                            id="document-provider"
-                            value={form.provider}
-                            onChange={(e) => handleChange('provider', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={{ ...inputStyle, borderColor: errors.provider ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                        />
-                        {errors.provider && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.provider}</p>}
-                    </div>
-                )}
+                <div>
+                    <label htmlFor="document-provider" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ผู้ให้บริการ</label>
+                    <input
+                        id="document-provider"
+                        type="text"
+                        value={form.provider}
+                        onChange={(e) => handleChange('provider', e.target.value)}
+                        placeholder="ไม่บังคับกรอก"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                        style={inputStyle}
+                    />
+                </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>

@@ -1,8 +1,11 @@
 export class AppError extends Error {
-  constructor(message, statusCode = 500) {
+  // data (ไม่บังคับ): payload เสริมให้ frontend ใช้ตัดสินใจต่อได้ เช่น { conflict: 'soft-deleted', entity, id }
+  // สำหรับกรณีที่ต้อง disambiguate มากกว่าแค่ข้อความ error ธรรมดา
+  constructor(message, statusCode = 500, data = undefined) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true;
+    this.data = data;
   }
 }
 
@@ -18,6 +21,7 @@ export function errorHandler(err, req, res, next) {
   res.status(statusCode).json({
     success: false,
     message,
+    ...(err.data !== undefined ? { data: err.data } : {}),
   });
 }
 
