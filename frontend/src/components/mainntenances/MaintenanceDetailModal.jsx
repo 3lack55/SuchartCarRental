@@ -1,9 +1,11 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx'
 import InfoTooltip from '../globals/InfoTooltip.jsx';
 import PlateBadge from '../globals/PlateBadge.jsx';
+import ServiceTypeBadge from './ServiceTypeBadge.jsx';
 import { useDeleteMaintenance, useMaintenance } from "../../services/maintenances/maintenancesQueries.js";
+import { useServiceCatalog } from '../../services/lookups/lookupQueries.js';
 
 function formatDate(value) {
     if (!value) return '-';
@@ -18,6 +20,12 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
     const { data, isLoading, error: queryError } = useMaintenance(maintenanceId);
     const maintenance = data?.data ?? null;
     const deleteMaintenance = useDeleteMaintenance();
+
+    const serviceCatalogQuery = useServiceCatalog();
+    const serviceTypeColors = useMemo(
+        () => Object.fromEntries((serviceCatalogQuery.data?.data ?? []).map((t) => [t.service_type_name, t.color])),
+        [serviceCatalogQuery.data]
+    );
 
     const loading = isLoading;
     const error = queryError?.message ?? null;
@@ -126,7 +134,10 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                                             <tr key={item.detail_id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                                                 <td className="px-3 py-2.5 align-top">
                                                     <p style={{ color: 'var(--page-text)' }}>{item.service_item_name}</p>
-                                                    <p className="text-xs" style={{ color: 'var(--sub-text)' }}>{item.service_type_name} · {item.service_category_name}</p>
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs">
+                                                        <ServiceTypeBadge typeName={item.service_type_name} color={serviceTypeColors[item.service_type_name]} className="px-2 py-0.5 text-[11px]" />
+                                                        <span style={{ color: 'var(--sub-text)' }}>{item.service_category_name}</span>
+                                                    </div>
                                                     {item.remark && <p className="mt-0.5 text-xs" style={{ color: 'var(--sub-text)' }}>หมายเหตุ: {item.remark}</p>}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>{item.quantity}</td>

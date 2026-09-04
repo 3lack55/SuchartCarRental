@@ -253,11 +253,11 @@ export default function VehiclesPage() {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{v.purchase_year ? `${v.purchase_year}${v.purchase_month ? `/${v.purchase_month}` : ''}` : '-'}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{durationSinceYearMonth(v.purchase_year, v.purchase_month) ?? '-'}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{v.brand_model || '-'}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{v.purchase_year ? `${v.purchase_year}${v.purchase_month ? `/${v.purchase_month}` : ''}` : '-'}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{durationSinceYearMonth(v.purchase_year, v.purchase_month) ?? '-'}</td>
                                     <td className="px-4 py-3"><VehicleTypeBadge typeName={v.type_name} color={v.type_color} /></td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>
                                         {v.driver ? v.driver.name : <span style={{ color: 'var(--icon-muted)' }}>ไม่มีคนขับประจำ</span>}
                                     </td>
                                     <td className="px-4 py-3">

@@ -1,16 +1,25 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useMaintenances } from '../../services/maintenances/maintenancesQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import MaintenanceDetailModal from '../../components/mainntenances/MaintenanceDetailModal.jsx';
 import MaintenanceFormModal from '../../components/mainntenances/MaintenanceFormModal.jsx';
+import ServiceTypeBadge from '../../components/mainntenances/ServiceTypeBadge.jsx';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
 import PlateBadge from '../../components/globals/PlateBadge.jsx';
 import Pagination from '../../components/globals/Pagination.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
 import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
+import { useServiceCatalog } from '../../services/lookups/lookupQueries.js';
+
+// แยกบรรทัด "ซ่อม 2, เปลี่ยน 3" กลับเป็นชื่อประเภท (ตัดจำนวนท้ายบรรทัดออก) เพื่อไปหาสีจากแคตตาล็อก
+function typeNameFromBreakdownLine(line) {
+    const lastSpaceIdx = line.lastIndexOf(' ');
+    return lastSpaceIdx === -1 ? line : line.slice(0, lastSpaceIdx);
+}
 
 function formatDate(value) {
     if (!value) return '-';
@@ -70,11 +79,18 @@ export default function MaintenancesPage() {
     const [customEnd, setCustomEnd] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [formModal, setFormModal] = useState(null);
+    // แถวที่ "รายละเอียด" ถูกกางออกอยู่ (ค่าเริ่มต้นย่อทั้งหมด กันแถวที่มีหลายรายการดูสูงกว่าแถวอื่นมากเกินไป)
+    const [expandedIds, setExpandedIds] = useState(() => new Set());
 
     const { user } = useAuth();
 
     const { data, isLoading, error } = useMaintenances({ search: debouncedSearch });
     const allMaintenances = data?.data ?? [];
+    const serviceCatalogQuery = useServiceCatalog();
+    const serviceTypeColors = useMemo(
+        () => Object.fromEntries((serviceCatalogQuery.data?.data ?? []).map((t) => [t.service_type_name, t.color])),
+        [serviceCatalogQuery.data]
+    );
     const { start: periodStart, end: periodEnd } = getPeriodRange(period, customStart, customEnd);
     const maintenances = allMaintenances.filter((m) => {
         if (garageTypeFilter && m.garage_type !== garageTypeFilter) return false;
@@ -108,6 +124,24 @@ export default function MaintenancesPage() {
     function handleSaved() {
         setFormModal(null);
         setSelectedId(null);
+    }
+
+    function toggleRowExpanded(id) {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }
+
+    // นับเฉพาะแถวที่มีมากกว่า 1 รายการ (แถวที่มีปุ่มกาง/ย่อจริงๆ) แถวที่มีรายการเดียวไม่มีอะไรให้กาง
+    // ปุ่มเดียวสลับ 2 สถานะ: ถ้าแถวเหล่านี้ในหน้าปัจจุบันกางอยู่ครบแล้ว -> ย่อทั้งหมด, ไม่งั้น -> กางทั้งหมด
+    const expandableRows = pagedMaintenances.filter((m) => m.total_items > 1);
+    const allRowsExpanded = expandableRows.length > 0 && expandableRows.every((m) => expandedIds.has(m.maintenance_id));
+
+    function toggleAllRows() {
+        setExpandedIds(allRowsExpanded ? new Set() : new Set(expandableRows.map((m) => m.maintenance_id)));
     }
 
     return (
@@ -231,6 +265,17 @@ export default function MaintenancesPage() {
                                 { value: 'shop', label: 'อู่ทั่วไป' },
                             ]}
                         />
+                        {expandableRows.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={toggleAllRows}
+                                className="flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 hover:opacity-80"
+                                style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                            >
+                                {allRowsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                {allRowsExpanded ? 'ย่อรายละเอียดทั้งหมด' : 'ขยายรายละเอียดทั้งหมด'}
+                            </button>
+                        )}
                         <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{maintenances.length} รายการ</div>
                     </div>
                 </div>
@@ -245,14 +290,15 @@ export default function MaintenancesPage() {
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รถ</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รุ่น</th>
                                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>ศูนย์/อู่</th>
-                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>จำนวนรายการ</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รายการซ่อม</th>
+                                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--sub-text)' }}>รายละเอียด</th>
                                 <th className="px-4 py-3 text-right font-medium" style={{ color: 'var(--sub-text)' }}>ยอดรวม</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={6} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -260,7 +306,7 @@ export default function MaintenancesPage() {
 
                             {!isLoading && maintenances.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลการซ่อมบำรุง
                                     </td>
                                 </tr>
@@ -276,14 +322,81 @@ export default function MaintenancesPage() {
                                     className="cursor-pointer transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
                                     style={{ borderBottom: '1px solid var(--surface-border)', backgroundColor: 'transparent' }}
                                 >
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(m.service_date)}</td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-3 align-top truncate" style={{ color: 'var(--sub-text)' }}>{formatDate(m.service_date)}</td>
+                                    <td className="px-4 py-3 align-top">
                                         <PlateBadge plateNumber={m.plate_number} plateProvince={m.plate_province} duplicate={duplicatePlateNumbers.has(m.plate_number)} />
                                     </td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.model}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.garage_name}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{m.total_items} รายการ</td>
-                                    <td className="px-4 py-3 text-right font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(m.total_cost).toLocaleString()}</td>
+                                    <td className="px-4 py-3 align-top truncate" style={{ color: 'var(--sub-text)' }}>{m.model}</td>
+                                    <td className="px-4 py-3 align-top truncate" style={{ color: 'var(--sub-text)' }}>{m.garage_name}</td>
+                                    <td className="px-4 py-3 align-top">
+                                        <div className="flex items-center gap-1.5">
+                                            <p style={{ color: 'var(--page-text)' }} className="truncate">
+                                                {m.total_items} รายการ
+                                            </p>
+                                        </div>
+                                        {m.type_breakdown && (
+                                            <div className="mt-1 flex flex-col gap-1">
+                                                {m.type_breakdown.split(', ').map((line) => (
+                                                    <ServiceTypeBadge key={line} typeName={line} color={serviceTypeColors[typeNameFromBreakdownLine(line)]} />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="max-w-52 px-4 py-3 align-top">
+                                        {!m.item_names ? (
+                                            <span style={{ color: 'var(--icon-muted)' }}>-</span>
+                                        ) : m.total_items > 1 && !expandedIds.has(m.maintenance_id) ? (
+                                            <div className="flex items-center gap-1">
+                                                <p className="truncate text-xs" style={{ color: 'var(--sub-text)' }} title={m.item_names}>
+                                                    {m.item_names}
+                                                </p>
+                                                {m.total_items > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); toggleRowExpanded(m.maintenance_id); }}
+                                                        aria-label={expandedIds.has(m.maintenance_id) ? `ย่อรายละเอียด ${m.plate_number}` : `ขยายรายละเอียด ${m.plate_number}`}
+                                                        aria-expanded={expandedIds.has(m.maintenance_id)}
+                                                        className="shrink-0 cursor-pointer rounded p-0.5 transition-opacity hover:opacity-70"
+                                                        style={{ color: 'var(--icon-muted)' }}
+                                                    >
+                                                        {expandedIds.has(m.maintenance_id) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                        ) : (
+                                            <div className="space-y-0.5 text-xs">
+                                                <div className="flex gap-1 items-start">
+                                                    <div>
+                                                        {m.item_names.split(', ').map((name, idx) => {
+                                                            const itemType = m.item_type_names?.split(', ')[idx];
+                                                            const color = serviceTypeColors[itemType];
+                                                            return (
+                                                                <p key={`${idx}-${name}`} style={{ color: color || 'var(--sub-text)' }} className="truncate">
+                                                                    {name}
+                                                                </p>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {m.total_items > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); toggleRowExpanded(m.maintenance_id); }}
+                                                            aria-label={expandedIds.has(m.maintenance_id) ? `ย่อรายละเอียด ${m.plate_number}` : `ขยายรายละเอียด ${m.plate_number}`}
+                                                            aria-expanded={expandedIds.has(m.maintenance_id)}
+                                                            className="shrink-0 cursor-pointer rounded p-0.5 transition-opacity hover:opacity-70"
+                                                            style={{ color: 'var(--icon-muted)' }}
+                                                        >
+                                                            {expandedIds.has(m.maintenance_id) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right align-top font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(m.total_cost).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>

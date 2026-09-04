@@ -20,7 +20,10 @@ const inputStyle = {
     borderColor: 'var(--surface-border)',
 };
 
-function AddRow({ placeholder, onAdd, submitting }) {
+const DEFAULT_COLOR = '#64748b';
+
+// color/onColorChange ใส่มาเฉพาะตอนเพิ่ม "ประเภทบริการ" (ชั้นบนสุด) เท่านั้น หมวดหมู่/รายการย่อยไม่มีสี
+function AddRow({ placeholder, onAdd, submitting, color, onColorChange }) {
     const [value, setValue] = useState('');
 
     async function handleSubmit(e) {
@@ -33,6 +36,16 @@ function AddRow({ placeholder, onAdd, submitting }) {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+            {onColorChange && (
+                <input
+                    type="color"
+                    aria-label="เลือกสีประเภทบริการใหม่"
+                    value={color}
+                    onChange={(e) => onColorChange(e.target.value)}
+                    className="h-10.5 w-12 shrink-0 cursor-pointer rounded-lg border p-1"
+                    style={inputStyle}
+                />
+            )}
             <input
                 type="text"
                 value={value}
@@ -94,6 +107,8 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [editing, setEditing] = useState(null); // { level: 'type'|'category'|'item', id }
     const [editingName, setEditingName] = useState('');
+    const [editingColor, setEditingColor] = useState(DEFAULT_COLOR);
+    const [newTypeColor, setNewTypeColor] = useState(DEFAULT_COLOR);
     const [pendingDelete, setPendingDelete] = useState(null); // { level, id, name }
     const [formError, setFormError] = useState('');
 
@@ -124,10 +139,11 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
         setEditing(null);
     }
 
-    function startEdit(level, id, currentName) {
+    function startEdit(level, id, currentName, currentColor) {
         setFormError('');
         setEditing({ level, id });
         setEditingName(currentName);
+        setEditingColor(currentColor || DEFAULT_COLOR);
     }
 
     function cancelEdit() {
@@ -142,7 +158,7 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
         setFormError('');
         try {
             if (editing.level === 'type') {
-                await updateType.mutateAsync({ id: editing.id, name: trimmed });
+                await updateType.mutateAsync({ id: editing.id, name: trimmed, color: editingColor });
             } else if (editing.level === 'category') {
                 await updateCategory.mutateAsync({ id: editing.id, name: trimmed, serviceTypeId: selectedTypeId });
             } else {
@@ -186,10 +202,18 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
 
     if (!selectedType) {
         level = 'type';
-        rows = catalog.map((t) => ({ id: t.service_type_id, name: t.service_type_name, hasChildren: true }));
+        rows = catalog.map((t) => ({ id: t.service_type_id, name: t.service_type_name, hasChildren: true, color: t.color }));
         emptyText = 'ยังไม่มีประเภทบริการในระบบ';
         addPlaceholder = 'เพิ่มประเภทบริการใหม่ (เช่น ซ่อม, เปลี่ยน, ตรวจเช็ค)';
-        onAdd = (name) => handleAdd(createType, name);
+        onAdd = async (name) => {
+            setFormError('');
+            try {
+                await createType.mutateAsync({ name, color: newTypeColor });
+                setNewTypeColor(DEFAULT_COLOR);
+            } catch (err) {
+                setFormError(err.message);
+            }
+        };
         addSubmitting = createType.isPending;
         breadcrumbSegments = [{ label: 'บริการซ่อมบำรุง' }];
     } else if (!selectedCategory) {
@@ -227,7 +251,15 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
         <div className="space-y-4">
             <Breadcrumb segments={breadcrumbSegments} />
 
-            {canManage && <AddRow placeholder={addPlaceholder} onAdd={onAdd} submitting={addSubmitting} />}
+            {canManage && (
+                <AddRow
+                    placeholder={addPlaceholder}
+                    onAdd={onAdd}
+                    submitting={addSubmitting}
+                    color={level === 'type' ? newTypeColor : undefined}
+                    onColorChange={level === 'type' ? setNewTypeColor : undefined}
+                />
+            )}
 
             {(formError || queryError) && (
                 <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError || queryError?.message}</p>
@@ -257,6 +289,16 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
                                 >
                                     {isEditing ? (
                                         <div className="flex flex-1 items-center gap-1.5">
+                                            {level === 'type' && (
+                                                <input
+                                                    type="color"
+                                                    aria-label={`เลือกสีของ ${row.name}`}
+                                                    value={editingColor}
+                                                    onChange={(e) => setEditingColor(e.target.value)}
+                                                    className="h-9 w-10 shrink-0 cursor-pointer rounded-lg border p-1"
+                                                    style={inputStyle}
+                                                />
+                                            )}
                                             <input
                                                 autoFocus
                                                 type="text"
@@ -282,7 +324,16 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
                                             className="flex flex-1 items-center justify-between gap-2 text-left text-sm"
                                             style={{ color: 'var(--page-text)', cursor: row.hasChildren ? 'pointer' : 'default' }}
                                         >
-                                            <span>{row.name}</span>
+                                            <span className="flex items-center gap-2">
+                                                {level === 'type' && (
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="inline-block h-3 w-3 shrink-0 rounded-full border"
+                                                        style={{ backgroundColor: row.color || 'transparent', borderColor: 'var(--surface-border)' }}
+                                                    />
+                                                )}
+                                                {row.name}
+                                            </span>
                                             {row.hasChildren && <ChevronRight size={16} style={{ color: 'var(--icon-muted)' }} />}
                                         </button>
                                     )}
@@ -291,7 +342,7 @@ export default function ServiceCatalogPanel({ canManage, canDelete }) {
                                         <div className="flex shrink-0 items-center gap-1">
                                             <button
                                                 type="button"
-                                                onClick={() => startEdit(level, row.id, row.name)}
+                                                onClick={() => startEdit(level, row.id, row.name, row.color)}
                                                 aria-label={`แก้ไข ${row.name}`}
                                                 className="cursor-pointer rounded-lg p-1.5 transition-colors"
                                                 style={{ color: 'var(--icon-muted)' }}

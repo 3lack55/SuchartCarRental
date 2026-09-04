@@ -126,7 +126,7 @@ export async function deleteViolationReasonController(req, res, next) {
 
 export async function createServiceTypeController(req, res, next) {
     try {
-        const result = await createServiceType(req.body.name);
+        const result = await createServiceType(req.body.name, req.body.color);
         await logActivity(req, { action: 'lookup.service_type.create', entity_type: 'service_type', entity_id: result.service_type_id, description: `เพิ่มประเภทบริการซ่อมบำรุง "${result.service_type_name}"` });
         res.status(201).json({ success: true, data: result });
     } catch (err) {
@@ -136,7 +136,7 @@ export async function createServiceTypeController(req, res, next) {
 
 export async function updateServiceTypeController(req, res, next) {
     try {
-        const result = await updateServiceType(req.params.id, req.body.name);
+        const result = await updateServiceType(req.params.id, req.body.name, req.body.color);
         await logActivity(req, { action: 'lookup.service_type.update', entity_type: 'service_type', entity_id: result.service_type_id, description: `แก้ไขประเภทบริการซ่อมบำรุงเป็น "${result.service_type_name}"` });
         res.json({ success: true, data: result });
     } catch (err) {

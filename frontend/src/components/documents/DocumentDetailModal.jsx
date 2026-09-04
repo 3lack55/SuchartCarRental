@@ -17,8 +17,15 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
     const document = data?.data ?? null;
     const deleteDocument = useDeleteDocument();
 
-    const historyQuery = useDocumentHistory(documentType, document?.vehicle_id, { enabled: showHistory });
+    // โหลดประวัติไว้ตั้งแต่เอกสารพร้อม (ไม่รอ toggle "ดูประวัติ") เพื่อรู้ล่วงหน้าว่าลบรายการนี้แล้ว
+    // รายการรอบก่อนหน้าไหนจะถูกเลื่อนขึ้นมาเป็น "ปัจจุบัน" แทน จะได้เตือนผู้ใช้ในไดอะล็อกยืนยันลบก่อนกดจริง
+    const historyQuery = useDocumentHistory(documentType, document?.vehicle_id, { enabled: Boolean(document?.vehicle_id) });
     const history = historyQuery.data?.data ?? [];
+
+    // รายการที่จะกลายเป็น "ปัจจุบัน" แทนหลังลบ (รายการอื่นที่ไม่ใช่ตัวนี้ ซึ่งมีวันหมดอายุล่าสุด) ถ้ามี
+    const nextCurrent = history
+        .filter((h) => h.document_id !== document?.document_id)
+        .reduce((latest, h) => (!latest || new Date(h.expire_date) > new Date(latest.expire_date) ? h : latest), null);
 
     const loading = isLoading;
     const error = queryError?.message ?? null;
@@ -154,7 +161,11 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
             {showConfirm && (
                 <ConfirmDialog
                     title="ลบข้อมูลเอกสาร"
-                    message="ยืนยันการลบเอกสารนี้? ไม่สามารถกู้คืนได้"
+                    message={
+                        nextCurrent
+                            ? `ยืนยันการลบเอกสารนี้? หลังลบแล้ว ระบบจะแสดงรายการก่อนหน้า (หมดอายุ ${formatDate(nextCurrent.expire_date)}) เป็นเอกสารปัจจุบันแทน และไม่สามารถกู้คืนรายการที่ลบได้`
+                            : 'ยืนยันการลบเอกสารนี้? ไม่สามารถกู้คืนได้'
+                    }
                     confirmLabel="ลบ"
                     loading={deleting}
                     onConfirm={handleDelete}

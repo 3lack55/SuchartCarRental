@@ -15,6 +15,12 @@ const pool = mysql.createPool({
   dateStrings: true,
 });
 
+// ค่า default ของ MySQL (1024 ไบต์) ตัดข้อความสั้นเกินไปสำหรับ GROUP_CONCAT ที่ใช้สรุปรายการซ่อมบำรุง
+// (view_maintenance_summary: item_names/item_type_names) เมื่อใบซ่อมมีหลายรายการ ขยายเป็น 8192 ไบต์ต่อ connection กันตัดข้อความ
+pool.on('connection', (connection) => {
+  connection.query('SET SESSION group_concat_max_len = 8192');
+});
+
 export async function testConnection() {
   const conn = await pool.getConnection();
   try {

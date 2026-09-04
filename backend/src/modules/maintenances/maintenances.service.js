@@ -20,7 +20,7 @@ export async function listMaintenances({ search, vehicleId, page, limit } = {}) 
     const baseSql = `
     SELECT maintenance_id, vehicle_id, plate_number, plate_province, model,
         service_date, garage_name, garage_type, receipt_number,
-        mileage, next_service_mileage, total_items, total_cost
+        mileage, next_service_mileage, total_items, total_cost, type_breakdown, item_names, item_type_names
     FROM view_maintenance_summary
     ${where}
     ORDER BY service_date DESC, maintenance_id DESC

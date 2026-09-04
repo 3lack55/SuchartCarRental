@@ -30,7 +30,7 @@ export async function getVehicleTypeLookup() {
 
 export async function getServiceCatalog() {
     return getOrSetCache(SERVICE_CATALOG_CACHE_KEY, SERVICE_CATALOG_CACHE_TTL, async () => {
-        const [types] = await pool.execute('SELECT service_type_id, service_type_name FROM service_type ORDER BY service_type_id');
+        const [types] = await pool.execute('SELECT service_type_id, service_type_name, color FROM service_type ORDER BY service_type_id');
         const [categories] = await pool.execute(
             'SELECT service_category_id, service_category_name, service_type_id FROM service_category ORDER BY service_category_id'
         );
@@ -41,6 +41,7 @@ export async function getServiceCatalog() {
         const catalog = types.map((t) => ({
             service_type_id: t.service_type_id,
             service_type_name: t.service_type_name,
+            color: t.color,
             categories: categories
                 .filter((c) => c.service_type_id === t.service_type_id)
                 .map((c) => ({
@@ -162,21 +163,21 @@ export async function deleteViolationReason(reasonId) {
 
 // ---------- แคตตาล็อกบริการซ่อมบำรุง (service_type / service_category / service_items) ----------
 
-export async function createServiceType(name) {
+export async function createServiceType(name, color) {
     await assertNameUnique('service_type', 'service_type_id', 'service_type_name', name, null, 'ประเภทบริการนี้มีอยู่ในระบบแล้ว');
-    const [result] = await pool.execute('INSERT INTO service_type (service_type_name) VALUES (?)', [name]);
+    const [result] = await pool.execute('INSERT INTO service_type (service_type_name, color) VALUES (?, ?)', [name, color || null]);
     invalidateCache(SERVICE_CATALOG_CACHE_KEY);
-    return { service_type_id: result.insertId, service_type_name: name };
+    return { service_type_id: result.insertId, service_type_name: name, color: color || null };
 }
 
-export async function updateServiceType(serviceTypeId, name) {
+export async function updateServiceType(serviceTypeId, name, color) {
     await assertNameUnique('service_type', 'service_type_id', 'service_type_name', name, serviceTypeId, 'ประเภทบริการนี้มีอยู่ในระบบแล้ว');
-    const [result] = await pool.execute('UPDATE service_type SET service_type_name = ? WHERE service_type_id = ?', [name, serviceTypeId]);
+    const [result] = await pool.execute('UPDATE service_type SET service_type_name = ?, color = ? WHERE service_type_id = ?', [name, color || null, serviceTypeId]);
     if (result.affectedRows === 0) {
         throw new AppError('ไม่พบประเภทบริการนี้', 404);
     }
     invalidateCache(SERVICE_CATALOG_CACHE_KEY);
-    return { service_type_id: Number(serviceTypeId), service_type_name: name };
+    return { service_type_id: Number(serviceTypeId), service_type_name: name, color: color || null };
 }
 
 export async function deleteServiceType(serviceTypeId) {

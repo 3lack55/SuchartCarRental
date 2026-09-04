@@ -11,6 +11,7 @@ export const violationReasonSchema = Joi.object({
 
 export const serviceTypeSchema = Joi.object({
   name: Joi.string().trim().min(1).max(50).required(),
+  color: Joi.string().trim().pattern(/^#[0-9A-Fa-f]{6}$/).allow(null, ''),
 });
 
 export const serviceCategorySchema = Joi.object({

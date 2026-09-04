@@ -77,19 +77,19 @@ export function deleteViolationReason(token, id) {
 
 // ---------- ประเภทบริการซ่อมบำรุง ----------
 
-export function createServiceType(token, name) {
+export function createServiceType(token, name, color) {
   return requestJson(`${API_BASE_URL}/api/lookups/service-types`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    body: { name },
+    body: { name, color },
   });
 }
 
-export function updateServiceType(token, id, name) {
+export function updateServiceType(token, id, name, color) {
   return requestJson(`${API_BASE_URL}/api/lookups/service-types/${id}`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
-    body: { name },
+    body: { name, color },
   });
 }
 

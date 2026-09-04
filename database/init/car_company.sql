@@ -251,6 +251,7 @@ DROP TABLE IF EXISTS `service_type`;
 CREATE TABLE `service_type` (
   `service_type_id` int NOT NULL AUTO_INCREMENT,
   `service_type_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `color` varchar(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`service_type_id`)
@@ -263,7 +264,7 @@ CREATE TABLE `service_type` (
 
 LOCK TABLES `service_type` WRITE;
 /*!40000 ALTER TABLE `service_type` DISABLE KEYS */;
-INSERT INTO `service_type` VALUES (1,'ซ่อม','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,'เปลี่ยน','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'ตรวจเช็ค','2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `service_type` VALUES (1,'ซ่อม',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,'เปลี่ยน',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,'ตรวจเช็ค',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `service_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -566,7 +567,10 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `mileage`,
  1 AS `next_service_mileage`,
  1 AS `total_items`,
- 1 AS `total_cost`*/;
+ 1 AS `total_cost`,
+ 1 AS `type_breakdown`,
+ 1 AS `item_names`,
+ 1 AS `item_type_names`*/;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -765,7 +769,7 @@ USE `car_company`;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_maintenance_summary` AS select `m`.`maintenance_id` AS `maintenance_id`,`m`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`v`.`brand_model` AS `model`,`p`.`name_th` AS `plate_province`,`m`.`service_date` AS `service_date`,`m`.`garage_name` AS `garage_name`,`m`.`garage_type` AS `garage_type`,`m`.`receipt_number` AS `receipt_number`,`m`.`mileage` AS `mileage`,`m`.`next_service_mileage` AS `next_service_mileage`,count(`md`.`detail_id`) AS `total_items`,coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) AS `total_cost` from (((`maintenances` `m` join `vehicles` `v` on((`v`.`vehicle_id` = `m`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) group by `m`.`maintenance_id`,`m`.`vehicle_id`,`v`.`plate_number`,`p`.`name_th`,`m`.`service_date`,`m`.`garage_name`,`m`.`garage_type`,`m`.`receipt_number`,`m`.`mileage`,`m`.`next_service_mileage` */;
+/*!50001 VIEW `view_maintenance_summary` AS select `m`.`maintenance_id` AS `maintenance_id`,`m`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`v`.`brand_model` AS `model`,`p`.`name_th` AS `plate_province`,`m`.`service_date` AS `service_date`,`m`.`garage_name` AS `garage_name`,`m`.`garage_type` AS `garage_type`,`m`.`receipt_number` AS `receipt_number`,`m`.`mileage` AS `mileage`,`m`.`next_service_mileage` AS `next_service_mileage`,count(`md`.`detail_id`) AS `total_items`,coalesce(sum((`md`.`quantity` * `md`.`unit_price`)),0) AS `total_cost`,`type_counts`.`type_breakdown` AS `type_breakdown`,group_concat(`si`.`service_item_name` order by `st2`.`service_type_id` ASC,`md`.`detail_id` ASC separator ', ') AS `item_names`,group_concat(`st2`.`service_type_name` order by `st2`.`service_type_id` ASC,`md`.`detail_id` ASC separator ', ') AS `item_type_names` from (((((((`maintenances` `m` join `vehicles` `v` on((`v`.`vehicle_id` = `m`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `maintenance_details` `md` on((`md`.`maintenance_id` = `m`.`maintenance_id`))) left join `service_items` `si` on((`si`.`service_item_id` = `md`.`service_item_id`))) left join `service_category` `sc2` on((`sc2`.`service_category_id` = `si`.`service_category_id`))) left join `service_type` `st2` on((`st2`.`service_type_id` = `sc2`.`service_type_id`))) left join (select `cnt`.`maintenance_id` AS `maintenance_id`,group_concat(concat(`st`.`service_type_name`,' ',`cnt`.`item_count`) order by `st`.`service_type_id` ASC separator ', ') AS `type_breakdown` from ((select `md2`.`maintenance_id` AS `maintenance_id`,`sc`.`service_type_id` AS `service_type_id`,count(0) AS `item_count` from ((`maintenance_details` `md2` join `service_items` `si2` on((`si2`.`service_item_id` = `md2`.`service_item_id`))) join `service_category` `sc` on((`sc`.`service_category_id` = `si2`.`service_category_id`))) group by `md2`.`maintenance_id`,`sc`.`service_type_id`) `cnt` join `service_type` `st` on((`st`.`service_type_id` = `cnt`.`service_type_id`))) group by `cnt`.`maintenance_id`) `type_counts` on((`type_counts`.`maintenance_id` = `m`.`maintenance_id`))) group by `m`.`maintenance_id`,`m`.`vehicle_id`,`v`.`plate_number`,`v`.`brand_model`,`p`.`name_th`,`m`.`service_date`,`m`.`garage_name`,`m`.`garage_type`,`m`.`receipt_number`,`m`.`mileage`,`m`.`next_service_mileage`,`type_counts`.`type_breakdown` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

@@ -75,7 +75,13 @@ export function useUpdateVehicleType() {
 
   return useMutation({
     mutationFn: ({ id, name, color }) => updateVehicleType(user?.token, id, name, color),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] }),
+    // ชื่อ/สีประเภทรถถูกฝัง (join) มากับข้อมูลรถแต่ละคันตั้งแต่ตอน fetch แล้ว ไม่ใช่ค่าที่ไปหาใหม่แบบ live
+    // เปลี่ยนชื่อ/สีที่นี่แล้วถ้าไม่ invalidate รายการ/รายละเอียดรถด้วย ป้ายประเภทรถจะค้างค่าเก่าไว้
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle'] });
+    },
   });
 }
 
@@ -85,7 +91,13 @@ export function useDeleteVehicleType() {
 
   return useMutation({
     mutationFn: (id) => deleteVehicleType(user?.token, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] }),
+    // ลบประเภทรถที่ยังมีรถผูกอยู่ได้ (ON DELETE SET NULL) รถเหล่านั้นจะกลายเป็น "ไม่มีประเภท" ทันที
+    // ต้อง invalidate รายการ/รายละเอียดรถด้วย ไม่งั้นป้ายประเภทเก่าจะยังค้างแสดงอยู่ทั้งที่ถูกลบไปแล้ว
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicleTypes'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle'] });
+    },
   });
 }
 
@@ -128,7 +140,7 @@ export function useCreateServiceType() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name) => createServiceType(user?.token, name),
+    mutationFn: ({ name, color }) => createServiceType(user?.token, name, color),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] }),
   });
 }
@@ -138,8 +150,14 @@ export function useUpdateServiceType() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, name }) => updateServiceType(user?.token, id, name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] }),
+    mutationFn: ({ id, name, color }) => updateServiceType(user?.token, id, name, color),
+    // ชื่อประเภทบริการถูกฝังเป็นข้อความมากับสรุป/รายการซ่อมของแต่ละใบซ่อมตั้งแต่ตอน fetch แล้ว
+    // เปลี่ยนชื่อที่นี่แล้วถ้าไม่ invalidate รายการ/รายละเอียดใบซ่อมด้วย ข้อความในตารางจะค้างชื่อเก่าไว้
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenances'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+    },
   });
 }
 
@@ -169,7 +187,11 @@ export function useUpdateServiceCategory() {
 
   return useMutation({
     mutationFn: ({ id, name, serviceTypeId }) => updateServiceCategory(user?.token, id, name, serviceTypeId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] }),
+    // ชื่อหมวดหมู่ก็ถูกฝังไว้ในรายละเอียดใบซ่อม (view_maintenance_line_items) เช่นกัน
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+    },
   });
 }
 
@@ -199,7 +221,12 @@ export function useUpdateServiceItem() {
 
   return useMutation({
     mutationFn: ({ id, name, categoryId }) => updateServiceItem(user?.token, id, name, categoryId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] }),
+    // ชื่อรายการย่อยถูกฝังไว้ทั้งในตารางสรุป (รายละเอียด) และหน้ารายละเอียดใบซ่อม
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['serviceCatalog'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenances'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+    },
   });
 }
 

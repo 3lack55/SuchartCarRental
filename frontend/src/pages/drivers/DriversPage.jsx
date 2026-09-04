@@ -201,7 +201,7 @@ export default function DriversPage() {
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-1.5 font-semibold" style={{ color: 'var(--page-text)' }}>
-                                                    {d.prefix}{d.first_name} {d.last_name}
+                                                    <span className="truncate">{d.prefix}{d.first_name} {d.last_name}</span>
                                                     {Number(d.unpaid_violations_count) > 0 && (
                                                         <span onClick={(e) => e.stopPropagation()}>
                                                             <InfoTooltip text={`มีค่าปรับค้างจ่าย ${d.unpaid_violations_count} รายการ`} label="มีค่าปรับค้างจ่าย">
@@ -215,11 +215,11 @@ export default function DriversPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
-                                    <td className="px-4 py-3" style={{ color: 'var(--sub-text)' }}>{durationSince(d.hire_date) ?? '-'}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{durationSince(d.hire_date) ?? '-'}</td>
                                     <td className="px-4 py-3">
                                         <span
-                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                            className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate"
                                             style={
                                                 d.deleted
                                                     ? { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', opacity: 0.75 }

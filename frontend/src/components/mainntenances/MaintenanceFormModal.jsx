@@ -12,7 +12,7 @@ let tempIdCounter = 0;
 function nextTempId() { return `tmp-${++tempIdCounter}`; }
 
 function emptyItem() {
-    return { tempId: nextTempId(), service_type_id: '', service_category_id: '', service_item_id: '', quantity: 1, unit_price: '', remark: '' };
+    return { tempId: nextTempId(), service_type_id: '', service_category_id: '', service_item_id: '', quantity: 1, unit_price: 0, remark: '' };
 }
 
 const labelStyle = { color: 'var(--sub-text)' };
@@ -109,7 +109,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
     // เพิ่มประเภท/หมวด/รายการใหม่เข้าแคตตาล็อกได้ทันทีจาก dropdown โดยไม่ต้องออกไปหน้าตั้งค่า แล้วเลือกให้อัตโนมัติ
     async function handleCreateType(tempId, name) {
-        const result = await createServiceType.mutateAsync(name);
+        const result = await createServiceType.mutateAsync({ name });
         updateItem(tempId, 'service_type_id', String(result.data.service_type_id));
     }
 
@@ -387,7 +387,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                                     <input
                                                         type="number"
                                                         min="0"
-                                                        step="0.01"
+                                                        step="1.0"
                                                         aria-label={`จำนวน รายการที่ ${idx + 1}`}
                                                         value={it.quantity}
                                                         onChange={(e) => updateItem(it.tempId, 'quantity', e.target.value)}
@@ -401,7 +401,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                                     <input
                                                         type="number"
                                                         min="0"
-                                                        step="0.01"
+                                                        step="1.0"
                                                         aria-label={`ราคาต่อหน่วย รายการที่ ${idx + 1}`}
                                                         value={it.unit_price}
                                                         onChange={(e) => updateItem(it.tempId, 'unit_price', e.target.value)}
