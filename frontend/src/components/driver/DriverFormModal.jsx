@@ -8,6 +8,11 @@ import { formatPhone } from '../../utils/phone.js';
 
 const PREFIX_OPTIONS = ['นาย', 'นาง', 'นางสาว'];
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+    return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 const FIELD_ERROR_ID = {
     first_name: 'driver-first-name-error',
     last_name: 'driver-last-name-error',
@@ -120,7 +125,7 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
 
     return (
         <Modal title={isEdit ? 'แก้ไขข้อมูลคนขับ' : 'เพิ่มคนขับ'} onClose={onClose} maxWidth="max-w-xl">
-            <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row">
                     <div className="sm:w-28">
                         <label htmlFor="driver-prefix" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>คำนำหน้า</label>
@@ -133,7 +138,7 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                     </div>
                     <div className="flex-1">
                         <label htmlFor="driver-first-name" className="mb-1.5 flex items-center text-xs font-medium" style={{ color: 'var(--sub-text)' }}>
-                            ชื่อ
+                            ชื่อ<Required />
                             <InfoTooltip text="ชื่อ-นามสกุลต้องไม่ซ้ำกับคนขับคนอื่นในระบบ" />
                         </label>
                         <input
@@ -142,19 +147,21 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                             aria-describedby={errors.first_name ? FIELD_ERROR_ID.first_name : undefined}
                             value={form.first_name}
                             onChange={(e) => handleChange('first_name', e.target.value)}
+                            placeholder="เช่น สมชาย"
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                             style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: errors.first_name ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         />
                         {errors.first_name && <p id={FIELD_ERROR_ID.first_name} role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.first_name}</p>}
                     </div>
                     <div className="flex-1">
-                        <label htmlFor="driver-last-name" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>นามสกุล</label>
+                        <label htmlFor="driver-last-name" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>นามสกุล<Required /></label>
                         <input
                             id="driver-last-name"
                             aria-invalid={Boolean(errors.last_name)}
                             aria-describedby={errors.last_name ? FIELD_ERROR_ID.last_name : undefined}
                             value={form.last_name}
                             onChange={(e) => handleChange('last_name', e.target.value)}
+                            placeholder="เช่น ใจดี"
                             className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                             style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: errors.last_name ? 'var(--status-danger)' : 'var(--surface-border)' }}
                         />
@@ -165,7 +172,7 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
                 <div className="flex flex-col gap-3 sm:flex-row">
                     <div className="flex-1">
                         <label htmlFor="driver-phone" className="mb-1.5 flex items-center text-xs font-medium" style={{ color: 'var(--sub-text)' }}>
-                            เบอร์โทร
+                            เบอร์โทร<Required />
                             <InfoTooltip text="ตัวเลข 10 หลัก และต้องไม่ซ้ำกับคนขับคนอื่นในระบบ" />
                         </label>
                         <input
@@ -193,7 +200,7 @@ export default function DriverFormModal({ driver, onClose, onSaved }) {
 
                 {formError && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError}</p>}
 
-                <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
                     <button
                         type="button"
                         onClick={onClose}

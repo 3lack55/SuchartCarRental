@@ -165,8 +165,8 @@ export default function DocumentsPage() {
         return (
             <>
                 <td
-                    className="px-4 py-3 transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
-                    style={{ ...cellStyle, color: 'var(--sub-text)' }}
+                    className="px-4 py-3 transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft) border-l"
+                    style={{ ...cellStyle, color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}
                     role="button"
                     tabIndex={0}
                     aria-label={ariaLabel}
@@ -198,6 +198,17 @@ export default function DocumentsPage() {
                             ยังไม่มีข้อมูล · เพิ่ม
                         </div>
                     )}
+                </td>
+                <td
+                    className="px-4 py-3 text-right transition-colors duration-150 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-(--primary-color-soft)"
+                    style={{ ...cellStyle, color: 'var(--sub-text)' }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={ariaLabel}
+                    onClick={handleClick}
+                    onKeyDown={handleKeyDown}
+                >
+                    {sub && sub.amount != null ? `฿ ${formatCurrency(sub.amount)}` : 'ไม่ได้ระบุ'}
                 </td>
             </>
         );
@@ -390,24 +401,26 @@ export default function DocumentsPage() {
                 {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
                 <div className="overflow-x-auto rounded-md border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                    <table className="w-full min-w-180 text-sm" style={{ color: 'var(--page-text)' }}>
+                    <table className="w-full min-w-240 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
                                 <th rowSpan={2} className="px-4 py-3 text-left align-middle font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</th>
-                                <th colSpan={2} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.act_tax.label}</th>
-                                <th colSpan={2} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.insurance.label}</th>
+                                <th colSpan={3} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.act_tax.label}</th>
+                                <th colSpan={3} className="border-l px-4 py-2 text-center font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>{DOCUMENT_TYPE_META.insurance.label}</th>
                             </tr>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
                                 <th className="border-l px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>วันหมดอายุ</th>
                                 <th className="px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
+                                <th className="px-4 py-2 text-right font-medium" style={{ color: 'var(--sub-text)' }}>ยอดชำระครั้งล่าสุด</th>
                                 <th className="border-l px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)', borderColor: 'var(--surface-border)' }}>วันหมดอายุ</th>
                                 <th className="px-4 py-2 text-left font-medium" style={{ color: 'var(--sub-text)' }}>สถานะ</th>
+                                <th className="px-4 py-2 text-right font-medium" style={{ color: 'var(--sub-text)' }}>ยอดชำระครั้งล่าสุด</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={5} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} role="status" className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         กำลังโหลด...
                                     </td>
                                 </tr>
@@ -415,7 +428,7 @@ export default function DocumentsPage() {
 
                             {!isLoading && rows.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
+                                    <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลเอกสาร
                                     </td>
                                 </tr>

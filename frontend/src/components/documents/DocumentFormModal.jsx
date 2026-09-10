@@ -10,6 +10,11 @@ const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 const lockedStyle = { ...inputStyle, opacity: 0.7, cursor: 'not-allowed' };
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+    return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 // mode: 'create' (เลือกรถ/ประเภทได้อิสระ), 'renew' (ต่ออายุ ล็อกรถ/ประเภทจาก renewFrom, ค่าอื่นว่างไว้ให้กรอกใหม่),
 // 'add' (เพิ่มเอกสารที่ยังขาดจากหน้ารายละเอียดรถ ล็อกรถ/ประเภทเหมือน renew), 'edit' (แก้ไข record เดิม)
 export default function DocumentFormModal({ mode = 'create', document, renewFrom, onClose, onSaved }) {
@@ -104,57 +109,59 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
 
     return (
         <Modal title={title} onClose={onClose}>
-            <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
                 {mode === 'renew' && (
                     <p className="rounded-xl px-3 py-2 text-xs" style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}>
                         การต่ออายุจะบันทึกเป็นรายการใหม่ และเก็บประวัติเอกสารเดิมไว้ให้ครบ
                     </p>
                 )}
 
-                <div>
-                    <label htmlFor="document-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
-                    {locked ? (
-                        <div id="document-vehicle" className="w-full rounded-xl border px-3 py-2.5 text-sm" style={lockedStyle}>
-                            {source?.plate_number} · {source?.plate_province}
-                        </div>
-                    ) : (
-                        <select
-                            id="document-vehicle"
-                            value={form.vehicle_id}
-                            onChange={(e) => handleChange('vehicle_id', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={{ ...inputStyle, borderColor: errors.vehicle_id ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                        >
-                            <option value="" disabled>เลือกรถ</option>
-                            {vehicles.map((v) => (
-                                <option key={v.vehicle_id} value={v.vehicle_id}>{v.plate_number} · {v.plate_province}{v.brand_model ? ` (${v.brand_model})` : ''}</option>
-                            ))}
-                        </select>
-                    )}
-                    {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
-                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <label htmlFor="document-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ{!locked && <Required />}</label>
+                        {locked ? (
+                            <div id="document-vehicle" className="w-full rounded-xl border px-3 py-2.5 text-sm" style={lockedStyle}>
+                                {source?.plate_number} · {source?.plate_province}
+                            </div>
+                        ) : (
+                            <select
+                                id="document-vehicle"
+                                value={form.vehicle_id}
+                                onChange={(e) => handleChange('vehicle_id', e.target.value)}
+                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={{ ...inputStyle, borderColor: errors.vehicle_id ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                            >
+                                <option value="" disabled>เลือกรถ</option>
+                                {vehicles.map((v) => (
+                                    <option key={v.vehicle_id} value={v.vehicle_id}>{v.plate_number} · {v.plate_province}{v.brand_model ? ` (${v.brand_model})` : ''}</option>
+                                ))}
+                            </select>
+                        )}
+                        {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
+                    </div>
 
-                <div>
-                    <label htmlFor="document-type" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ประเภทเอกสาร</label>
-                    {locked ? (
-                        <div id="document-type" className="w-full rounded-xl border px-3 py-2.5 text-sm" style={lockedStyle}>
-                            {meta?.label}
-                        </div>
-                    ) : (
-                        <select
-                            id="document-type"
-                            value={form.document_type}
-                            onChange={(e) => handleChange('document_type', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={{ ...inputStyle, borderColor: errors.document_type ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                        >
-                            <option value="" disabled>เลือกประเภทเอกสาร</option>
-                            {Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => (
-                                <option key={type} value={type}>{m.label}</option>
-                            ))}
-                        </select>
-                    )}
-                    {errors.document_type && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.document_type}</p>}
+                    <div>
+                        <label htmlFor="document-type" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ประเภทเอกสาร{!locked && <Required />}</label>
+                        {locked ? (
+                            <div id="document-type" className="w-full rounded-xl border px-3 py-2.5 text-sm" style={lockedStyle}>
+                                {meta?.label}
+                            </div>
+                        ) : (
+                            <select
+                                id="document-type"
+                                value={form.document_type}
+                                onChange={(e) => handleChange('document_type', e.target.value)}
+                                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={{ ...inputStyle, borderColor: errors.document_type ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                            >
+                                <option value="" disabled>เลือกประเภทเอกสาร</option>
+                                {Object.entries(DOCUMENT_TYPE_META).map(([type, m]) => (
+                                    <option key={type} value={type}>{m.label}</option>
+                                ))}
+                            </select>
+                        )}
+                        {errors.document_type && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.document_type}</p>}
+                    </div>
                 </div>
 
                 <div>
@@ -164,7 +171,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         type="text"
                         value={form.provider}
                         onChange={(e) => handleChange('provider', e.target.value)}
-                        placeholder="ไม่บังคับกรอก"
+                        placeholder="เช่น วิริยะประกันภัย"
                         className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={inputStyle}
                     />
@@ -175,18 +182,21 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         ยอดชำระ (บาท)
                         <InfoTooltip text="ไม่บังคับกรอก ใช้สำหรับสรุปค่าใช้จ่ายต่ออายุเอกสารรายปี" />
                     </label>
-                    <input
-                        id="document-amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputMode="decimal"
-                        value={form.amount}
-                        onChange={(e) => handleChange('amount', e.target.value)}
-                        placeholder="ไม่บังคับกรอก"
-                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                        style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                    />
+                    <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--icon-muted)' }}>฿</span>
+                        <input
+                            id="document-amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputMode="decimal"
+                            value={form.amount}
+                            onChange={(e) => handleChange('amount', e.target.value)}
+                            placeholder="เช่น 1500.00"
+                            className="w-full rounded-xl border py-2.5 pr-3 pl-7 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                            style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                        />
+                    </div>
                     {errors.amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.amount}</p>}
                 </div>
 
@@ -196,25 +206,28 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                             ทุนประกัน (บาท)
                             <InfoTooltip text="ไม่บังคับกรอก วงเงินคุ้มครองสูงสุดตามกรมธรรม์ฉบับนี้" />
                         </label>
-                        <input
-                            id="document-coverage-amount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            inputMode="decimal"
-                            value={form.coverage_amount}
-                            onChange={(e) => handleChange('coverage_amount', e.target.value)}
-                            placeholder="ไม่บังคับกรอก"
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
-                        />
+                        <div className="relative">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--icon-muted)' }}>฿</span>
+                            <input
+                                id="document-coverage-amount"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                inputMode="decimal"
+                                value={form.coverage_amount}
+                                onChange={(e) => handleChange('coverage_amount', e.target.value)}
+                                placeholder="เช่น 1000000.00"
+                                className="w-full rounded-xl border py-2.5 pr-3 pl-7 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                            />
+                        </div>
                         {errors.coverage_amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.coverage_amount}</p>}
                     </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                        <label htmlFor="document-last-paid-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ชำระล่าสุด</label>
+                        <label htmlFor="document-last-paid-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ชำระล่าสุด<Required /></label>
                         <DatePicker
                             id="document-last-paid-date"
                             value={form.last_paid_date}
@@ -225,7 +238,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                     </div>
                     <div>
                         <label htmlFor="document-expire-date" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                            วันหมดอายุ
+                            วันหมดอายุ<Required />
                             <InfoTooltip text="ต้องอยู่หลังวันที่ชำระล่าสุด" />
                         </label>
                         <DatePicker
@@ -241,7 +254,7 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
 
                 {formError && <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError}</p>}
 
-                <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
                     <button
                         type="button"
                         onClick={onClose}

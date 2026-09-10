@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Phone, Calendar, Clock, Car, AlertTriangle, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { useDeleteDriver, useDriver, useRestoreDriver } from '../../services/drivers/driversQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
@@ -128,23 +129,23 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                         </div>
 
                         <div className='p-5'>
-                            <div className="grid grid-cols-1 gap-3 pb-3 text-sm sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-4 pb-3 sm:grid-cols-2">
                                 <div>
-                                    <p style={{ color: 'var(--sub-text)' }}>เบอร์โทร</p>
-                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatPhone(driver.phone)}</p>
+                                    <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Phone size={12} />เบอร์โทร</p>
+                                    <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{formatPhone(driver.phone)}</p>
                                 </div>
                                 <div>
-                                    <p style={{ color: 'var(--sub-text)' }}>วันที่เริ่มงาน</p>
-                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
+                                    <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Calendar size={12} />วันที่เริ่มงาน</p>
+                                    <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{formatDate(driver.hire_date)}</p>
                                 </div>
                                 <div>
-                                    <p style={{ color: 'var(--sub-text)' }}>ระยะเวลาทำงาน</p>
-                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{driver.deleted ? '-' : durationSince(driver.hire_date) ?? '-'}</p>
+                                    <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Clock size={12} />ระยะเวลาทำงาน</p>
+                                    <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{driver.deleted ? '-' : durationSince(driver.hire_date) ?? '-'}</p>
                                 </div>
                             </div>
 
                             <div className="border-t py-3" style={{ borderColor: 'var(--surface-border)' }}>
-                                <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รถที่ดูแล</p>
+                                <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><Car size={14} />รถที่ดูแล</p>
                                 {driver.vehicles.length === 0 ? (
                                     <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ไม่มีรถที่ดูแลอยู่ในขณะนี้</p>
                                 ) : (
@@ -170,7 +171,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
 
                             <div className="border-t py-3" style={{ borderColor: 'var(--surface-border)' }}>
                                 <div className="mb-2 flex items-center justify-between gap-3">
-                                    <p className="text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติการทำผิดกฎจราจร</p>
+                                    <p className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><AlertTriangle size={14} />ประวัติการทำผิดกฎจราจร</p>
                                     {driver.unpaid_violations > 0 && (
                                         <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--status-danger-soft)', color: 'var(--status-danger)' }}>
                                             ค้างจ่าย {driver.unpaid_violations} รายการ
@@ -209,27 +210,30 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                             <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
                                 <button
                                     onClick={() => onEdit(driver)}
-                                    className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                    className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                                     style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                                 >
+                                    <Pencil size={15} />
                                     แก้ไข
                                 </button>
                                 {driver.deleted ? (
                                     <button
                                         onClick={handleRestore}
                                         disabled={restoring}
-                                        className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                                         style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
                                     >
+                                        <RotateCcw size={15} />
                                         {restoring ? 'กำลังกู้คืน...' : 'กู้คืนคนขับ'}
                                     </button>
                                 ) : (
                                     <button
                                         onClick={() => setShowConfirm(true)}
                                         disabled={deleting}
-                                        className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                                         style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                                     >
+                                        <Trash2 size={15} />
                                         {deleting ? 'กำลังลบ...' : 'ลบ'}
                                     </button>
                                 )}

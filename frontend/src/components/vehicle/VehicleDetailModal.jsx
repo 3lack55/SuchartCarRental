@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Users, ScrollText, Wrench, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { useDeleteVehicle, useRestoreVehicle, useVehicle } from '../../services/vehicles/vehiclesQueries.js';
 import { useAuth } from '../../context/auth/useAuth.js';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
@@ -153,7 +154,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
             </div>
 
             <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
-              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>คนขับที่ดูแล</p>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><Users size={14} />คนขับที่ดูแล</p>
               {vehicle.driver ? (
                 <div className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
                   <span style={{ color: 'var(--page-text)' }}>{vehicle.driver.name}</span>
@@ -170,7 +171,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
             </div>
 
             <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
-              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ภาษี พรบ. และประกัน</p>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><ScrollText size={14} />ภาษี พรบ. และประกัน</p>
               {vehicle.documents.length === 0 && missingDocumentTypes.length === 0 ? (
                 <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีข้อมูลเอกสาร</p>
               ) : (
@@ -219,7 +220,7 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
             </div>
 
             <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
-              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>ประวัติซ่อมบำรุงล่าสุด</p>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><Wrench size={14} />ประวัติซ่อมบำรุงล่าสุด</p>
               {vehicle.recent_maintenances.length === 0 ? (
                 <p className="text-sm" style={{ color: 'var(--icon-muted)' }}>ยังไม่มีประวัติการซ่อมบำรุง</p>
               ) : (
@@ -242,27 +243,30 @@ export default function VehicleDetailModal({ vehicleId, onClose, onEdit, onDelet
             <div className="flex gap-2 p-5">
               <button
                 onClick={() => onEdit(vehicle)}
-                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                 style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
               >
+                <Pencil size={15} />
                 แก้ไข
               </button>
               {vehicle.deleted ? (
                 <button
                   onClick={handleRestore}
                   disabled={restoring}
-                  className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ backgroundColor: 'var(--status-success-soft)', borderColor: 'var(--status-success)', color: 'var(--status-success)' }}
                 >
+                  <RotateCcw size={15} />
                   {restoring ? 'กำลังกู้คืน...' : 'กู้คืนรถ'}
                 </button>
               ) : (
                 <button
                   onClick={() => setConfirmOpen(true)}
                   disabled={deleting}
-                  className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                 >
+                  <Trash2 size={15} />
                   {deleting ? 'กำลังลบ...' : 'ลบ'}
                 </button>
               )}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RefreshCw, Pencil, Trash2, ChevronDown, ChevronUp, Calendar, CalendarClock, Wallet, ShieldCheck, Building2 } from 'lucide-react';
 import Modal from '../globals/Modal.jsx';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx';
 import { useDeleteDocument, useDocument, useDocumentHistory } from '../../services/documents/documentsQueries.js';
@@ -73,43 +74,58 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 border-b p-5 text-sm sm:grid-cols-2" style={{ borderColor: 'var(--surface-border)' }}>
-                        {document.provider && (
-                            <div className="col-span-2">
-                                <p style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{document.provider}</p>
-                            </div>
-                        )}
-                        <div>
-                            <p style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(document.last_paid_date)}</p>
+                    <div className="grid grid-cols-1 gap-4 border-b p-5 sm:grid-cols-2" style={{ borderColor: 'var(--surface-border)' }}>
+                        <div className="col-span-2">
+                            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Building2 size={12} />บริษัทประกัน</p>
+                            {document.provider ? (
+                                <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{document.provider}</p>
+                            ) : (
+                                <p className="mt-1 text-sm italic" style={{ color: 'var(--sub-text)' }}>ไม่ได้ระบุ</p>
+                            )}
                         </div>
+
                         <div>
-                            <p style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</p>
-                            <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(document.expire_date)}</p>
+                            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Calendar size={12} />วันที่ชำระล่าสุด</p>
+                            <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{formatDate(document.last_paid_date)}</p>
                         </div>
-                        {document.amount != null && (
-                            <div>
-                                <p style={{ color: 'var(--sub-text)' }}>ยอดชำระ</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{formatCurrency(document.amount)}</p>
-                            </div>
-                        )}
-                        {document.coverage_amount != null && (
-                            <div>
-                                <p style={{ color: 'var(--sub-text)' }}>ทุนประกัน</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{formatCurrency(document.coverage_amount)}</p>
-                            </div>
-                        )}
+
+                        <div>
+                            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><CalendarClock size={12} />วันหมดอายุ</p>
+                            <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{formatDate(document.expire_date)}</p>
+                        </div>
+
+                        <div>
+                            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Wallet size={12} />ยอดชำระ</p>
+                            {document.amount != null ? (
+                                <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>฿ {formatCurrency(document.amount)}</p>
+                            ) : (
+                                <p className="mt-1 text-sm italic" style={{ color: 'var(--sub-text)' }}>ไม่ได้ระบุ</p>
+                            )}
+                        </div>
+
+                        {
+                            meta?.label.includes('ประกัน') && (
+                                <div>
+                                    <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><ShieldCheck size={12} />ทุนประกัน</p>
+                                    {document.coverage_amount != null ? (
+                                        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>฿ {formatCurrency(document.coverage_amount)}</p>
+                                    ) : (
+                                        <p className="mt-1 text-sm italic" style={{ color: 'var(--sub-text)' }}>ไม่ได้ระบุ</p>
+                                    )}
+                                </div>
+                            )
+                        }
                     </div>
 
                     <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
                         <button
                             type="button"
                             onClick={() => setShowHistory((prev) => !prev)}
-                            className="cursor-pointer text-sm font-medium transition-opacity hover:opacity-70"
-                            style={{ color: 'var(--primary-color)' }}
+                            className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:opacity-80"
+                            style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--primary-color)', border: '1px solid var(--surface-border)' }}
                         >
-                            {showHistory ? 'ซ่อนประวัติการต่ออายุ ▲' : 'ดูประวัติการต่ออายุ ▾'}
+                            {showHistory ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                            {showHistory ? 'ซ่อนประวัติการต่ออายุ' : 'ดูประวัติการต่ออายุ'}
                         </button>
 
                         {showHistory && (
@@ -130,13 +146,19 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                                         }}
                                     >
                                         <div>
-                                            <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)' }}>{formatDate(h.last_paid_date)} – {formatDate(h.expire_date)}</p>
-                                            {h.provider && <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider}</p>}
-                                            {h.amount != null && (
-                                                <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>฿{formatCurrency(h.amount)}</p>
-                                            )}
+                                            <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)' }}>{formatDate(h.last_paid_date)} - {formatDate(h.expire_date)}</p>
+                                            {h.provider 
+                                                ? <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider}</p> 
+                                                : <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ไม่ได้ระบุผู้ให้บริการ</p>
+                                            }
+
+                                            {h.amount != null 
+                                                ? <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ยอดชำระ {formatCurrency(h.amount)} บาท</p>
+                                                : <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ไม่ได้ระบุยอดชำระ</p>
+                                            }
+
                                             {h.coverage_amount != null && (
-                                                <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ทุนประกัน ฿{formatCurrency(h.coverage_amount)}</p>
+                                                <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ทุนประกัน {formatCurrency(h.coverage_amount)} บาท</p>
                                             )}
                                         </div>
                                         {h.document_id === document.document_id && (
@@ -148,32 +170,35 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                         )}
                     </div>
 
-                    <div className="flex gap-2 p-5">
+                    <div className="flex flex-col gap-2 p-5">
                         <button
                             onClick={() => onRenew(document)}
-                            className="flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+                            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
                             style={{ backgroundColor: 'var(--primary-color)', color: 'var(--on-primary)' }}
                         >
+                            <RefreshCw size={16} />
                             ต่ออายุ
                         </button>
-                    </div>
 
-                    <div className="flex gap-2 border-t p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                        <button
-                            onClick={() => onEdit(document)}
-                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
-                            style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
-                        >
-                            แก้ไข
-                        </button>
-                        <button
-                            onClick={() => setShowConfirm(true)}
-                            disabled={deleting}
-                            className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                            style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
-                        >
-                            {deleting ? 'กำลังลบ...' : 'ลบ'}
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => onEdit(document)}
+                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
+                            >
+                                <Pencil size={15} />
+                                แก้ไข
+                            </button>
+                            <button
+                                onClick={() => setShowConfirm(true)}
+                                disabled={deleting}
+                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                            >
+                                <Trash2 size={15} />
+                                {deleting ? 'กำลังลบ...' : 'ลบ'}
+                            </button>
+                        </div>
                     </div>
 
                     {deleteError && <p className="px-5 pb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{deleteError}</p>}

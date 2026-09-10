@@ -12,6 +12,11 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+  return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 const CURRENT_YEAR = new Date().getFullYear();
 // ปีที่ซื้อ: เรียงจากใหม่ไปเก่า ตั้งแต่ปีหน้าย้อนไป 1980 (ตรงกับขอบเขตที่ backend ตรวจสอบ)
 const PURCHASE_YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR + 1 - 1980 + 1 }, (_, i) => {
@@ -196,7 +201,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
       {loadingOptions ? (
         <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 p-5">
+        <form onSubmit={handleSubmit} className="space-y-5 p-5">
           <div>
             <label htmlFor="vehicle-brand-model" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>รุ่นรถ</label>
             <input
@@ -211,7 +216,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
-              <label htmlFor="vehicle-plate-number" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน</label>
+              <label htmlFor="vehicle-plate-number" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>ทะเบียน<Required /></label>
               <input
                 id="vehicle-plate-number"
                 aria-invalid={Boolean(fieldErrors.plate_number)}
@@ -224,7 +229,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
               {fieldErrors.plate_number && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{fieldErrors.plate_number}</p>}
             </div>
             <div className="flex-1">
-              <label htmlFor="vehicle-plate-province" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด</label>
+              <label htmlFor="vehicle-plate-province" className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--sub-text)' }}>จังหวัด<Required /></label>
               <Select
                 id="vehicle-plate-province"
                 value={form.plate_province_id}
@@ -314,7 +319,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
           )}
 
           {!isEdit && (
-            <div className="space-y-3 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+            <div className="space-y-4 border-t pt-5" style={{ borderColor: 'var(--surface-border)' }}>
               <p className="text-xs font-medium" style={{ color: 'var(--sub-text)' }}>เอกสารรถ (กรอกได้ถ้ามีข้อมูล)</p>
 
               <DocumentSection
@@ -339,7 +344,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
           )}
 
-          <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+          <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
             <button
               type="button"
               onClick={onClose}
@@ -426,14 +431,14 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
       </label>
 
       {state.enabled && (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-3">
           <div>
             <label htmlFor={`${idPrefix}-company`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>บริษัทประกัน</label>
             <input
               id={`${idPrefix}-company`}
               value={state.insurance_company}
               onChange={(e) => onChange('insurance_company', e.target.value)}
-              placeholder="ไม่บังคับกรอก"
+              placeholder="เช่น วิริยะประกันภัย"
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
               style={{ ...inputStyle, borderColor: errors.insurance_company ? 'var(--status-danger)' : 'var(--surface-border)' }}
             />
@@ -442,43 +447,49 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
 
           <div>
             <label htmlFor={`${idPrefix}-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>ยอดชำระ (บาท)</label>
-            <input
-              id={`${idPrefix}-amount`}
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              value={state.amount}
-              onChange={(e) => onChange('amount', e.target.value)}
-              placeholder="ไม่บังคับกรอก"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-              style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
-            />
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--icon-muted)' }}>฿</span>
+              <input
+                id={`${idPrefix}-amount`}
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={state.amount}
+                onChange={(e) => onChange('amount', e.target.value)}
+                placeholder="เช่น 1500.00"
+                className="w-full rounded-lg border py-2 pr-3 pl-7 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+              />
+            </div>
             {errors.amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.amount}</p>}
           </div>
 
           {showCoverageAmount && (
             <div>
               <label htmlFor={`${idPrefix}-coverage-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>ทุนประกัน (บาท)</label>
-              <input
-                id={`${idPrefix}-coverage-amount`}
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={state.coverage_amount}
-                onChange={(e) => onChange('coverage_amount', e.target.value)}
-                placeholder="ไม่บังคับกรอก"
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
-                style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--icon-muted)' }}>฿</span>
+                <input
+                  id={`${idPrefix}-coverage-amount`}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={state.coverage_amount}
+                  onChange={(e) => onChange('coverage_amount', e.target.value)}
+                  placeholder="เช่น 1000000.00"
+                  className="w-full rounded-lg border py-2 pr-3 pl-7 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                  style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                />
+              </div>
               {errors.coverage_amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.coverage_amount}</p>}
             </div>
           )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1">
-              <label htmlFor={`${idPrefix}-last-paid-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด</label>
+              <label htmlFor={`${idPrefix}-last-paid-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันที่ชำระล่าสุด<Required /></label>
               <DatePicker
                 id={`${idPrefix}-last-paid-date`}
                 value={state.last_paid_date}
@@ -488,7 +499,7 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCo
               {errors.last_paid_date && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.last_paid_date}</p>}
             </div>
             <div className="flex-1">
-              <label htmlFor={`${idPrefix}-expire-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</label>
+              <label htmlFor={`${idPrefix}-expire-date`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>วันหมดอายุ<Required /></label>
               <DatePicker
                 id={`${idPrefix}-expire-date`}
                 value={state.expire_date}

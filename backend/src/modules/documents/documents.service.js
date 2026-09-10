@@ -101,8 +101,8 @@ export async function listDocumentHistory(documentType, vehicleId) {
 export async function getDocumentSummary({ search } = {}) {
     let sql = `
         SELECT vehicle_id, plate_number, plate_province,
-            act_tax_document_id, act_tax_expire_date, act_tax_days_remaining,
-            insurance_document_id, insurance_expire_date, insurance_days_remaining
+            act_tax_document_id, act_tax_expire_date, act_tax_amount, act_tax_days_remaining,
+            insurance_document_id, insurance_expire_date, insurance_amount, insurance_days_remaining
         FROM view_document_summary
         WHERE 1 = 1
     `;
@@ -121,10 +121,10 @@ export async function getDocumentSummary({ search } = {}) {
         plate_number: r.plate_number,
         plate_province: r.plate_province,
         act_tax: r.act_tax_document_id
-            ? { document_id: r.act_tax_document_id, expire_date: r.act_tax_expire_date, days_remaining: r.act_tax_days_remaining }
+            ? { document_id: r.act_tax_document_id, expire_date: r.act_tax_expire_date, amount: r.act_tax_amount, days_remaining: r.act_tax_days_remaining }
             : null,
         insurance: r.insurance_document_id
-            ? { document_id: r.insurance_document_id, expire_date: r.insurance_expire_date, days_remaining: r.insurance_days_remaining }
+            ? { document_id: r.insurance_document_id, expire_date: r.insurance_expire_date, amount: r.insurance_amount, days_remaining: r.insurance_days_remaining }
             : null,
     }));
 }

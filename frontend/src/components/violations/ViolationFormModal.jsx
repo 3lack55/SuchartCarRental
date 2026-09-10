@@ -13,6 +13,11 @@ const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 const errorInputStyle = { ...inputStyle, borderColor: 'var(--status-danger)' };
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+    return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 // แยก "2026-06-10 14:23:00" (จาก backend) เป็นวันที่ ("2026-06-10" ให้ DatePicker) กับเวลา ("14:23" ให้ TimePicker)
 // เก็บเป็น field แยกกันในฟอร์ม ไม่รวมเป็น string เดียว เพื่อให้เลือกเวลาก่อนเลือกวันที่ได้โดยค่าไม่หาย
 function splitIncidentDatetime(value) {
@@ -109,35 +114,37 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
             {loadingOptions ? (
                 <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             ) : (
-                <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
-                    <div>
-                        <label htmlFor="violation-driver" className="mb-1.5 block text-xs font-medium" style={labelStyle}>คนขับ</label>
-                        <Select
-                            id="violation-driver"
-                            value={form.driver_id}
-                            onChange={(value) => handleChange('driver_id', value)}
-                            placeholder="เลือกคนขับ"
-                            error={Boolean(errors.driver_id)}
-                            options={drivers.map((d) => ({ value: String(d.driver_id), label: `${d.prefix}${d.first_name} ${d.last_name}` }))}
-                        />
-                        {errors.driver_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.driver_id}</p>}
+                <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                            <label htmlFor="violation-driver" className="mb-1.5 block text-xs font-medium" style={labelStyle}>คนขับ<Required /></label>
+                            <Select
+                                id="violation-driver"
+                                value={form.driver_id}
+                                onChange={(value) => handleChange('driver_id', value)}
+                                placeholder="เลือกคนขับ"
+                                error={Boolean(errors.driver_id)}
+                                options={drivers.map((d) => ({ value: String(d.driver_id), label: `${d.prefix}${d.first_name} ${d.last_name}` }))}
+                            />
+                            {errors.driver_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.driver_id}</p>}
+                        </div>
+
+                        <div>
+                            <label htmlFor="violation-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ<Required /></label>
+                            <Select
+                                id="violation-vehicle"
+                                value={form.vehicle_id}
+                                onChange={(value) => handleChange('vehicle_id', value)}
+                                placeholder="เลือกรถ"
+                                error={Boolean(errors.vehicle_id)}
+                                options={vehicles.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
+                            />
+                            {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
+                        </div>
                     </div>
 
                     <div>
-                        <label htmlFor="violation-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
-                        <Select
-                            id="violation-vehicle"
-                            value={form.vehicle_id}
-                            onChange={(value) => handleChange('vehicle_id', value)}
-                            placeholder="เลือกรถ"
-                            error={Boolean(errors.vehicle_id)}
-                            options={vehicles.map((v) => ({ value: String(v.vehicle_id), label: `${v.plate_number} · ${v.plate_province}${v.brand_model ? ` (${v.brand_model})` : ''}` }))}
-                        />
-                        {errors.vehicle_id && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.vehicle_id}</p>}
-                    </div>
-
-                    <div>
-                        <label htmlFor="violation-reason" className="mb-1.5 block text-xs font-medium" style={labelStyle}>สาเหตุ</label>
+                        <label htmlFor="violation-reason" className="mb-1.5 block text-xs font-medium" style={labelStyle}>สาเหตุ<Required /></label>
                         <Select
                             id="violation-reason"
                             value={form.reason_id}
@@ -152,7 +159,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
 
                     <div>
                         <label htmlFor="violation-date" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                            วันที่และเวลาที่เกิดเหตุ
+                            วันที่และเวลาที่เกิดเหตุ<Required />
                             <InfoTooltip text="วันเวลาที่เกิดการฝ่าฝืน ตามที่ระบุในใบสั่ง" />
                         </label>
                         <div className="flex gap-2">
@@ -176,17 +183,21 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                     </div>
 
                     <div>
-                        <label htmlFor="violation-fine" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ค่าปรับ (บาท)</label>
-                        <input
-                            id="violation-fine"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={form.fine}
-                            onChange={(e) => handleChange('fine', e.target.value)}
-                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                            style={errors.fine ? errorInputStyle : inputStyle}
-                        />
+                        <label htmlFor="violation-fine" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ค่าปรับ (บาท)<Required /></label>
+                        <div className="relative">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--icon-muted)' }}>฿</span>
+                            <input
+                                id="violation-fine"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={form.fine}
+                                onChange={(e) => handleChange('fine', e.target.value)}
+                                placeholder="เช่น 500"
+                                className="w-full rounded-xl border py-2.5 pr-3 pl-7 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                                style={errors.fine ? errorInputStyle : inputStyle}
+                            />
+                        </div>
                         {errors.fine && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.fine}</p>}
                     </div>
 
@@ -204,7 +215,7 @@ export default function ViolationFormModal({ violation, onClose, onSaved }) {
                         <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError || optionsError.message}</p>
                     )}
 
-                    <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                    <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
                         <button
                             type="button"
                             onClick={onClose}

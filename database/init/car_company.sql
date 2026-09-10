@@ -448,7 +448,7 @@ DROP TABLE IF EXISTS `view_current_documents`;
 /*!50001 DROP VIEW IF EXISTS `view_current_documents`*/;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
-/*!50001 CREATE VIEW `view_current_documents` AS SELECT 
+/*!50001 CREATE VIEW `view_current_documents` AS SELECT
  1 AS `document_type`,
  1 AS `document_id`,
  1 AS `vehicle_id`,
@@ -457,6 +457,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `provider`,
  1 AS `last_paid_date`,
  1 AS `expire_date`,
+ 1 AS `amount`,
  1 AS `days_remaining`*/;
 SET character_set_client = @saved_cs_client;
 
@@ -474,9 +475,11 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `plate_province`,
  1 AS `act_tax_document_id`,
  1 AS `act_tax_expire_date`,
+ 1 AS `act_tax_amount`,
  1 AS `act_tax_days_remaining`,
  1 AS `insurance_document_id`,
  1 AS `insurance_expire_date`,
+ 1 AS `insurance_amount`,
  1 AS `insurance_days_remaining`*/;
 SET character_set_client = @saved_cs_client;
 
@@ -514,7 +517,7 @@ DROP TABLE IF EXISTS `view_document_expiry`;
 /*!50001 DROP VIEW IF EXISTS `view_document_expiry`*/;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
-/*!50001 CREATE VIEW `view_document_expiry` AS SELECT 
+/*!50001 CREATE VIEW `view_document_expiry` AS SELECT
  1 AS `document_type`,
  1 AS `document_id`,
  1 AS `vehicle_id`,
@@ -523,6 +526,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `provider`,
  1 AS `last_paid_date`,
  1 AS `expire_date`,
+ 1 AS `amount`,
  1 AS `days_remaining`*/;
 SET character_set_client = @saved_cs_client;
 
@@ -685,7 +689,7 @@ USE `car_company`;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_current_documents` AS select `ranked`.`document_type` AS `document_type`,`ranked`.`document_id` AS `document_id`,`ranked`.`vehicle_id` AS `vehicle_id`,`ranked`.`plate_number` AS `plate_number`,`ranked`.`plate_province` AS `plate_province`,`ranked`.`provider` AS `provider`,`ranked`.`last_paid_date` AS `last_paid_date`,`ranked`.`expire_date` AS `expire_date`,`ranked`.`days_remaining` AS `days_remaining` from (select `vde`.`document_type` AS `document_type`,`vde`.`document_id` AS `document_id`,`vde`.`vehicle_id` AS `vehicle_id`,`vde`.`plate_number` AS `plate_number`,`vde`.`plate_province` AS `plate_province`,`vde`.`provider` AS `provider`,`vde`.`last_paid_date` AS `last_paid_date`,`vde`.`expire_date` AS `expire_date`,`vde`.`days_remaining` AS `days_remaining`,row_number() OVER (PARTITION BY `vde`.`document_type`,`vde`.`vehicle_id` ORDER BY `vde`.`expire_date` desc )  AS `rn` from `view_document_expiry` `vde`) `ranked` where (`ranked`.`rn` = 1) */;
+/*!50001 VIEW `view_current_documents` AS select `ranked`.`document_type` AS `document_type`,`ranked`.`document_id` AS `document_id`,`ranked`.`vehicle_id` AS `vehicle_id`,`ranked`.`plate_number` AS `plate_number`,`ranked`.`plate_province` AS `plate_province`,`ranked`.`provider` AS `provider`,`ranked`.`last_paid_date` AS `last_paid_date`,`ranked`.`expire_date` AS `expire_date`,`ranked`.`amount` AS `amount`,`ranked`.`days_remaining` AS `days_remaining` from (select `vde`.`document_type` AS `document_type`,`vde`.`document_id` AS `document_id`,`vde`.`vehicle_id` AS `vehicle_id`,`vde`.`plate_number` AS `plate_number`,`vde`.`plate_province` AS `plate_province`,`vde`.`provider` AS `provider`,`vde`.`last_paid_date` AS `last_paid_date`,`vde`.`expire_date` AS `expire_date`,`vde`.`amount` AS `amount`,`vde`.`days_remaining` AS `days_remaining`,row_number() OVER (PARTITION BY `vde`.`document_type`,`vde`.`vehicle_id` ORDER BY `vde`.`expire_date` desc )  AS `rn` from `view_document_expiry` `vde`) `ranked` where (`ranked`.`rn` = 1) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -703,7 +707,7 @@ USE `car_company`;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_document_summary` AS select `v`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`document_id` AS `act_tax_document_id`,`at`.`expire_date` AS `act_tax_expire_date`,`at`.`days_remaining` AS `act_tax_days_remaining`,`ins`.`document_id` AS `insurance_document_id`,`ins`.`expire_date` AS `insurance_expire_date`,`ins`.`days_remaining` AS `insurance_days_remaining` from ((`vehicles` `v` join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `view_current_documents` `at` on(((`at`.`vehicle_id` = `v`.`vehicle_id`) and (`at`.`document_type` = 'act_tax'))) left join `view_current_documents` `ins` on(((`ins`.`vehicle_id` = `v`.`vehicle_id`) and (`ins`.`document_type` = 'insurance')))) where (`v`.`deleted` = 0) */;
+/*!50001 VIEW `view_document_summary` AS select `v`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`document_id` AS `act_tax_document_id`,`at`.`expire_date` AS `act_tax_expire_date`,`at`.`amount` AS `act_tax_amount`,`at`.`days_remaining` AS `act_tax_days_remaining`,`ins`.`document_id` AS `insurance_document_id`,`ins`.`expire_date` AS `insurance_expire_date`,`ins`.`amount` AS `insurance_amount`,`ins`.`days_remaining` AS `insurance_days_remaining` from (((`vehicles` `v` join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) left join `view_current_documents` `at` on(((`at`.`vehicle_id` = `v`.`vehicle_id`) and (`at`.`document_type` = 'act_tax')))) left join `view_current_documents` `ins` on(((`ins`.`vehicle_id` = `v`.`vehicle_id`) and (`ins`.`document_type` = 'insurance')))) where (`v`.`deleted` = 0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -739,7 +743,7 @@ USE `car_company`;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `view_document_expiry` AS select ('act_tax' collate utf8mb4_unicode_ci) AS `document_type`,`at`.`act_tax_id` AS `document_id`,`at`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`insurance_company` AS `provider`,`at`.`last_paid_date` AS `last_paid_date`,`at`.`expire_date` AS `expire_date`,(to_days(`at`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_act_tax` `at` join `vehicles` `v` on((`v`.`vehicle_id` = `at`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) union all select ('insurance' collate utf8mb4_unicode_ci) AS `document_type`,`i`.`insurance_id` AS `document_id`,`i`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`i`.`insurance_company` AS `provider`,`i`.`last_paid_date` AS `last_paid_date`,`i`.`expire_date` AS `expire_date`,(to_days(`i`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_insurances` `i` join `vehicles` `v` on((`v`.`vehicle_id` = `i`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) */;
+/*!50001 VIEW `view_document_expiry` AS select ('act_tax' collate utf8mb4_unicode_ci) AS `document_type`,`at`.`act_tax_id` AS `document_id`,`at`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`at`.`insurance_company` AS `provider`,`at`.`last_paid_date` AS `last_paid_date`,`at`.`expire_date` AS `expire_date`,`at`.`amount` AS `amount`,(to_days(`at`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_act_tax` `at` join `vehicles` `v` on((`v`.`vehicle_id` = `at`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) union all select ('insurance' collate utf8mb4_unicode_ci) AS `document_type`,`i`.`insurance_id` AS `document_id`,`i`.`vehicle_id` AS `vehicle_id`,`v`.`plate_number` AS `plate_number`,`p`.`name_th` AS `plate_province`,`i`.`insurance_company` AS `provider`,`i`.`last_paid_date` AS `last_paid_date`,`i`.`expire_date` AS `expire_date`,`i`.`amount` AS `amount`,(to_days(`i`.`expire_date`) - to_days(curdate())) AS `days_remaining` from ((`vehicle_insurances` `i` join `vehicles` `v` on((`v`.`vehicle_id` = `i`.`vehicle_id`))) join `provinces` `p` on((`p`.`province_id` = `v`.`plate_province_id`))) where (`v`.`deleted` = 0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

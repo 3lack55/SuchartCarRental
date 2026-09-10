@@ -19,6 +19,11 @@ const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 const errorInputStyle = { ...inputStyle, borderColor: 'var(--status-danger)' };
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+    return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 // maintenance: ส่งมาถ้าเป็นโหมดแก้ไข, ไม่ส่งมา = โหมดเพิ่มใหม่
 export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) {
     const isEdit = Boolean(maintenance);
@@ -190,13 +195,13 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
             {loadingOptions ? (
                 <div role="status" className="flex items-center justify-center p-16" style={{ color: 'var(--sub-text)' }}>กำลังโหลดข้อมูล...</div>
             ) : (
-                <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
+                <form onSubmit={handleSubmit} noValidate className="space-y-6 p-5">
                     {/* ข้อมูลใบซ่อม */}
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={labelStyle}>ข้อมูลใบซ่อม</p>
 
                         <div>
-                            <label htmlFor="maintenance-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ</label>
+                            <label htmlFor="maintenance-vehicle" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รถ<Required /></label>
                             <Select
                                 id="maintenance-vehicle"
                                 value={header.vehicle_id}
@@ -210,7 +215,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
-                                <label htmlFor="maintenance-service-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ซ่อม</label>
+                                <label htmlFor="maintenance-service-date" className="mb-1.5 block text-xs font-medium" style={labelStyle}>วันที่ซ่อม<Required /></label>
                                 <DatePicker
                                     id="maintenance-service-date"
                                     value={header.service_date}
@@ -239,11 +244,12 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
-                                <label htmlFor="maintenance-garage-name" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ชื่อศูนย์/อู่</label>
+                                <label htmlFor="maintenance-garage-name" className="mb-1.5 block text-xs font-medium" style={labelStyle}>ชื่อศูนย์/อู่<Required /></label>
                                 <input
                                     id="maintenance-garage-name"
                                     value={header.garage_name}
                                     onChange={(e) => updateHeader('garage_name', e.target.value)}
+                                    placeholder="เช่น ศูนย์บริการโตโยต้า"
                                     className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                                     style={headerErrors.garage_name ? errorInputStyle : inputStyle}
                                 />
@@ -259,6 +265,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     id="maintenance-receipt-number"
                                     value={header.receipt_number}
                                     onChange={(e) => updateHeader('receipt_number', e.target.value)}
+                                    placeholder="เช่น INV-00123"
                                     className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                                     style={inputStyle}
                                 />
@@ -268,7 +275,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
                                 <label htmlFor="maintenance-mileage" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
-                                    เลขไมล์ (กม.)
+                                    เลขไมล์ (กม.)<Required />
                                     <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
                                 </label>
                                 <input
@@ -277,6 +284,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     min="0"
                                     value={header.mileage}
                                     onChange={(e) => updateHeader('mileage', e.target.value)}
+                                    placeholder="เช่น 45000"
                                     className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                                     style={headerErrors.mileage ? errorInputStyle : inputStyle}
                                 />
@@ -294,6 +302,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     min="0"
                                     value={header.next_service_mileage}
                                     onChange={(e) => updateHeader('next_service_mileage', e.target.value)}
+                                    placeholder="เช่น 50000"
                                     className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                                     style={inputStyle}
                                 />
@@ -302,7 +311,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                     </div>
 
                     {/* รายการซ่อม */}
-                    <div className="space-y-3 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                    <div className="space-y-4 border-t pt-5" style={{ borderColor: 'var(--surface-border)' }}>
                         <div className="flex items-center justify-between">
                             <p className="flex items-center text-xs font-semibold uppercase tracking-[0.12em]" style={labelStyle}>
                                 รายการซ่อม
@@ -324,11 +333,11 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                                     <tr 
                                         style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}
                                     >
-                                        <th className="min-w-36 px-2 py-2 text-left font-medium">ประเภท</th>
-                                        <th className="min-w-36 px-2 py-2 text-left font-medium">หมวด</th>
-                                        <th className="min-w-40 px-2 py-2 text-left font-medium">รายการ</th>
-                                        <th className="min-w-20 px-2 py-2 text-left font-medium">จำนวน</th>
-                                        <th className="min-w-24 px-2 py-2 text-left font-medium">ราคา/หน่วย</th>
+                                        <th className="min-w-36 px-2 py-2 text-left font-medium">ประเภท<Required /></th>
+                                        <th className="min-w-36 px-2 py-2 text-left font-medium">หมวด<Required /></th>
+                                        <th className="min-w-40 px-2 py-2 text-left font-medium">รายการ<Required /></th>
+                                        <th className="min-w-20 px-2 py-2 text-left font-medium">จำนวน<Required /></th>
+                                        <th className="min-w-24 px-2 py-2 text-left font-medium">ราคา/หน่วย<Required /></th>
                                         <th className="min-w-32 px-2 py-2 text-left font-medium">หมายเหตุ</th>
                                         <th className="min-w-24 px-2 py-2 text-right font-medium">รวม</th>
                                         <th className="w-9 px-2 py-2"></th>
@@ -413,7 +422,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
 
                                                 <td className="px-2 py-2 align-top">
                                                     <input
-                                                        placeholder="ไม่บังคับ"
+                                                        placeholder="เช่น เปลี่ยนตามระยะ"
                                                         aria-label={`หมายเหตุ รายการที่ ${idx + 1}`}
                                                         value={it.remark}
                                                         onChange={(e) => updateItem(it.tempId, 'remark', e.target.value)}
@@ -460,7 +469,7 @@ export default function MaintenanceFormModal({ maintenance, onClose, onSaved }) 
                         <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{error || optionsError.message}</p>
                     )}
 
-                    <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                    <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
                         <button
                             type="button"
                             onClick={onClose}

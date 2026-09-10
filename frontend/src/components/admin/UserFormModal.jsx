@@ -7,6 +7,11 @@ const labelStyle = { color: 'var(--sub-text)' };
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 const errorInputStyle = { ...inputStyle, borderColor: 'var(--status-danger)' };
 
+// ดอกจันแดงต่อท้ายลาเบลของฟิลด์ที่บังคับกรอก
+function Required() {
+    return <span aria-hidden="true" style={{ color: 'var(--status-danger)' }}> *</span>;
+}
+
 const ROLE_OPTIONS = [
     { value: 'staff', label: 'พนักงาน (Staff)' },
     { value: 'manager', label: 'ผู้จัดการ (Manager)' },
@@ -62,50 +67,54 @@ export default function UserFormModal({ onClose, onSaved }) {
 
     return (
         <Modal title="เพิ่มผู้ใช้งาน" onClose={onClose}>
-            <form onSubmit={handleSubmit} noValidate className="space-y-4 p-5">
-                <div>
-                    <label htmlFor="user-username" className="mb-1.5 block text-xs font-medium" style={labelStyle}>Username</label>
-                    <input
-                        id="user-username"
-                        type="text"
-                        autoComplete="off"
-                        value={form.username}
-                        onChange={(e) => handleChange('username', e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
-                        style={errors.username ? errorInputStyle : inputStyle}
-                    />
-                    {errors.username && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.username}</p>}
+            <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <label htmlFor="user-username" className="mb-1.5 block text-xs font-medium" style={labelStyle}>Username<Required /></label>
+                        <input
+                            id="user-username"
+                            type="text"
+                            autoComplete="off"
+                            value={form.username}
+                            onChange={(e) => handleChange('username', e.target.value)}
+                            placeholder="เช่น john.doe"
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                            style={errors.username ? errorInputStyle : inputStyle}
+                        />
+                        {errors.username && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.username}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="user-role" className="mb-1.5 block text-xs font-medium" style={labelStyle}>สิทธิ์การใช้งาน<Required /></label>
+                        <Select
+                            id="user-role"
+                            value={form.role}
+                            onChange={(value) => handleChange('role', value)}
+                            options={ROLE_OPTIONS}
+                        />
+                    </div>
                 </div>
 
                 <div>
-                    <label htmlFor="user-password" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รหัสผ่านเริ่มต้น</label>
+                    <label htmlFor="user-password" className="mb-1.5 block text-xs font-medium" style={labelStyle}>รหัสผ่านเริ่มต้น<Required /></label>
                     <input
                         id="user-password"
                         type="password"
                         autoComplete="new-password"
                         value={form.password}
                         onChange={(e) => handleChange('password', e.target.value)}
+                        placeholder="อย่างน้อย 8 ตัวอักษร"
                         className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                         style={errors.password ? errorInputStyle : inputStyle}
                     />
                     {errors.password && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.password}</p>}
                 </div>
 
-                <div>
-                    <label htmlFor="user-role" className="mb-1.5 block text-xs font-medium" style={labelStyle}>สิทธิ์การใช้งาน</label>
-                    <Select
-                        id="user-role"
-                        value={form.role}
-                        onChange={(value) => handleChange('role', value)}
-                        options={ROLE_OPTIONS}
-                    />
-                </div>
-
                 {formError && (
                     <p role="alert" className="text-sm" style={{ color: 'var(--status-danger)' }}>{formError}</p>
                 )}
 
-                <div className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--surface-border)' }}>
+                <div className="sticky bottom-0 -mx-5 -mb-5 flex gap-2 border-t px-5 py-4" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface)' }}>
                     <button
                         type="button"
                         onClick={onClose}

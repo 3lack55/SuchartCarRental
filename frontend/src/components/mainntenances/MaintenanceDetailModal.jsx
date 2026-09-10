@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from "react";
+import { Receipt, Gauge, CalendarClock, ListChecks, Pencil, Trash2 } from 'lucide-react';
 import { useModalA11y } from '../../hooks/useModalA11y.js';
 import ConfirmDialog from '../globals/ConfirmDialog.jsx'
 import InfoTooltip from '../globals/InfoTooltip.jsx';
@@ -94,31 +95,39 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 border-b p-5 text-sm sm:grid-cols-3" style={{ borderColor: 'var(--surface-border)' }}>
+                        <div className="grid grid-cols-2 gap-4 border-b p-5 sm:grid-cols-3" style={{ borderColor: 'var(--surface-border)' }}>
                             <div>
-                                <p style={{ color: 'var(--sub-text)' }}>เลขที่ใบเสร็จ</p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number || '-'}</p>
+                                <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}><Receipt size={12} />เลขที่ใบเสร็จ</p>
+                                {maintenance.receipt_number ? (
+                                    <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{maintenance.receipt_number}</p>
+                                ) : (
+                                    <p className="mt-1 text-sm italic" style={{ color: 'var(--sub-text)' }}>ไม่ได้ระบุ</p>
+                                )}
                             </div>
                             <div>
-                                <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}>
+                                    <Gauge size={12} />
                                     เลขไมล์
                                     <InfoTooltip text="เลขไมล์ของรถ ณ วันที่เข้าซ่อมครั้งนี้" />
                                 </p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
+                                <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{Number(maintenance.mileage).toLocaleString()} กม.</p>
                             </div>
                             <div>
-                                <p className="flex items-center" style={{ color: 'var(--sub-text)' }}>
+                                <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--sub-text)' }}>
+                                    <CalendarClock size={12} />
                                     นัดครั้งถัดไป
                                     <InfoTooltip text="ระยะทาง (กม.) ที่แนะนำให้นำรถเข้าซ่อมบำรุงครั้งถัดไป" />
                                 </p>
-                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>
-                                    {maintenance.next_service_mileage ? `${Number(maintenance.next_service_mileage).toLocaleString()} กม.` : '-'}
-                                </p>
+                                {maintenance.next_service_mileage ? (
+                                    <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--page-text)' }}>{Number(maintenance.next_service_mileage).toLocaleString()} กม.</p>
+                                ) : (
+                                    <p className="mt-1 text-sm italic" style={{ color: 'var(--sub-text)' }}>ไม่ได้ระบุ</p>
+                                )}
                             </div>
                         </div>
 
                         <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
-                            <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}>รายการซ่อม</p>
+                            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--sub-text)' }}><ListChecks size={14} />รายการซ่อม</p>
                             <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--surface-border)' }}>
                                 <table className="w-full min-w-120 text-sm" style={{ color: 'var(--page-text)' }}>
                                     <thead>
@@ -159,16 +168,18 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                         <div className="flex gap-2 p-5">
                             <button
                                 onClick={() => onEdit(maintenance)}
-                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-all hover:opacity-80"
                                 style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)', color: 'var(--page-text)' }}
                             >
+                                <Pencil size={15} />
                                 แก้ไข
                             </button>
                             <button
                                 onClick={() => setShowConfirm(true)}
-                                className="flex-1 cursor-pointer rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
+                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
                                 style={{ backgroundColor: 'var(--status-danger-soft)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
                             >
+                                <Trash2 size={15} />
                                 ลบ
                             </button>
                         </div>
