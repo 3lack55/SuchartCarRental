@@ -23,6 +23,13 @@ export function getDocumentSummary(token, { search } = {}) {
     });
 }
 
+export function getDocumentYearlyCost(token) {
+    return requestJson(`${API_BASE_URL}/api/documents/yearly-cost`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
 export function getDocumentById(token, documentType, documentId) {
     return requestJson(`${API_BASE_URL}/api/documents/${documentType}/${documentId}`, {
         method: "GET",

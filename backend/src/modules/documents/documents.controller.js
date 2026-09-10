@@ -26,6 +26,15 @@ export async function getDocumentSummaryController(req, res, next) {
     }
 }
 
+export async function getYearlyDocumentCostController(req, res, next) {
+    try {
+        const data = await documentsService.getYearlyDocumentCost();
+        res.json({ success: true, data });
+    } catch (err) {
+        next(err);
+    }
+}
+
 export async function getDocumentController(req, res, next) {
     try {
         const document = await documentsService.getDocumentById(req.params.type, req.params.id);

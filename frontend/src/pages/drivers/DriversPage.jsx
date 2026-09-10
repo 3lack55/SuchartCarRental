@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import DriverDetailModal from '../../components/driver/DriverDetailModal';
 import DriverFormModal from '../../components/driver/DriverFormModal';
 import Modal from '../../components/globals/Modal';
+import Select from '../../components/globals/Select.jsx';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Pagination from '../../components/globals/Pagination.jsx';
 import { useDrivers } from '../../services/drivers/driversQueries.js';
@@ -22,26 +24,53 @@ function formatDate(value) {
 }
 
 export default function DriversPage() {
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
-    const [showInactive, setShowInactive] = useState(false);
+    const [unpaidFilter, setUnpaidFilter] = useState('');
+    const [hiredThisYearFilter, setHiredThisYearFilter] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [selectedDriverId, setSelectedDriverId] = useState(null);
     const [formModal, setFormModal] = useState(null);
     const { user } = useAuth();
 
-    const { data, isLoading, error } = useDrivers({ search: debouncedSearch, includeInactive: showInactive });
+    const { data, isLoading, error } = useDrivers({ search: debouncedSearch, includeInactive: false });
     const drivers = data?.data ?? [];
+    const filteredDrivers = drivers.filter((d) => {
+        if (unpaidFilter === 'unpaid' && Number(d.unpaid_violations_count) <= 0) return false;
+        if (hiredThisYearFilter && !(d.hire_date && new Date(d.hire_date).getFullYear() === new Date().getFullYear())) return false;
+        return true;
+    });
     const errorMessage = !user?.token ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' : error?.message;
-    const { page, setPage, totalPages, pageItems: pagedDrivers } = usePagination(drivers);
+    const { page, setPage, totalPages, pageItems: pagedDrivers } = usePagination(filteredDrivers);
 
-    const unpaidDriversCount = drivers.filter((d) => Number(d.unpaid_violations_count) > 0).length;
-    const hiredThisYearCount = drivers.filter((d) => d.hire_date && new Date(d.hire_date).getFullYear() === new Date().getFullYear()).length;
+    // การ์ดสรุปด้านบนเป็น KPI คงที่ ไม่ขึ้นกับตัวกรอง/ค้นหาใดๆ (ตัวเลขที่แสดงจริงตามตัวกรองอยู่ที่ "N รายการ" ข้างช่องค้นหาแทน)
+    // จึงต้องดึงข้อมูลคนขับที่ทำงานอยู่ทั้งหมดแยกต่างหาก ไม่ผ่าน search
+    const { data: allDriversData } = useDrivers({ includeInactive: false });
+    const allDrivers = allDriversData?.data ?? [];
+
+    const unpaidDriversCount = allDrivers.filter((d) => Number(d.unpaid_violations_count) > 0).length;
+    const hiredThisYearCount = allDrivers.filter((d) => d.hire_date && new Date(d.hire_date).getFullYear() === new Date().getFullYear()).length;
+
+    const activeFilterCount = (unpaidFilter ? 1 : 0) + (hiredThisYearFilter ? 1 : 0);
+    function clearAllFilters() {
+        setUnpaidFilter('');
+        setHiredThisYearFilter(false);
+    }
 
     const stats = [
-        { label: 'ทั้งหมด', value: drivers.length, tone: 'primary', description: 'จำนวนคนขับที่แสดงอยู่ในขณะนี้' },
-        { label: 'ค้างจ่ายค่าปรับ', value: unpaidDriversCount, tone: 'danger', description: 'จำนวนคนขับที่มีค่าปรับค้างจ่ายอย่างน้อย 1 รายการ' },
-        { label: 'เข้าทำงานปีนี้', value: hiredThisYearCount, tone: 'success', description: 'จำนวนคนขับที่เริ่มงานในปีนี้' },
+        {
+            label: 'ทั้งหมด', value: allDrivers.length, tone: 'primary', description: 'จำนวนคนขับที่ทำงานอยู่ในขณะนี้',
+            onClick: clearAllFilters,
+        },
+        {
+            label: 'ค้างจ่ายค่าปรับ', value: unpaidDriversCount, tone: 'danger', description: 'จำนวนคนขับที่มีค่าปรับค้างจ่ายอย่างน้อย 1 รายการ',
+            onClick: () => setUnpaidFilter((prev) => (prev === 'unpaid' ? '' : 'unpaid')),
+        },
+        {
+            label: 'เข้าทำงานปีนี้', value: hiredThisYearCount, tone: 'success', description: 'จำนวนคนขับที่เริ่มงานในปีนี้',
+            onClick: () => setHiredThisYearFilter((prev) => !prev),
+        },
     ];
 
     const buttonStyle = {
@@ -51,9 +80,11 @@ export default function DriversPage() {
         boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     };
 
-    const toggleButtonStyle = showInactive
-        ? { backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)', border: '1px solid var(--primary-color)' }
-        : { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' };
+    const secondaryButtonStyle = {
+        backgroundColor: 'var(--surface-soft)',
+        color: 'var(--page-text)',
+        border: '1px solid var(--surface-border)',
+    };
 
     function handleSaved(message = 'บันทึกข้อมูลเรียบร้อย') {
         setSuccessMessage(message);
@@ -72,48 +103,63 @@ export default function DriversPage() {
 
     return (
         <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
-            <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+            <header className="flex flex-col gap-4 rounded-lg border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Personnel</p>
                     <h1 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--page-text)' }}>คนขับ</h1>
                 </div>
 
-                <button
-                    onClick={() => setFormModal({ mode: 'create' })}
-                    className="rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95 cursor-pointer"
-                    style={buttonStyle}
-                >
-                    + เพิ่มคนขับ
-                </button>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <button
+                        onClick={() => navigate('/drivers/archived')}
+                        className="rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-90 cursor-pointer"
+                        style={secondaryButtonStyle}
+                    >
+                        ดูคนขับที่พ้นสภาพ
+                    </button>
+                    <button
+                        onClick={() => setFormModal({ mode: 'create' })}
+                        className="rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95 cursor-pointer"
+                        style={buttonStyle}
+                    >
+                        + เพิ่มคนขับ
+                    </button>
+                </div>
             </header>
 
-            <section className="grid gap-4 md:grid-cols-3">
-                {stats.map((item) => (
-                    <div key={item.label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                        <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
-                            {item.label}
-                            <InfoTooltip text={item.description} />
-                        </p>
-                        <div className="mt-2">
-                            <span
-                                className="text-2xl font-semibold"
-                                style={{
-                                    color:
-                                        item.tone === 'primary'
-                                            ? 'var(--page-text)'
-                                            : item.tone === 'danger'
-                                                ? 'var(--status-danger)'
-                                                : 'var(--status-success)',
-                                }}
-                            >
-                                {item.value}
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </section>
+            <div className="rounded-lg border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <section className="grid gap-4 md:grid-cols-3 mb-8">
+                    {stats.map((item) => (
+                        <button
+                            type="button"
+                            key={item.label}
+                            onClick={item.onClick}
+                            className="cursor-pointer rounded-md p-4 text-left shadow-sm transition-opacity duration-150 hover:opacity-80"
+                            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}
+                        >
+                            <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
+                                {item.label}
+                                <InfoTooltip text={item.description} />
+                            </p>
+                            <div className="mt-2">
+                                <span
+                                    className="text-2xl font-semibold"
+                                    style={{
+                                        color:
+                                            item.tone === 'primary'
+                                                ? 'var(--page-text)'
+                                                : item.tone === 'danger'
+                                                    ? 'var(--status-danger)'
+                                                    : 'var(--status-success)',
+                                    }}
+                                >
+                                    {item.value}
+                                </span>
+                            </div>
+                        </button>
+                    ))}
+                </section>
 
-            <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                     <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--icon-muted)' }}>⌕</span>
@@ -123,7 +169,7 @@ export default function DriversPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="ค้นหาชื่อหรือเบอร์โทร"
-                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
+                            className="w-full rounded-md py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
                             style={{
                                 backgroundColor: 'var(--surface-soft)',
                                 color: 'var(--page-text)',
@@ -141,22 +187,36 @@ export default function DriversPage() {
                         />
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setShowInactive((prev) => !prev)}
-                            className="cursor-pointer whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:opacity-80"
-                            style={toggleButtonStyle}
-                        >
-                            {showInactive ? 'กำลังแสดงคนขับที่พ้นสภาพด้วย' : 'แสดงคนขับที่พ้นสภาพ'}
-                        </button>
-                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{drivers.length} รายการ</div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-3 ">
+                        {activeFilterCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={clearAllFilters}
+                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}
+                            >
+                                ล้างตัวกรอง ({activeFilterCount})
+                                <span aria-hidden="true">✕</span>
+                            </button>
+                        )}
+                        <Select
+                            id="driver-unpaid-filter"
+                            ariaLabel="กรองตามค่าปรับค้างจ่าย"
+                            className="w-48"
+                            value={unpaidFilter}
+                            onChange={setUnpaidFilter}
+                            options={[
+                                { value: '', label: 'ทุกคน' },
+                                { value: 'unpaid', label: 'ค้างจ่ายค่าปรับ' },
+                            ]}
+                        />
+                        <div className="text-sm whitespace-nowrap" style={{ color: 'var(--sub-text)' }}>{filteredDrivers.length} รายการ</div>
                     </div>
                 </div>
 
                 {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
-                <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <div className="overflow-x-auto rounded-md border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full min-w-140 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
@@ -176,7 +236,7 @@ export default function DriversPage() {
                                 </tr>
                             )}
 
-                            {!isLoading && drivers.length === 0 && (
+                            {!isLoading && filteredDrivers.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>
                                         ไม่พบข้อมูลคนขับ
@@ -216,7 +276,7 @@ export default function DriversPage() {
                                     </td>
                                     <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatPhone(d.phone)}</td>
                                     <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{formatDate(d.hire_date)}</td>
-                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{durationSince(d.hire_date) ?? '-'}</td>
+                                    <td className="px-4 py-3 truncate" style={{ color: 'var(--sub-text)' }}>{d.deleted ? '-' : durationSince(d.hire_date) ?? '-'}</td>
                                     <td className="px-4 py-3">
                                         <span
                                             className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium truncate"
@@ -242,7 +302,7 @@ export default function DriversPage() {
                 <DriverDetailModal
                     driverId={selectedDriverId}
                     onClose={() => setSelectedDriverId(null)}
-                    onEdit={(driver) => setFormModal({ mode: 'edit', driver })}
+                    onEdit={(driver) => { setSelectedDriverId(null); setFormModal({ mode: 'edit', driver }); }}
                     onDeleted={handleDeleted}
                 />
             )}

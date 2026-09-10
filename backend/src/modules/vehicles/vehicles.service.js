@@ -23,15 +23,13 @@ export async function listVehicles({ search, includeInactive, page, limit } = {}
         p.name_th AS plate_province,
         t.type_name, t.color AS type_color,
         d.driver_id, d.prefix, d.first_name, d.last_name,
-        (COALESCE(doc_stats.doc_count, 0) < 2 OR COALESCE(doc_stats.expired_count, 0) > 0) AS documents_incomplete
+        (v.deleted = 0 AND COALESCE(doc_stats.doc_count, 0) < 2) AS documents_incomplete
     FROM vehicles v
     JOIN provinces p ON p.province_id = v.plate_province_id
     LEFT JOIN vehicle_type t ON t.type_id = v.type_id
     LEFT JOIN drivers d ON d.driver_id = v.driver_id
     LEFT JOIN (
-        SELECT vehicle_id,
-            COUNT(*) AS doc_count,
-            SUM(CASE WHEN days_remaining < 0 THEN 1 ELSE 0 END) AS expired_count
+        SELECT vehicle_id, COUNT(*) AS doc_count
         FROM view_current_documents
         GROUP BY vehicle_id
     ) doc_stats ON doc_stats.vehicle_id = v.vehicle_id
@@ -187,15 +185,15 @@ export async function createVehicle(data) {
     // เอกสารแนบ (พรบ.+ภาษี/ประกัน) เป็นข้อมูลเสริม บันทึกก็ต่อเมื่อผู้ใช้กรอกมา
     if (data.act_tax) {
       await conn.execute(
-        'INSERT INTO vehicle_act_tax (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)',
-        [vehicleId, data.act_tax.insurance_company, data.act_tax.last_paid_date, data.act_tax.expire_date]
+        'INSERT INTO vehicle_act_tax (vehicle_id, insurance_company, last_paid_date, expire_date, amount) VALUES (?, ?, ?, ?, ?)',
+        [vehicleId, data.act_tax.insurance_company, data.act_tax.last_paid_date, data.act_tax.expire_date, data.act_tax.amount ?? null]
       );
     }
 
     if (data.insurance) {
       await conn.execute(
-        'INSERT INTO vehicle_insurances (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)',
-        [vehicleId, data.insurance.insurance_company, data.insurance.last_paid_date, data.insurance.expire_date]
+        'INSERT INTO vehicle_insurances (vehicle_id, insurance_company, last_paid_date, expire_date, amount, coverage_amount) VALUES (?, ?, ?, ?, ?, ?)',
+        [vehicleId, data.insurance.insurance_company, data.insurance.last_paid_date, data.insurance.expire_date, data.insurance.amount ?? null, data.insurance.coverage_amount ?? null]
       );
     }
 

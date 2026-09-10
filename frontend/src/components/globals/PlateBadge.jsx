@@ -8,7 +8,7 @@ export default function PlateBadge({ plateNumber, plateProvince, duplicate = fal
     return (
         <span className="inline-flex items-center gap-1.5">
             <div
-                className={`inline-flex min-w-26 flex-col items-center rounded-lg border px-3 py-1.5 leading-tight ${className}`}
+                className={`inline-flex min-w-26 flex-col items-center rounded-md border px-3 py-1.5 leading-tight ${className}`}
                 style={{ backgroundColor: '#fdfbf3', borderColor: duplicate ? 'var(--status-warning)' : '#8a8578' }}
             >
                 <span className="text-sm font-bold tracking-wide" style={{ color: '#1a1a1a' }}>{plateNumber}</span>
@@ -17,7 +17,7 @@ export default function PlateBadge({ plateNumber, plateProvince, duplicate = fal
             {duplicate && (
                 <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
                     <InfoTooltip
-                        text="เลขทะเบียนนี้ซ้ำกับรถอีกคันในรายการนี้ แต่คนละจังหวัด — คนละคันกัน โปรดสังเกตจังหวัดให้ดีก่อนใช้ข้อมูล"
+                        text="โปรดสังเกตจังหวัดให้ดี เลขทะเบียนนี้เหมือนกันกับรถคันอื่นในรายการ"
                         label="ทะเบียนซ้ำกับรถคันอื่น คนละจังหวัด"
                     >
                         <AlertTriangle size={16} style={{ color: 'var(--status-warning)' }} />

@@ -26,6 +26,8 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
         provider: isEdit ? (document?.provider ?? '') : '',
         last_paid_date: isEdit && document?.last_paid_date ? document.last_paid_date.slice(0, 10) : '',
         expire_date: isEdit && document?.expire_date ? document.expire_date.slice(0, 10) : '',
+        amount: isEdit && document?.amount != null ? String(document.amount) : '',
+        coverage_amount: isEdit && document?.coverage_amount != null ? String(document.coverage_amount) : '',
     });
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState(null);
@@ -50,6 +52,12 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
         if (!form.last_paid_date) nextErrors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
         if (!form.expire_date) nextErrors.expire_date = 'กรุณาเลือกวันหมดอายุ';
         else if (form.last_paid_date && form.expire_date <= form.last_paid_date) nextErrors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
+        if (form.amount !== '' && (Number.isNaN(Number(form.amount)) || Number(form.amount) < 0)) {
+            nextErrors.amount = 'กรุณากรอกจำนวนเงินให้ถูกต้อง (0 ขึ้นไป)';
+        }
+        if (form.document_type === 'insurance' && form.coverage_amount !== '' && (Number.isNaN(Number(form.coverage_amount)) || Number(form.coverage_amount) < 0)) {
+            nextErrors.coverage_amount = 'กรุณากรอกจำนวนเงินให้ถูกต้อง (0 ขึ้นไป)';
+        }
         return nextErrors;
     }
 
@@ -66,7 +74,11 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                 provider: form.provider.trim() || null,
                 last_paid_date: form.last_paid_date,
                 expire_date: form.expire_date,
+                amount: form.amount === '' ? null : Number(form.amount),
             };
+            if (form.document_type === 'insurance') {
+                payload.coverage_amount = form.coverage_amount === '' ? null : Number(form.coverage_amount);
+            }
 
             let saved;
             if (isEdit) {
@@ -157,6 +169,48 @@ export default function DocumentFormModal({ mode = 'create', document, renewFrom
                         style={inputStyle}
                     />
                 </div>
+
+                <div>
+                    <label htmlFor="document-amount" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                        ยอดชำระ (บาท)
+                        <InfoTooltip text="ไม่บังคับกรอก ใช้สำหรับสรุปค่าใช้จ่ายต่ออายุเอกสารรายปี" />
+                    </label>
+                    <input
+                        id="document-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        value={form.amount}
+                        onChange={(e) => handleChange('amount', e.target.value)}
+                        placeholder="ไม่บังคับกรอก"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                        style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                    />
+                    {errors.amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.amount}</p>}
+                </div>
+
+                {form.document_type === 'insurance' && (
+                    <div>
+                        <label htmlFor="document-coverage-amount" className="mb-1.5 flex items-center text-xs font-medium" style={labelStyle}>
+                            ทุนประกัน (บาท)
+                            <InfoTooltip text="ไม่บังคับกรอก วงเงินคุ้มครองสูงสุดตามกรมธรรม์ฉบับนี้" />
+                        </label>
+                        <input
+                            id="document-coverage-amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputMode="decimal"
+                            value={form.coverage_amount}
+                            onChange={(e) => handleChange('coverage_amount', e.target.value)}
+                            placeholder="ไม่บังคับกรอก"
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
+                            style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+                        />
+                        {errors.coverage_amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.coverage_amount}</p>}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>

@@ -84,13 +84,29 @@ export default function ViolationsPage() {
     const { page, setPage, totalPages, pageItems: pagedViolations } = usePagination(violations);
     const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(violations), [violations]);
 
-    const unpaid = violations.filter((v) => !v.is_paid);
-    const unpaidTotal = unpaid.reduce((sum, v) => sum + Number(v.fine || 0), 0);
+    // การ์ดสรุปด้านบนเป็น KPI คงที่ ไม่ขึ้นกับตัวกรอง/ค้นหาใดๆ (ตัวเลขที่แสดงจริงตามตัวกรองอยู่ที่ "N รายการ" ข้างช่องค้นหาแทน)
+    const { data: allViolationsData } = useViolations({});
+    const globalViolations = allViolationsData?.data ?? [];
+    const globalUnpaid = globalViolations.filter((v) => !v.is_paid);
+    const globalUnpaidTotal = globalUnpaid.reduce((sum, v) => sum + Number(v.fine || 0), 0);
+
+    const activeFilterCount = (paidFilter ? 1 : 0) + (reasonFilter ? 1 : 0) + (period !== 'all' ? 1 : 0);
+    function clearAllFilters() {
+        setPaidFilter('');
+        setReasonFilter('');
+        setPeriod('all');
+    }
 
     const stats = [
-        { label: 'ทั้งหมด', value: violations.length, tone: 'primary', description: 'จำนวนใบสั่งทั้งหมดในระบบ' },
-        { label: 'ค้างจ่าย', value: unpaid.length, tone: 'danger', description: 'จำนวนใบสั่งที่ยังไม่ได้ชำระค่าปรับ' },
-        { label: 'ยอดค้างจ่าย', value: `฿${unpaidTotal.toLocaleString()}`, tone: 'danger', description: 'ยอดรวมค่าปรับของใบสั่งที่ยังไม่จ่าย' },
+        {
+            label: 'ทั้งหมด', value: globalViolations.length, tone: 'primary', description: 'จำนวนใบสั่งทั้งหมดในระบบ',
+            onClick: clearAllFilters,
+        },
+        {
+            label: 'ค้างจ่าย', value: globalUnpaid.length, tone: 'danger', description: 'จำนวนใบสั่งที่ยังไม่ได้ชำระค่าปรับ',
+            onClick: () => setPaidFilter((prev) => (prev === 'false' ? '' : 'false')),
+        },
+        { label: 'ยอดค้างจ่าย', value: `฿${globalUnpaidTotal.toLocaleString()}`, tone: 'danger', description: 'ยอดรวมค่าปรับของใบสั่งที่ยังไม่จ่าย' },
     ];
 
     const buttonStyle = {
@@ -107,7 +123,7 @@ export default function ViolationsPage() {
 
     return (
         <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
-            <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+            <header className="flex flex-col gap-4 rounded-lg border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Compliance</p>
                     <h1 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--page-text)' }}>การฝ่าฝืนกฎจราจร</h1>
@@ -115,42 +131,49 @@ export default function ViolationsPage() {
 
                 <button
                     onClick={() => setFormModal({ mode: 'create' })}
-                    className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
+                    className="cursor-pointer rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
                     style={buttonStyle}
                 >
                     + บันทึกใบสั่ง
                 </button>
             </header>
 
-            <section className="grid gap-4 md:grid-cols-3">
-                {stats.map((item) => (
-                    <div key={item.label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                        <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
-                            {item.label}
-                            <InfoTooltip text={item.description} />
-                        </p>
-                        <div className="mt-2">
-                            <span
-                                className="text-2xl font-semibold"
-                                style={{
-                                    color:
-                                        item.tone === 'primary'
-                                            ? 'var(--page-text)'
-                                            : item.tone === 'success'
-                                                ? 'var(--status-success)'
-                                                : 'var(--status-danger)',
-                                }}
-                            >
-                                {item.value}
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </section>
+            <div className="rounded-lg border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <section className="grid gap-4 md:grid-cols-3 mb-8">
+                    {stats.map((item) => (
+                        <button
+                            type="button"
+                            key={item.label}
+                            onClick={item.onClick}
+                            disabled={!item.onClick}
+                            className={`rounded-lg p-4 text-left shadow-sm transition-opacity duration-150 ${item.onClick ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}
+                        >
+                            <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
+                                {item.label}
+                                <InfoTooltip text={item.description} />
+                            </p>
+                            <div className="mt-2">
+                                <span
+                                    className="text-2xl font-semibold"
+                                    style={{
+                                        color:
+                                            item.tone === 'primary'
+                                                ? 'var(--page-text)'
+                                                : item.tone === 'success'
+                                                    ? 'var(--status-success)'
+                                                    : 'var(--status-danger)',
+                                    }}
+                                >
+                                    {item.value}
+                                </span>
+                            </div>
+                        </button>
+                    ))}
+                </section>
 
-            <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="relative w-full max-w-md">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--icon-muted)' }}>⌕</span>
                         <input
                             type="text"
@@ -158,7 +181,7 @@ export default function ViolationsPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="ค้นหาชื่อคนขับ ทะเบียนรถ หรือสาเหตุ"
-                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
+                            className="w-full rounded-md py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
                             style={{
                                 backgroundColor: 'var(--surface-soft)',
                                 color: 'var(--page-text)',
@@ -176,7 +199,18 @@ export default function ViolationsPage() {
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                        {activeFilterCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={clearAllFilters}
+                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}
+                            >
+                                ล้างตัวกรอง ({activeFilterCount})
+                                <span aria-hidden="true">✕</span>
+                            </button>
+                        )}
                         <Select
                             id="violation-paid-filter"
                             ariaLabel="กรองตามสถานะการจ่าย"
@@ -216,7 +250,7 @@ export default function ViolationsPage() {
 
                 {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
-                <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <div className="overflow-x-auto rounded-md border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full min-w-180 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
@@ -285,7 +319,7 @@ export default function ViolationsPage() {
                 <ViolationDetailModal
                     violationId={selectedId}
                     onClose={() => setSelectedId(null)}
-                    onEdit={(violation) => setFormModal({ mode: 'edit', violation })}
+                    onEdit={(violation) => { setSelectedId(null); setFormModal({ mode: 'edit', violation }); }}
                     onDeleted={handleSaved}
                 />
             )}

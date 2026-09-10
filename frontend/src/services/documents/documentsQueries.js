@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     getDocuments,
     getDocumentSummary,
+    getDocumentYearlyCost,
     getDocumentById,
     getDocumentHistory,
     createDocument,
@@ -15,6 +16,7 @@ export const documentKeys = {
     all: ['documents'],
     list: (token, params) => ['documents', token, params],
     summary: (token, params) => ['document-summary', token, params],
+    yearlyCost: (token) => ['document-yearly-cost', token],
     detail: (token, type, id) => ['document', token, type, id],
     history: (token, type, vehicleId) => ['document-history', token, type, vehicleId],
 };
@@ -35,6 +37,16 @@ export function useDocumentSummary({ search } = {}) {
     return useQuery({
         queryKey: documentKeys.summary(user?.token, { search }),
         queryFn: () => getDocumentSummary(user.token, { search }),
+        enabled: Boolean(user?.token),
+    });
+}
+
+export function useDocumentYearlyCost() {
+    const { user } = useAuth();
+
+    return useQuery({
+        queryKey: documentKeys.yearlyCost(user?.token),
+        queryFn: () => getDocumentYearlyCost(user.token),
         enabled: Boolean(user?.token),
     });
 }

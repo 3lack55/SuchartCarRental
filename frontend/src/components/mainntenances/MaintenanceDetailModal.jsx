@@ -141,15 +141,15 @@ export default function MaintenanceDetailModal({ maintenanceId, onClose, onEdit,
                                                     {item.remark && <p className="mt-0.5 text-xs" style={{ color: 'var(--sub-text)' }}>หมายเหตุ: {item.remark}</p>}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>{item.quantity}</td>
-                                                <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>฿{Number(item.unit_price).toLocaleString()}</td>
-                                                <td className="px-3 py-2.5 text-right align-top font-medium" style={{ color: 'var(--page-text)' }}>฿{Number(item.line_total).toLocaleString()}</td>
+                                                <td className="px-3 py-2.5 text-right align-top" style={{ color: 'var(--sub-text)' }}>{Number(item.unit_price).toLocaleString()}</td>
+                                                <td className="px-3 py-2.5 text-right align-top font-medium" style={{ color: 'var(--page-text)' }}>{Number(item.line_total).toLocaleString()}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot>
                                         <tr>
                                             <td colSpan={3} className="px-3 py-2.5 text-right" style={{ color: 'var(--sub-text)' }}>ยอดรวมทั้งหมด</td>
-                                            <td className="px-3 py-2.5 text-right font-semibold" style={{ color: 'var(--page-text)' }}>฿{Number(maintenance.total_cost).toLocaleString()}</td>
+                                            <td className="px-3 py-2.5 text-right font-semibold" style={{ color: 'var(--page-text)' }}>฿ {Number(maintenance.total_cost).toLocaleString()}</td>
                                         </tr>
                                     </tfoot>
                                 </table>

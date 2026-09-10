@@ -1,11 +1,14 @@
 import Joi from 'joi';
 
-// เอกสารแนบรถ (พ.ร.บ.+ภาษีรถยนต์ รวมเป็นเอกสารเดียว / ประกันภาคสมัครใจ) — เก็บแค่ผู้ให้บริการ+วันที่ ไม่เก็บจำนวนเงิน
+// เอกสารแนบรถ (พ.ร.บ.+ภาษีรถยนต์ รวมเป็นเอกสารเดียว / ประกันภาคสมัครใจ) — amount (ยอดชำระ) ไม่บังคับกรอก
+// coverage_amount (ทุนประกัน) มีความหมายแค่ฝั่งประกัน service จะไม่บันทึกให้ act_tax แม้ส่งมาก็ตาม
 // ส่งมาก็ต่อเมื่อมีข้อมูลจริง
 const documentSchema = Joi.object({
   insurance_company: Joi.string().max(100).allow(null, ''),
   last_paid_date: Joi.date().iso().required(),
   expire_date: Joi.date().iso().greater(Joi.ref('last_paid_date')).required(),
+  amount: Joi.number().min(0).precision(2).allow(null),
+  coverage_amount: Joi.number().min(0).precision(2).allow(null),
 });
 
 // ปีที่ซื้อเกินปีหน้าไม่ได้ (กันกรอกปีในอนาคตเพี้ยนๆ) เดือนกรอกได้ก็ต่อเมื่อมีปีแล้วเท่านั้น

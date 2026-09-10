@@ -5,6 +5,7 @@ import { createDocumentSchema, updateDocumentSchema } from './documents.schema.j
 import {
     listDocumentsController,
     getDocumentSummaryController,
+    getYearlyDocumentCostController,
     getDocumentController,
     getDocumentHistoryController,
     createDocumentController,
@@ -16,6 +17,7 @@ const documentsRouter = Router();
 
 documentsRouter.get('/', authenticate, listDocumentsController);
 documentsRouter.get('/summary', authenticate, getDocumentSummaryController);
+documentsRouter.get('/yearly-cost', authenticate, getYearlyDocumentCostController);
 documentsRouter.get('/:type/history/:vehicleId', authenticate, getDocumentHistoryController);
 documentsRouter.get('/:type/:id', authenticate, getDocumentController);
 documentsRouter.post('/', authenticate, requireRole('admin', 'manager', 'staff'), validate(createDocumentSchema), createDocumentController);

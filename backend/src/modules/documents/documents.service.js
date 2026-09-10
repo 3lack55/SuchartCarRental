@@ -51,12 +51,17 @@ export async function listCurrentDocuments({ search, documentType, status } = {}
     return rows;
 }
 
+// coverage_amount (ทุนประกัน) มีอยู่แค่ในตาราง vehicle_insurances เท่านั้น ต้อง select แยกตามประเภทเอกสาร
+function coverageAmountSelect(documentType) {
+    return documentType === 'insurance' ? ', d.coverage_amount' : '';
+}
+
 export async function getDocumentById(documentType, documentId) {
     const config = getConfig(documentType);
 
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            d.insurance_company AS provider, d.last_paid_date, d.expire_date,
+            d.insurance_company AS provider, d.last_paid_date, d.expire_date, d.amount${coverageAmountSelect(documentType)},
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -79,7 +84,7 @@ export async function listDocumentHistory(documentType, vehicleId) {
 
     const [rows] = await pool.execute(
         `SELECT d.${config.idColumn} AS document_id, d.vehicle_id, v.plate_number, p.name_th AS plate_province,
-            d.insurance_company AS provider, d.last_paid_date, d.expire_date,
+            d.insurance_company AS provider, d.last_paid_date, d.expire_date, d.amount${coverageAmountSelect(documentType)},
             (TO_DAYS(d.expire_date) - TO_DAYS(CURDATE())) AS days_remaining
         FROM ${config.table} d
         JOIN vehicles v ON v.vehicle_id = d.vehicle_id
@@ -124,6 +129,37 @@ export async function getDocumentSummary({ search } = {}) {
     }));
 }
 
+// สรุปค่าใช้จ่ายต่ออายุเอกสารรายปี (พรบ.+ภาษี, ประกัน) จัดกลุ่มตาม "ปีที่จ่ายเงินจริง" (last_paid_date)
+// ไม่ใช้ expire_date เพราะนั่นคือปีที่เอกสารหมดอายุ ไม่ใช่ปีที่เสียเงิน และไม่ใช้ view_current_documents
+// เพราะ view นั้นกรองเหลือแค่ record ล่าสุด ตัดประวัติการต่ออายุทิ้งหมด ต้องอ่านตารางจริงตรงๆ
+// record เก่าที่ไม่มี amount (NULL) จะถูกนับเป็น 0 บาทด้วย COALESCE แต่ปีนั้นยังคงถูกนับรวมอยู่
+export async function getYearlyDocumentCost() {
+    const [rows] = await pool.execute(`
+        SELECT
+            yearly.year AS year,
+            SUM(CASE WHEN yearly.document_type = 'act_tax' THEN yearly.total ELSE 0 END) AS act_tax_cost,
+            SUM(CASE WHEN yearly.document_type = 'insurance' THEN yearly.total ELSE 0 END) AS insurance_cost
+        FROM (
+            SELECT YEAR(last_paid_date) AS year, 'act_tax' AS document_type, COALESCE(SUM(amount), 0) AS total
+            FROM vehicle_act_tax
+            GROUP BY YEAR(last_paid_date)
+            UNION ALL
+            SELECT YEAR(last_paid_date) AS year, 'insurance' AS document_type, COALESCE(SUM(amount), 0) AS total
+            FROM vehicle_insurances
+            GROUP BY YEAR(last_paid_date)
+        ) yearly
+        GROUP BY yearly.year
+        ORDER BY yearly.year DESC
+    `);
+
+    return rows.map((r) => ({
+        year: r.year,
+        act_tax_cost: Number(r.act_tax_cost),
+        insurance_cost: Number(r.insurance_cost),
+        total_cost: Number(r.act_tax_cost) + Number(r.insurance_cost),
+    }));
+}
+
 async function assertVehicleExists(vehicleId) {
     const [rows] = await pool.execute('SELECT vehicle_id FROM vehicles WHERE vehicle_id = ? AND deleted = 0', [vehicleId]);
     if (rows.length === 0) {
@@ -136,9 +172,13 @@ export async function createDocument(data) {
     const config = getConfig(data.document_type);
     await assertVehicleExists(data.vehicle_id);
 
+    const isInsurance = data.document_type === 'insurance';
+    const columns = ['vehicle_id', 'insurance_company', 'last_paid_date', 'expire_date', 'amount', ...(isInsurance ? ['coverage_amount'] : [])];
+    const values = [data.vehicle_id, data.provider || null, data.last_paid_date, data.expire_date, data.amount ?? null, ...(isInsurance ? [data.coverage_amount ?? null] : [])];
+
     const [result] = await pool.execute(
-        `INSERT INTO ${config.table} (vehicle_id, insurance_company, last_paid_date, expire_date) VALUES (?, ?, ?, ?)`,
-        [data.vehicle_id, data.provider || null, data.last_paid_date, data.expire_date]
+        `INSERT INTO ${config.table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+        values
     );
 
     invalidateCache(OVERVIEW_CACHE_KEY);
@@ -153,7 +193,9 @@ export async function updateDocument(documentType, documentId, data) {
     const fieldMap = {};
     if (data.last_paid_date) fieldMap.last_paid_date = data.last_paid_date;
     if (data.expire_date) fieldMap.expire_date = data.expire_date;
-    if (data.provider) fieldMap.insurance_company = data.provider;
+    if (data.provider !== undefined) fieldMap.insurance_company = data.provider;
+    if (data.amount !== undefined) fieldMap.amount = data.amount;
+    if (documentType === 'insurance' && data.coverage_amount !== undefined) fieldMap.coverage_amount = data.coverage_amount;
 
     const fields = Object.keys(fieldMap);
     if (fields.length === 0) {

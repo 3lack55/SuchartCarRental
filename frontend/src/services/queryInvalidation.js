@@ -11,6 +11,7 @@ export function invalidateFleetQueries(queryClient) {
     queryClient.invalidateQueries({ queryKey: ['document-summary'] });
     queryClient.invalidateQueries({ queryKey: ['document'] });
     queryClient.invalidateQueries({ queryKey: ['document-history'] });
+    queryClient.invalidateQueries({ queryKey: ['document-yearly-cost'] });
     queryClient.invalidateQueries({ queryKey: ['maintenances'] });
     queryClient.invalidateQueries({ queryKey: ['maintenance'] });
     queryClient.invalidateQueries({ queryKey: ['violations'] });

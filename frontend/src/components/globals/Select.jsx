@@ -150,7 +150,7 @@ export default function Select({ id, value, onChange, options, placeholder = 'à¹
                 aria-expanded={open}
                 onClick={() => (open ? setOpen(false) : openDropdown())}
                 onKeyDown={handleTriggerKeyDown}
-                className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm outline-none transition-all focus:ring-3 focus:ring-(--primary-color-soft) disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2.5 text-left text-sm outline-none transition-all focus:ring-3 focus:ring-(--primary-color-soft) disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                     backgroundColor: 'var(--surface-soft)',
                     color: selected ? 'var(--page-text)' : 'var(--sub-text)',
@@ -168,7 +168,7 @@ export default function Select({ id, value, onChange, options, placeholder = 'à¹
             {open && coords && createPortal(
                 <div
                     ref={popoverRef}
-                    className="fixed z-999 flex flex-col overflow-hidden rounded-xl border shadow-lg outline-none"
+                    className="fixed z-999 flex flex-col overflow-hidden rounded-md border shadow-lg outline-none"
                     style={{
                         left: coords.left,
                         width: coords.width,
@@ -192,7 +192,7 @@ export default function Select({ id, value, onChange, options, placeholder = 'à¹
                             onChange={(e) => handleSearchChange(e.target.value)}
                             onKeyDown={handleSearchKeyDown}
                             placeholder="à¸„à¹‰à¸™à¸«à¸²..."
-                            className="w-full rounded-lg py-1.5 pr-2 pl-7 text-sm outline-none"
+                            className="w-full rounded-sm py-1.5 pr-2 pl-7 text-sm outline-none"
                             style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)' }}
                         />
                     </div>
@@ -213,7 +213,7 @@ export default function Select({ id, value, onChange, options, placeholder = 'à¹
                                 aria-selected={o.value === value}
                                 onMouseEnter={() => setHighlight(i)}
                                 onClick={() => selectOption(o)}
-                                className="cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors"
+                                className="cursor-pointer rounded-sm px-3 py-2 text-sm transition-colors"
                                 style={{
                                     backgroundColor: i === highlight ? 'var(--primary-color-soft)' : 'transparent',
                                     color: i === highlight ? 'var(--on-primary)' : 'var(--page-text)',
@@ -230,7 +230,7 @@ export default function Select({ id, value, onChange, options, placeholder = 'à¹
                                 aria-selected={false}
                                 onMouseEnter={() => setHighlight(filtered.length)}
                                 onClick={handleCreate}
-                                className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                                className="flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-2 text-sm font-medium transition-colors"
                                 style={{
                                     backgroundColor: highlight === filtered.length ? 'var(--primary-color-soft)' : 'transparent',
                                     color: highlight === filtered.length ? 'var(--on-primary)' : 'var(--primary-color)',

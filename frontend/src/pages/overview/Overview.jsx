@@ -125,7 +125,7 @@ function SummaryCard({ icon, title, value, description, variant = "blue", accent
 
     return (
         <div
-            className={`group rounded-2xl border p-5 shadow-sm transition-shadow duration-150${clickable ? " cursor-pointer hover:shadow-md" : ""}`}
+            className={`group rounded-lg border p-5 shadow-sm transition-shadow duration-150${clickable ? " cursor-pointer hover:shadow-md" : ""}`}
             style={{ ...surfaceStyle, borderColor: "var(--surface-border)" }}
             onClick={onNavigate}
             role={clickable ? "button" : undefined}
@@ -139,7 +139,7 @@ function SummaryCard({ icon, title, value, description, variant = "blue", accent
                     <p className="mt-1 text-xs" style={{ color: "var(--page-text)", opacity: 0.75 }}>{description}</p>
                 </div>
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg, color: 'var(--on-primary)' }}>
+                <div className="flex h-11 w-11 items-center justify-center rounded-md" style={{ backgroundColor: iconBg, color: 'var(--on-primary)' }}>
                     <StatIcon type={icon} />
                 </div>
             </div>
@@ -179,9 +179,9 @@ function StatusRow({ label, value, variant = "warning", onNavigate }) {
 
 function DocumentCard({ title, icon, expiring, expired, onNavigateExpiring, onNavigateExpired }) {
     return (
-        <div className="rounded-2xl border p-5 shadow-sm" style={surfaceStyle}>
+        <div className="rounded-lg border p-5 shadow-sm" style={surfaceStyle}>
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--primary-color-soft)", color: 'var(--on-primary)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-md" style={{ backgroundColor: "var(--primary-color-soft)", color: 'var(--on-primary)' }}>
                     <StatIcon type={icon} />
                 </div>
 
@@ -334,7 +334,7 @@ export default function Overview() {
         <div className="min-h-full overflow-y-auto">
             <div className="mx-auto max-w-7xl">
                 <header className="mb-6">
-                    <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--page-text)" }}>
+                    <h1 className="text-2xl font-semibold " style={{ color: "var(--page-text)" }}>
                         ภาพรวมการจัดการยานพาหนะ
                     </h1>
                     <p className="mt-1 text-sm" style={mutedTextStyle}>
@@ -374,9 +374,9 @@ export default function Overview() {
                         />
                     ))}
 
-                    <div className="rounded-2xl border p-5 shadow-sm" style={surfaceStyle}>
+                    <div className="rounded-lg border p-5 shadow-sm" style={surfaceStyle}>
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--status-danger-soft)", color: "var(--status-danger)" }}>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md" style={{ backgroundColor: "var(--status-danger-soft)", color: "var(--status-danger)" }}>
                                 <StatIcon type="fine" />
                             </div>
 
@@ -388,7 +388,7 @@ export default function Overview() {
 
                         <div className="mt-5 grid grid-cols-2 gap-4">
                             <div
-                                className="cursor-pointer rounded-xl p-4 transition-shadow duration-150 hover:shadow-md"
+                                className="cursor-pointer rounded-md p-4 transition-shadow duration-150 hover:shadow-md"
                                 style={surfaceSoftStyle}
                                 onClick={() => navigate("/violations?paid=false")}
                                 role="button"
@@ -403,7 +403,7 @@ export default function Overview() {
                             </div>
 
                             <div
-                                className="cursor-pointer rounded-xl p-4 transition-shadow duration-150 hover:shadow-md"
+                                className="cursor-pointer rounded-md p-4 transition-shadow duration-150 hover:shadow-md"
                                 style={surfaceSoftStyle}
                                 onClick={() => navigate("/violations?paid=false")}
                                 role="button"
@@ -430,10 +430,10 @@ export default function Overview() {
                 </section>
 
                 <section className="mt-6">
-                    <div className="rounded-2xl border p-6 shadow-sm" style={surfaceStyle}>
+                    <div className="rounded-lg border p-6 shadow-sm" style={surfaceStyle}>
                         <div className="flex items-center gap-3">
                             <div
-                                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                                className="flex h-10 w-10 items-center justify-center rounded-md"
                                 style={{
                                     backgroundColor: themeMode === "dark" ? "rgba(var(--primary-color-rgb), 0.18)" : "var(--primary-color-soft)",
                                     color: 'var(--on-primary)',
@@ -450,7 +450,7 @@ export default function Overview() {
 
                         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div
-                                className="cursor-pointer rounded-xl p-5 transition-shadow duration-150 hover:shadow-md"
+                                className="cursor-pointer rounded-md p-5 transition-shadow duration-150 hover:shadow-md"
                                 style={surfaceSoftStyle}
                                 onClick={() => navigate("/maintenance?period=month")}
                                 role="button"
@@ -465,7 +465,7 @@ export default function Overview() {
                             </div>
 
                             <div
-                                className="cursor-pointer rounded-xl p-5 transition-shadow duration-150 hover:shadow-md"
+                                className="cursor-pointer rounded-md p-5 transition-shadow duration-150 hover:shadow-md"
                                 style={surfaceSoftStyle}
                                 onClick={() => navigate("/maintenance?period=month")}
                                 role="button"

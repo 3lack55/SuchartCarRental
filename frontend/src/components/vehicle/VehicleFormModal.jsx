@@ -55,8 +55,9 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
   const [form, setForm] = useState(() => buildFormState(editingVehicle));
 
   // เอกสารแนบตอนเพิ่มรถใหม่: กรอกได้ก็ต่อเมื่อมีข้อมูลจริง (ไม่บังคับ)
-  const [actTax, setActTax] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
-  const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '' });
+  const [actTax, setActTax] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', amount: '' });
+  // coverage_amount (ทุนประกัน) มีแค่ฝั่งประกัน พ.ร.บ. ไม่มีเพราะวงเงินคุ้มครองตายตัวตามกฎหมาย ไม่ใช่ข้อมูลที่กรอกรายฉบับ
+  const [insurance, setInsurance] = useState({ enabled: false, insurance_company: '', last_paid_date: '', expire_date: '', amount: '', coverage_amount: '' });
 
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -108,6 +109,12 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
     if (!state.last_paid_date) errors.last_paid_date = 'กรุณาเลือกวันที่ชำระล่าสุด';
     if (!state.expire_date) errors.expire_date = 'กรุณาเลือกวันหมดอายุ';
     else if (state.last_paid_date && state.expire_date <= state.last_paid_date) errors.expire_date = 'วันหมดอายุต้องหลังวันที่ชำระล่าสุด';
+    if (state.amount !== '' && (Number.isNaN(Number(state.amount)) || Number(state.amount) < 0)) {
+      errors.amount = 'กรุณากรอกจำนวนเงินให้ถูกต้อง (0 ขึ้นไป)';
+    }
+    if (state.coverage_amount !== undefined && state.coverage_amount !== '' && (Number.isNaN(Number(state.coverage_amount)) || Number(state.coverage_amount) < 0)) {
+      errors.coverage_amount = 'กรุณากรอกจำนวนเงินให้ถูกต้อง (0 ขึ้นไป)';
+    }
     return errors;
   }
 
@@ -147,6 +154,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             insurance_company: actTax.insurance_company.trim() || null,
             last_paid_date: actTax.last_paid_date,
             expire_date: actTax.expire_date,
+            amount: actTax.amount === '' ? null : Number(actTax.amount),
           };
         }
         if (insurance.enabled) {
@@ -154,6 +162,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
             insurance_company: insurance.insurance_company.trim() || null,
             last_paid_date: insurance.last_paid_date,
             expire_date: insurance.expire_date,
+            amount: insurance.amount === '' ? null : Number(insurance.amount),
+            coverage_amount: insurance.coverage_amount === '' ? null : Number(insurance.coverage_amount),
           };
         }
       }
@@ -207,7 +217,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 aria-invalid={Boolean(fieldErrors.plate_number)}
                 value={form.plate_number}
                 onChange={(e) => handleChange('plate_number', e.target.value)}
-                placeholder="เช่น 1กข1234"
+                placeholder="เช่น 1 กข 1234"
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all"
                 style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: fieldErrors.plate_number ? 'var(--status-danger)' : 'var(--surface-border)' }}
               />
@@ -320,6 +330,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
                 state={insurance}
                 errors={docErrors.insurance}
                 onChange={(field, value) => handleDocChange('insurance', setInsurance, field, value)}
+                showCoverageAmount
               />
             </div>
           )}
@@ -401,7 +412,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSaved }) {
 const inputStyle = { backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', borderColor: 'var(--surface-border)' };
 
 // การ์ดเอกสารแบบเปิด/ปิดได้: ติ๊กเปิดเมื่อมีข้อมูลจริงเท่านั้น ค่อยแสดงช่องกรอกและบังคับกรอกครบ
-function DocumentSection({ idPrefix, title, state, errors = {}, onChange }) {
+function DocumentSection({ idPrefix, title, state, errors = {}, onChange, showCoverageAmount = false }) {
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--surface-border)', backgroundColor: 'var(--surface-soft)' }}>
       <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--page-text)' }}>
@@ -428,6 +439,42 @@ function DocumentSection({ idPrefix, title, state, errors = {}, onChange }) {
             />
             {errors.insurance_company && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.insurance_company}</p>}
           </div>
+
+          <div>
+            <label htmlFor={`${idPrefix}-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>ยอดชำระ (บาท)</label>
+            <input
+              id={`${idPrefix}-amount`}
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={state.amount}
+              onChange={(e) => onChange('amount', e.target.value)}
+              placeholder="ไม่บังคับกรอก"
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+              style={{ ...inputStyle, borderColor: errors.amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+            />
+            {errors.amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.amount}</p>}
+          </div>
+
+          {showCoverageAmount && (
+            <div>
+              <label htmlFor={`${idPrefix}-coverage-amount`} className="mb-1 block text-xs" style={{ color: 'var(--sub-text)' }}>ทุนประกัน (บาท)</label>
+              <input
+                id={`${idPrefix}-coverage-amount`}
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={state.coverage_amount}
+                onChange={(e) => onChange('coverage_amount', e.target.value)}
+                placeholder="ไม่บังคับกรอก"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft)"
+                style={{ ...inputStyle, borderColor: errors.coverage_amount ? 'var(--status-danger)' : 'var(--surface-border)' }}
+              />
+              {errors.coverage_amount && <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--status-danger)' }}>{errors.coverage_amount}</p>}
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="flex-1">

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../context/auth/useAuth.js';
-import { useDocumentSummary } from '../../services/documents/documentsQueries.js';
+import { useDocumentSummary, useDocumentYearlyCost } from '../../services/documents/documentsQueries.js';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.js';
 import InfoTooltip from '../../components/globals/InfoTooltip.jsx';
 import Select from '../../components/globals/Select.jsx';
@@ -17,6 +18,10 @@ import { getDuplicatePlateNumbers } from '../../utils/plateCollision.js';
 function formatDate(value) {
     if (!value) return '-';
     return new Date(value).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatCurrency(value) {
+    return Number(value ?? 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 const DOCUMENT_STATUS_OPTIONS = ['expired', 'expiring', 'valid'];
@@ -52,6 +57,19 @@ export default function DocumentsPage() {
 
     const { data, isLoading, error } = useDocumentSummary({ search: debouncedSearch });
     const allRows = useMemo(() => data?.data ?? [], [data]);
+    const { data: yearlyCostData, isLoading: yearlyCostLoading } = useDocumentYearlyCost();
+    const yearlyCostRows = useMemo(() => yearlyCostData?.data ?? [], [yearlyCostData]);
+    const {
+        page: yearlyCostPage,
+        setPage: setYearlyCostPage,
+        totalPages: yearlyCostTotalPages,
+        pageItems: pagedYearlyCostRows,
+    } = usePagination(yearlyCostRows, 5);
+    // ค่าเริ่มต้นย่อไว้เป็นการ์ดสรุปแค่ปีปัจจุบัน กันตารางทั้งหมดกินพื้นที่หน้าจอโดยไม่จำเป็น กดขยายดูย้อนหลังทีหลังได้
+    const [yearlyCostExpanded, setYearlyCostExpanded] = useState(false);
+    const currentYear = new Date().getFullYear();
+    const currentYearCost = yearlyCostRows.find((row) => row.year === currentYear)
+        ?? { year: currentYear, act_tax_cost: 0, insurance_cost: 0, total_cost: 0 };
     const rows = useMemo(() => {
         let result = allRows;
         if (documentType) {
@@ -65,16 +83,34 @@ export default function DocumentsPage() {
     const { page, setPage, totalPages, pageItems: pagedRows } = usePagination(rows);
     const duplicatePlateNumbers = useMemo(() => getDuplicatePlateNumbers(rows), [rows]);
 
-    // นับจากเอกสารแต่ละประเภทที่มีอยู่จริง (ไม่ใช่นับจำนวนรถ) ให้ตรงกับความหมายเดิมของสถิติ
-    const visibleSubDocs = useMemo(() => rows.flatMap((r) => [r.act_tax, r.insurance]).filter(Boolean), [rows]);
+    // การ์ดสรุปด้านบนเป็น KPI คงที่ ไม่ขึ้นกับตัวกรอง/ค้นหาใดๆ (ตัวเลขที่แสดงจริงตามตัวกรองอยู่ที่ "N รายการ" ข้างช่องค้นหาแทน)
+    // จึงต้องดึงเอกสารทั้งหมดแยกต่างหาก ไม่ผ่าน search และนับจากเอกสารแต่ละประเภทที่มีอยู่จริง (ไม่ใช่นับจำนวนรถ)
+    const { data: allRowsData } = useDocumentSummary({});
+    const globalRows = useMemo(() => allRowsData?.data ?? [], [allRowsData]);
+    const visibleSubDocs = useMemo(() => globalRows.flatMap((r) => [r.act_tax, r.insurance]).filter(Boolean), [globalRows]);
     const expiredCount = visibleSubDocs.filter((d) => d.days_remaining < 0).length;
     const expiringCount = visibleSubDocs.filter((d) => d.days_remaining >= 0 && d.days_remaining <= 30).length;
     const validCount = visibleSubDocs.filter((d) => d.days_remaining > 30).length;
 
+    const activeFilterCount = (documentType ? 1 : 0) + (status ? 1 : 0);
+    function clearAllFilters() {
+        setDocumentType('');
+        setStatus('');
+    }
+
     const stats = [
-        { label: 'หมดอายุแล้ว', value: expiredCount, tone: 'danger', description: 'เอกสารที่หมดอายุไปแล้วและยังไม่ต่ออายุ' },
-        { label: 'ใกล้หมดอายุ', value: expiringCount, tone: 'warning', description: 'เอกสารที่จะหมดอายุภายใน 30 วัน' },
-        { label: 'ปกติ', value: validCount, tone: 'success', description: 'เอกสารที่ยังไม่ใกล้หมดอายุ' },
+        {
+            label: 'หมดอายุแล้ว', value: expiredCount, tone: 'danger', description: 'เอกสารที่หมดอายุไปแล้วและยังไม่ต่ออายุ',
+            onClick: () => setStatus((prev) => (prev === 'expired' ? '' : 'expired')),
+        },
+        {
+            label: 'ใกล้หมดอายุ', value: expiringCount, tone: 'warning', description: 'เอกสารที่จะหมดอายุภายใน 30 วัน',
+            onClick: () => setStatus((prev) => (prev === 'expiring' ? '' : 'expiring')),
+        },
+        {
+            label: 'ปกติ', value: validCount, tone: 'success', description: 'เอกสารที่ยังไม่ใกล้หมดอายุ',
+            onClick: () => setStatus((prev) => (prev === 'valid' ? '' : 'valid')),
+        },
     ];
 
     const buttonStyle = {
@@ -169,7 +205,7 @@ export default function DocumentsPage() {
 
     return (
         <div className="space-y-5 mx-auto max-w-7xl" style={{ color: 'var(--page-text)' }}>
-            <header className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+            <header className="flex flex-col gap-4 rounded-lg border p-5 shadow-sm md:flex-row md:items-center md:justify-between" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                 <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--sub-text)' }}>Compliance</p>
                     <h1 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--page-text)' }}>พ.ร.บ. ภาษี และประกัน</h1>
@@ -177,42 +213,126 @@ export default function DocumentsPage() {
 
                 <button
                     onClick={() => setFormModal({ mode: 'create' })}
-                    className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
+                    className="cursor-pointer rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:opacity-95"
                     style={buttonStyle}
                 >
                     + เพิ่ม/ต่ออายุเอกสาร
                 </button>
             </header>
 
-            <section className="grid gap-4 md:grid-cols-3">
-                {stats.map((item) => (
-                    <div key={item.label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                        <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
-                            {item.label}
-                            <InfoTooltip text={item.description} />
-                        </p>
-                        <div className="mt-2">
-                            <span
-                                className="text-2xl font-semibold"
-                                style={{
-                                    color:
-                                        item.tone === 'danger'
-                                            ? 'var(--status-danger)'
-                                            : item.tone === 'warning'
-                                                ? 'var(--status-warning)'
-                                                : 'var(--status-success)',
-                                }}
-                            >
-                                {item.value}
-                            </span>
+            <div className="rounded-lg border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                        <h2 className="text-sm font-semibold" style={{ color: 'var(--page-text)' }}>ค่าใช้จ่ายต่ออายุเอกสารรายปี</h2>
+                        <InfoTooltip text="สรุปยอดชำระตามปีที่จ่ายเงินจริง (วันที่ชำระล่าสุด) รายการเก่าที่ไม่มียอดชำระบันทึกไว้จะนับเป็น 0 บาท" />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setYearlyCostExpanded((prev) => !prev)}
+                        className="flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:opacity-80"
+                        style={{ backgroundColor: 'var(--surface-soft)', color: 'var(--page-text)', border: '1px solid var(--surface-border)' }}
+                    >
+                        {yearlyCostExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {yearlyCostExpanded ? 'ย่อเป็นสรุปปีนี้' : 'ดูย้อนหลังทุกปี'}
+                    </button>
+                </div>
+
+                {!yearlyCostExpanded && (
+                    <div className="rounded-md border p-4" style={{ backgroundColor: 'var(--surface-soft)', borderColor: 'var(--surface-border)' }}>
+                        <p className="mb-3 text-xs" style={{ color: 'var(--sub-text)' }}>สรุปปี {currentYearCost.year}</p>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--sub-text)' }}>ค่าใช้จ่าย พ.ร.บ./ภาษี</p>
+                                <p className="mt-1 text-xl font-semibold" style={{ color: 'var(--page-text)' }}>฿ {formatCurrency(currentYearCost.act_tax_cost)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--sub-text)' }}>ค่าใช้จ่ายประกัน</p>
+                                <p className="mt-1 text-xl font-semibold" style={{ color: 'var(--page-text)' }}>฿ {formatCurrency(currentYearCost.insurance_cost)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--sub-text)' }}>รวม</p>
+                                <p className="mt-1 text-xl font-semibold" style={{ color: 'var(--page-text)' }}>฿ {formatCurrency(currentYearCost.total_cost)}</p>
+                            </div>
                         </div>
                     </div>
-                ))}
-            </section>
+                )}
 
-            <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
-                <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="relative w-full max-w-md">
+                {yearlyCostExpanded && (
+                    <>
+                        <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                            <table className="w-full min-w-md text-sm" style={{ color: 'var(--page-text)' }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
+                                        <th className="px-4 py-3 text-left font-medium">ปี</th>
+                                        <th className="px-4 py-3 text-right font-medium">ค่าใช้จ่าย พ.ร.บ./ภาษี</th>
+                                        <th className="px-4 py-3 text-right font-medium">ค่าใช้จ่ายประกัน</th>
+                                        <th className="px-4 py-3 text-right font-medium">รวม</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {yearlyCostLoading && (
+                                        <tr>
+                                            <td colSpan={4} role="status" className="px-4 py-8 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>กำลังโหลด...</td>
+                                        </tr>
+                                    )}
+                                    {!yearlyCostLoading && yearlyCostRows.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="px-4 py-8 text-center" style={{ color: 'var(--sub-text)', opacity: 0.75 }}>ยังไม่มีข้อมูล</td>
+                                        </tr>
+                                    )}
+                                    {!yearlyCostLoading && pagedYearlyCostRows.map((row) => (
+                                        <tr key={row.year} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                                            <td className="px-4 py-3 font-medium">{row.year}</td>
+                                            <td className="px-4 py-3 text-right" style={{ color: 'var(--sub-text)' }}>฿ {formatCurrency(row.act_tax_cost)}</td>
+                                            <td className="px-4 py-3 text-right" style={{ color: 'var(--sub-text)' }}>฿ {formatCurrency(row.insurance_cost)}</td>
+                                            <td className="px-4 py-3 text-right font-semibold">฿ {formatCurrency(row.total_cost)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {yearlyCostTotalPages > 1 && (
+                            <Pagination page={yearlyCostPage} totalPages={yearlyCostTotalPages} onPageChange={setYearlyCostPage} />
+                        )}
+                    </>
+                )}
+            </div>
+
+            <div className="rounded-lg border p-4 shadow-sm" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <section className="grid gap-4 md:grid-cols-3 mb-8">
+                    {stats.map((item) => (
+                        <button
+                            type="button"
+                            key={item.label}
+                            onClick={item.onClick}
+                            className="cursor-pointer rounded-md p-4 text-left shadow-sm transition-opacity duration-150 hover:opacity-80"
+                            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}
+                        >
+                            <p className="flex items-center text-xs" style={{ color: 'var(--sub-text)' }}>
+                                {item.label}
+                                <InfoTooltip text={item.description} />
+                            </p>
+                            <div className="mt-2">
+                                <span
+                                    className="text-2xl font-semibold"
+                                    style={{
+                                        color:
+                                            item.tone === 'danger'
+                                                ? 'var(--status-danger)'
+                                                : item.tone === 'warning'
+                                                    ? 'var(--status-warning)'
+                                                    : 'var(--status-success)',
+                                    }}
+                                >
+                                    {item.value}
+                                </span>
+                            </div>
+                        </button>
+                    ))}
+                </section>
+
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--icon-muted)' }}>⌕</span>
                         <input
                             type="text"
@@ -220,7 +340,7 @@ export default function DocumentsPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="ค้นหาทะเบียนรถ"
-                            className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
+                            className="w-full rounded-md py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-3 focus:ring-(--primary-color-soft) transition-all duration-200"
                             style={{
                                 backgroundColor: 'var(--surface-soft)',
                                 color: 'var(--page-text)',
@@ -238,15 +358,15 @@ export default function DocumentsPage() {
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                        {documentType && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        {activeFilterCount > 0 && (
                             <button
                                 type="button"
-                                onClick={() => setDocumentType('')}
+                                onClick={clearAllFilters}
                                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
                                 style={{ backgroundColor: 'var(--primary-color-soft)', color: 'var(--on-primary)' }}
                             >
-                                ประเภท: {DOCUMENT_TYPE_META[documentType].label}
+                                ล้างตัวกรอง ({activeFilterCount})
                                 <span aria-hidden="true">✕</span>
                             </button>
                         )}
@@ -269,7 +389,7 @@ export default function DocumentsPage() {
 
                 {errorMessage && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-danger)' }}>{errorMessage}</p>}
 
-                <div className="overflow-x-auto rounded-xl border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
+                <div className="overflow-x-auto rounded-md border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)' }}>
                     <table className="w-full min-w-180 text-sm" style={{ color: 'var(--page-text)' }}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--surface-soft)', borderBottom: '1px solid var(--surface-border)', color: 'var(--sub-text)' }}>
@@ -322,8 +442,8 @@ export default function DocumentsPage() {
                     documentType={selected.documentType}
                     documentId={selected.documentId}
                     onClose={() => setSelected(null)}
-                    onRenew={(document) => setFormModal({ mode: 'renew', renewFrom: document })}
-                    onEdit={(document) => setFormModal({ mode: 'edit', document })}
+                    onRenew={(document) => { setSelected(null); setFormModal({ mode: 'renew', renewFrom: document }); }}
+                    onEdit={(document) => { setSelected(null); setFormModal({ mode: 'edit', document }); }}
                     onDeleted={handleDeleted}
                 />
             )}

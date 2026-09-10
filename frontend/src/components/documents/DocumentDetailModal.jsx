@@ -9,6 +9,10 @@ function formatDate(value) {
     return new Date(value).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatCurrency(value) {
+    return Number(value).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function DocumentDetailModal({ documentType, documentId, onClose, onRenew, onEdit, onDeleted }) {
     const [showConfirm, setShowConfirm] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
@@ -84,6 +88,18 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                             <p style={{ color: 'var(--sub-text)' }}>วันหมดอายุ</p>
                             <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{formatDate(document.expire_date)}</p>
                         </div>
+                        {document.amount != null && (
+                            <div>
+                                <p style={{ color: 'var(--sub-text)' }}>ยอดชำระ</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{formatCurrency(document.amount)}</p>
+                            </div>
+                        )}
+                        {document.coverage_amount != null && (
+                            <div>
+                                <p style={{ color: 'var(--sub-text)' }}>ทุนประกัน</p>
+                                <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>฿{formatCurrency(document.coverage_amount)}</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="border-b p-5" style={{ borderColor: 'var(--surface-border)' }}>
@@ -116,6 +132,12 @@ export default function DocumentDetailModal({ documentType, documentId, onClose,
                                         <div>
                                             <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)' }}>{formatDate(h.last_paid_date)} – {formatDate(h.expire_date)}</p>
                                             {h.provider && <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>{h.provider}</p>}
+                                            {h.amount != null && (
+                                                <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>฿{formatCurrency(h.amount)}</p>
+                                            )}
+                                            {h.coverage_amount != null && (
+                                                <p style={{ color: h.document_id === document.document_id ? 'var(--on-primary)' : 'var(--page-text)', opacity: 0.75 }}>ทุนประกัน ฿{formatCurrency(h.coverage_amount)}</p>
+                                            )}
                                         </div>
                                         {h.document_id === document.document_id && (
                                             <span className="text-xs font-medium" style={{ color: 'var(--on-primary)', opacity: 0.5 }}>ปัจจุบัน</span>

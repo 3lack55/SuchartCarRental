@@ -139,7 +139,7 @@ export default function DriverDetailModal({ driverId, onClose, onEdit, onDeleted
                                 </div>
                                 <div>
                                     <p style={{ color: 'var(--sub-text)' }}>ระยะเวลาทำงาน</p>
-                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{durationSince(driver.hire_date) ?? '-'}</p>
+                                    <p className="mt-0.5 font-medium" style={{ color: 'var(--page-text)' }}>{driver.deleted ? '-' : durationSince(driver.hire_date) ?? '-'}</p>
                                 </div>
                             </div>
 

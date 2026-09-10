@@ -312,13 +312,15 @@ CREATE TABLE `vehicle_act_tax` (
   `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`act_tax_id`),
   KEY `vehicle_id` (`vehicle_id`),
   KEY `idx_act_tax_expire` (`expire_date`),
   CONSTRAINT `vehicle_act_tax_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_act_tax_dates` CHECK ((`expire_date` > `last_paid_date`))
+  CONSTRAINT `chk_act_tax_dates` CHECK ((`expire_date` > `last_paid_date`)),
+  CONSTRAINT `chk_act_tax_amount_nonnegative` CHECK ((`amount` is null or `amount` >= 0))
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -328,7 +330,7 @@ CREATE TABLE `vehicle_act_tax` (
 
 LOCK TABLES `vehicle_act_tax` WRITE;
 /*!40000 ALTER TABLE `vehicle_act_tax` DISABLE KEYS */;
-INSERT INTO `vehicle_act_tax` VALUES (1,1,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-01','2026-08-01','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20','2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-05','2026-08-15','2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-06-10','2026-06-10','2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `vehicle_act_tax` VALUES (1,1,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-01','2026-08-01',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-05','2026-08-15',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-06-10','2026-06-10',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `vehicle_act_tax` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -345,13 +347,17 @@ CREATE TABLE `vehicle_insurances` (
   `insurance_company` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_paid_date` date NOT NULL,
   `expire_date` date NOT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `coverage_amount` decimal(12,2) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`insurance_id`),
   KEY `vehicle_id` (`vehicle_id`),
   KEY `idx_insurance_expire` (`expire_date`),
   CONSTRAINT `vehicle_insurances_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_insurance_dates` CHECK ((`expire_date` > `last_paid_date`))
+  CONSTRAINT `chk_insurance_dates` CHECK ((`expire_date` > `last_paid_date`)),
+  CONSTRAINT `chk_insurance_amount_nonnegative` CHECK ((`amount` is null or `amount` >= 0)),
+  CONSTRAINT `chk_insurance_coverage_nonnegative` CHECK ((`coverage_amount` is null or `coverage_amount` >= 0))
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -361,7 +367,7 @@ CREATE TABLE `vehicle_insurances` (
 
 LOCK TABLES `vehicle_insurances` WRITE;
 /*!40000 ALTER TABLE `vehicle_insurances` DISABLE KEYS */;
-INSERT INTO `vehicle_insurances` VALUES (1,1,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-08-01','2026-08-01','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15','2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20','2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กรุงเทพประกันภัย จำกัด (มหาชน)','2025-08-05','2026-08-15','2026-08-10 14:56:22','2026-08-10 14:56:22');
+INSERT INTO `vehicle_insurances` VALUES (1,1,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-08-01','2026-08-01',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กรุงเทพประกันภัย จำกัด (มหาชน)','2025-08-05','2026-08-15',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `vehicle_insurances` ENABLE KEYS */;
 UNLOCK TABLES;
 

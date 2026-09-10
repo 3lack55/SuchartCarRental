@@ -56,7 +56,7 @@ export default function SidebarMenu({ isSidebarOpen, onNavigate }) {
     const hideTimer = useRef(null);
 
     const currentPath = location.pathname === '/' ? '/overview' : location.pathname;
-    const activeItem = overviewItems.find((item) => item.path === currentPath)?.id || inFoItems.find((item) => item.path === currentPath)?.id || settingItems.find((item) => item.path === currentPath)?.id || 1;
+    const activeItem = overviewItems.find((item) => item.path === currentPath)?.id ?? inFoItems.find((item) => item.path === currentPath)?.id ?? settingItems.find((item) => item.path === currentPath)?.id ?? null;
 
     const fontColor = 'var(--on-primary)';
     const tooltipBg = 'var(--surface)';
