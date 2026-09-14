@@ -3,6 +3,10 @@
 -- เพื่อให้หน้า "พ.ร.บ. ภาษี และประกัน" แสดง "ราคาต่ออายุล่าสุด" ในตารางสรุปได้
 -- ต้องรันหลัง scripts/migrate_document_renewal_amount.sql (ที่เพิ่มคอลัมน์ amount ให้ตารางจริงแล้ว) เท่านั้น
 -- เป็นแค่ CREATE OR REPLACE VIEW ไม่กระทบข้อมูล ไม่ต้องสำรองก่อนก็ได้ แต่แนะนำให้ทำเป็นนิสัยเสมอ
+-- SET NAMES utf8mb4 จำเป็นตรงนี้: ถ้ารันผ่าน `docker exec -i mysql ... < file` โดยไม่ตั้งชุดอักขระของ session ก่อน
+-- mysql client จะตีความ string literal ('act_tax'/'insurance') เป็น latin1 ตามค่าเริ่มต้น แล้วชนกับ
+-- "collate utf8mb4_unicode_ci" ที่ระบุไว้ (ทำให้ error 1253) ต้องสั่ง SET NAMES ให้ตรงกับ collation ที่ใช้ก่อนเสมอ
+SET NAMES utf8mb4;
 
 CREATE OR REPLACE VIEW `view_document_expiry` AS
 select 'act_tax' collate utf8mb4_unicode_ci as document_type, at.act_tax_id as document_id, at.vehicle_id as vehicle_id,

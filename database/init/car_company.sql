@@ -44,7 +44,7 @@ CREATE TABLE `activity_logs` (
   KEY `idx_activity_logs_created` (`created_at`),
   KEY `idx_activity_logs_user` (`user_id`),
   CONSTRAINT `fk_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,7 +53,6 @@ CREATE TABLE `activity_logs` (
 
 LOCK TABLES `activity_logs` WRITE;
 /*!40000 ALTER TABLE `activity_logs` DISABLE KEYS */;
-INSERT INTO `activity_logs` VALUES (1,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:19:22'),(2,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:20:43'),(3,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 12:21:21'),(4,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"bobo\")','::ffff:172.19.0.1','2026-08-19 12:21:35'),(5,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:21:40'),(6,1,'admin','user.create','user',5,'เพิ่มผู้ใช้งานใหม่ \"bobo\" (สิทธิ์ admin)','::ffff:172.19.0.1','2026-08-19 12:22:34'),(7,5,'bobo','auth.login_success','user',5,'เข้าสู่ระบบสำเร็จ \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:28:07'),(8,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:28:28'),(9,1,'admin','user.password_reset','user',4,'รีเซ็ตรหัสผ่านผู้ใช้งาน \"staff2\"','::ffff:172.19.0.1','2026-08-19 12:37:37'),(10,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff2\")','::ffff:172.19.0.1','2026-08-19 12:37:50'),(11,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff1\")','::ffff:172.19.0.1','2026-08-19 12:37:56'),(12,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"ิิิิิbobo\")','::ffff:172.19.0.1','2026-08-19 12:38:18'),(13,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"ิิิิิbobo\")','::ffff:172.19.0.1','2026-08-19 12:38:24'),(14,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 12:38:43'),(15,1,'admin','user.password_reset','user',5,'รีเซ็ตรหัสผ่านผู้ใช้งาน \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:40:12'),(16,5,'bobo','auth.login_success','user',5,'เข้าสู่ระบบสำเร็จ \"bobo\"','::ffff:172.19.0.1','2026-08-19 12:40:45'),(17,5,'bobo','driver.update','driver',1,'แก้ไขข้อมูลคนขับ \"นายสมชาย ใจดี\"','::ffff:172.19.0.1','2026-08-19 12:56:40'),(18,5,'bobo','driver.delete','driver',6,'ลบคนขับ driver_id=6','::ffff:172.19.0.1','2026-08-19 12:56:49'),(19,5,'bobo','vehicle.delete','vehicle',1,'ลบรถยนต์ vehicle_id=1','::ffff:172.19.0.1','2026-08-19 12:56:55'),(20,5,'bobo','vehicle.restore','vehicle',1,'กู้คืนรถยนต์ vehicle_id=1','::ffff:172.19.0.1','2026-08-19 12:57:11'),(38,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"staff1\")','::ffff:172.19.0.1','2026-08-19 13:10:55'),(47,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 13:30:44'),(48,5,'bobo','vehicle.create','vehicle',10,'เพิ่มรถยนต์ทะเบียน \"4 ฉช 8765\"','::ffff:172.19.0.1','2026-08-19 13:31:45'),(49,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-19 13:35:58'),(50,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 13:36:16'),(51,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-19 13:39:30'),(52,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:11:56'),(53,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:34'),(54,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:35'),(55,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:35'),(56,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','172.19.0.1','2026-08-19 14:13:36'),(57,3,'staff1','auth.login_success','user',3,'เข้าสู่ระบบสำเร็จ \"staff1\"','::ffff:172.19.0.1','2026-08-25 13:56:37'),(58,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 13:56:45'),(59,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 14:33:23'),(60,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 14:34:20'),(61,NULL,'system','auth.login_failed','user',NULL,'เข้าสู่ระบบไม่สำเร็จ (username: \"admin\")','::ffff:172.19.0.1','2026-08-25 14:36:25'),(62,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 15:52:31'),(63,1,'admin','auth.login_success','user',1,'เข้าสู่ระบบสำเร็จ \"admin\"','::ffff:172.19.0.1','2026-08-25 18:00:24'),(64,NULL,'_temptest2','auth.login_success','user',9,'เข้าสู่ระบบสำเร็จ \"_temptest2\"','::ffff:172.19.0.1','2026-08-25 18:22:20'),(65,NULL,'_temptest2','document.create','document',8,'เพิ่มเอกสารพรบ.และภาษี ทะเบียน \"1 กข 1234\"','::ffff:172.19.0.1','2026-08-25 18:24:00'),(66,NULL,'_temptest2','document.create','document',9,'เพิ่มเอกสารพรบ.และภาษี ทะเบียน \"1 กข 1234\"','::ffff:172.19.0.1','2026-08-25 18:24:00'),(67,NULL,'_temptest2','document.delete','document',8,'ลบเอกสารพรบ.และภาษี document_id=8','::ffff:172.19.0.1','2026-08-25 18:25:36'),(68,NULL,'_temptest2','document.delete','document',9,'ลบเอกสารพรบ.และภาษี document_id=9','::ffff:172.19.0.1','2026-08-25 18:25:36');
 /*!40000 ALTER TABLE `activity_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -77,7 +76,7 @@ CREATE TABLE `drivers` (
   PRIMARY KEY (`driver_id`),
   UNIQUE KEY `phone` (`phone`) /*!80000 INVISIBLE */,
   UNIQUE KEY `drivername` (`first_name`,`last_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -86,7 +85,6 @@ CREATE TABLE `drivers` (
 
 LOCK TABLES `drivers` WRITE;
 /*!40000 ALTER TABLE `drivers` DISABLE KEYS */;
-INSERT INTO `drivers` VALUES (1,'นาย','สมชาย','ใจดี','0891234567','2022-01-15 00:00:00',0,'2026-08-10 14:56:22','2026-08-19 12:56:40'),(2,'นาย','วิชัย','รักงาน','0812345678','2022-03-01 00:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:41:19'),(3,'นาง','สุนีย์','ขยันดี','0898765432','2023-05-19 17:00:00',0,'2026-08-10 14:56:22','2026-08-14 16:37:19'),(4,'นาย','ประยุทธ','มั่นคง','0865554321','2021-11-09 17:00:00',0,'2026-08-10 14:56:22','2026-08-17 12:22:42'),(5,'นาย','อนุชา','พากเพียร','0876543210','2024-01-31 17:00:00',1,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,'นาย','ชนแหลก','แหกประกัน','0621378901','2026-08-01 00:00:00',1,'2026-08-14 16:17:12','2026-08-19 12:56:49'),(8,'นาย','สมหมาย','ใจกล้า','0839578888','2026-08-18 00:00:00',0,'2026-08-17 17:57:03','2026-08-17 17:57:03');
 /*!40000 ALTER TABLE `drivers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -111,7 +109,7 @@ CREATE TABLE `maintenance_details` (
   KEY `maintenance_id` (`maintenance_id`),
   CONSTRAINT `maintenance_details_ibfk_1` FOREIGN KEY (`service_item_id`) REFERENCES `service_items` (`service_item_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `maintenance_details_ibfk_2` FOREIGN KEY (`maintenance_id`) REFERENCES `maintenances` (`maintenance_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -120,7 +118,6 @@ CREATE TABLE `maintenance_details` (
 
 LOCK TABLES `maintenance_details` WRITE;
 /*!40000 ALTER TABLE `maintenance_details` DISABLE KEYS */;
-INSERT INTO `maintenance_details` VALUES (1,1,6,4.00,320.00,'เปลี่ยนน้ำมันเครื่องตามรอบ','2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,1,7,1.00,250.00,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,1,8,1.00,180.00,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,2,11,1.00,850.00,'ผ้าเบรกหน้าใกล้หมด เปลี่ยนก่อนกำหนด','2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,2,6,4.00,300.00,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(6,3,9,1.00,450.00,'เติมน้ำมันเบรกให้เต็มระดับ','2026-08-10 14:56:22','2026-08-10 14:56:22'),(7,4,14,4.00,2800.00,'เปลี่ยนยางทั้ง 4 เส้น','2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `maintenance_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -146,7 +143,7 @@ CREATE TABLE `maintenances` (
   KEY `vehicle_id` (`vehicle_id`),
   KEY `idx_maintenance_service_date` (`service_date`),
   CONSTRAINT `maintenances_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +152,6 @@ CREATE TABLE `maintenances` (
 
 LOCK TABLES `maintenances` WRITE;
 /*!40000 ALTER TABLE `maintenances` DISABLE KEYS */;
-INSERT INTO `maintenances` VALUES (1,1,'2026-07-01','ศูนย์บริการ Toyota สาขารามอินทรา','center','RCP-2026-0001',45000,50000,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'2026-06-15','อู่ช่างแดง ออโต้เซอร์วิส','shop','RCP-2026-0002',78000,83000,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'2026-07-20','ศูนย์บริการ Honda สาขาชลบุรี','center','RCP-2026-0003',22000,27000,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'2026-05-30','อู่ป้าแอ๋ว การช่าง','shop',NULL,61000,66000,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `maintenances` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -321,7 +317,7 @@ CREATE TABLE `vehicle_act_tax` (
   CONSTRAINT `vehicle_act_tax_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_act_tax_dates` CHECK ((`expire_date` > `last_paid_date`)),
   CONSTRAINT `chk_act_tax_amount_nonnegative` CHECK ((`amount` is null or `amount` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -330,7 +326,6 @@ CREATE TABLE `vehicle_act_tax` (
 
 LOCK TABLES `vehicle_act_tax` WRITE;
 /*!40000 ALTER TABLE `vehicle_act_tax` DISABLE KEYS */;
-INSERT INTO `vehicle_act_tax` VALUES (1,1,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-01','2026-08-01',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กลางคุ้มครองผู้ประสบภัยจากรถ จำกัด','2025-08-05','2026-08-15',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(5,5,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-06-10','2026-06-10',NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `vehicle_act_tax` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -358,7 +353,7 @@ CREATE TABLE `vehicle_insurances` (
   CONSTRAINT `chk_insurance_dates` CHECK ((`expire_date` > `last_paid_date`)),
   CONSTRAINT `chk_insurance_amount_nonnegative` CHECK ((`amount` is null or `amount` >= 0)),
   CONSTRAINT `chk_insurance_coverage_nonnegative` CHECK ((`coverage_amount` is null or `coverage_amount` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -367,7 +362,6 @@ CREATE TABLE `vehicle_insurances` (
 
 LOCK TABLES `vehicle_insurances` WRITE;
 /*!40000 ALTER TABLE `vehicle_insurances` DISABLE KEYS */;
-INSERT INTO `vehicle_insurances` VALUES (1,1,'บริษัท วิริยะประกันภัย จำกัด (มหาชน)','2025-08-01','2026-08-01',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(2,2,'บริษัท เมืองไทยประกันภัย จำกัด (มหาชน)','2025-09-15','2026-09-15',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(3,3,'บริษัท ทิพยประกันภัย จำกัด (มหาชน)','2025-07-20','2026-08-20',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22'),(4,4,'บริษัท กรุงเทพประกันภัย จำกัด (มหาชน)','2025-08-05','2026-08-15',NULL,NULL,'2026-08-10 14:56:22','2026-08-10 14:56:22');
 /*!40000 ALTER TABLE `vehicle_insurances` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -427,7 +421,7 @@ CREATE TABLE `vehicles` (
   CONSTRAINT `vehicles_ibfk_3` FOREIGN KEY (`type_id`) REFERENCES `vehicle_type` (`type_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_purchase_year` CHECK ((`purchase_year` is null) or (`purchase_year` between 1980 and 2100)),
   CONSTRAINT `chk_purchase_month` CHECK ((`purchase_month` is null) or (`purchase_month` between 1 and 12))
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -436,7 +430,6 @@ CREATE TABLE `vehicles` (
 
 LOCK TABLES `vehicles` WRITE;
 /*!40000 ALTER TABLE `vehicles` DISABLE KEYS */;
-INSERT INTO `vehicles` VALUES (1,'Toyota Hilux Revo 2022','1 กข 1234',1,1,1,0,'2026-08-10 14:56:22','2026-08-19 12:57:11'),(2,'Toyota Commuter 2021','2 ขค 5678',1,2,2,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(3,'Honda City 2023','กท 9956',9,3,3,0,'2026-08-10 14:56:22','2026-08-15 14:37:37'),(4,'Isuzu D-Max 2020','3 งจ 4321',14,4,1,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(5,'Hino 6 ล้อ 2019','4 ฉช 8765',21,NULL,4,0,'2026-08-10 14:56:22','2026-08-11 15:18:30'),(6,'Hyundai H-1','1 กจ 5627',21,NULL,2,0,'2026-08-15 14:39:43','2026-08-19 12:56:49'),(7,'Toyota Commuter ','1 หญ',1,NULL,2,0,'2026-08-15 14:41:24','2026-08-19 12:56:49'),(8,'React Query Test Car (edited)','ทดสอบ1826',2,NULL,NULL,1,'2026-08-16 17:14:21','2026-08-16 17:14:23'),(10,'Hino 6 ล้อ 2019','4 ฉช 8765',1,NULL,4,0,'2026-08-19 13:31:45','2026-08-19 13:31:45');
 /*!40000 ALTER TABLE `vehicles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -631,7 +624,7 @@ CREATE TABLE `violations` (
   CONSTRAINT `violations_ibfk_1` FOREIGN KEY (`driver_id`) REFERENCES `drivers` (`driver_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_2` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`vehicle_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `violations_ibfk_3` FOREIGN KEY (`reason_id`) REFERENCES `violations_reasons` (`reason_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -640,7 +633,6 @@ CREATE TABLE `violations` (
 
 LOCK TABLES `violations` WRITE;
 /*!40000 ALTER TABLE `violations` DISABLE KEYS */;
-INSERT INTO `violations` VALUES (1,1,1,1,'2026-06-10 14:23:00',1000.00,0,'2026-08-10 14:56:22','2026-08-17 17:56:13'),(2,2,2,3,'2026-07-02 09:15:00',500.00,1,'2026-08-10 14:56:22','2026-08-17 18:12:19'),(3,3,3,2,'2026-07-18 17:40:00',1000.00,1,'2026-08-10 14:56:22','2026-08-17 18:09:32'),(4,4,4,5,'2026-05-25 11:05:00',400.00,0,'2026-08-10 14:56:22','2026-08-17 17:40:13');
 /*!40000 ALTER TABLE `violations` ENABLE KEYS */;
 UNLOCK TABLES;
 
